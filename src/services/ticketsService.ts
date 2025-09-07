@@ -32,6 +32,41 @@ export interface TicketFlowStatus {
   refundedAt?: string | null;
 }
 
+/* ========= Tipos para detalle de reserva (seguimiento) ========= */
+
+export type ReservationDetail = TicketFlowStatus & {
+  reservationId: number;
+  createdAt: string;
+  quantity: number;
+  amount: number;
+  event: {
+    id: number;
+    title: string;
+    date: string | null;
+    venue?: string | null;
+    city?: string | null;
+    coverImageUrl?: string | null;
+  };
+  // Archivo de ticket (si hay)
+  ticketFileName?: string | null;
+  ticketMime?: string | null;
+  ticketSize?: number | null;
+
+  // Pago asociado
+  payment?: {
+    id: number;
+    status: string;
+    isDeferredCapture?: boolean;
+    capturePolicy?: "IMMEDIATE" | "MANUAL_ON_APPROVAL";
+    escrowStatus?: string | null;
+    token?: string | null;
+    buyOrder?: string | null;
+    authorizedAmount?: number | null;
+    capturedAmount?: number | null;
+    updatedAt?: string | null;
+  } | null;
+};
+
 /* ========= Tipos para listado (Mis entradas - comprador) ========= */
 
 export type TicketListItem = {
@@ -72,7 +107,7 @@ export type OrganizerReservationItem = {
   buyer?: { id: number; name: string | null; email: string | null };
   quantity: number;
   amount: number;
-  status: ReservationStatus | string; // puede venir "PENDING_PAYMENT" etc.
+  status: ReservationStatus | string;
   fulfillmentStatus?: string | null;
   ticketUploadedAt?: string | null;
   deliveredAt?: string | null;
@@ -96,10 +131,8 @@ export type OrganizerReservationsResponse = {
 
 /* ========= Utils ========= */
 
-/** Intenta extraer el nombre de archivo desde Content-Disposition */
 export function extractFilenameFromContentDisposition(cd?: string | null): string | undefined {
   if (!cd) return;
-  // filename*=UTF-8''<urlencoded>  ||  filename="<plain>"
   const star = cd.match(/filename\*=(?:UTF-8''|)([^;]+)/i);
   if (star && star[1]) {
     try {
@@ -112,7 +145,6 @@ export function extractFilenameFromContentDisposition(cd?: string | null): strin
   if (simple && simple[1]) return simple[1].trim();
 }
 
-/** Dispara una descarga en el navegador a partir de un Blob */
 export function triggerBrowserDownload(blob: Blob, filename = "archivo") {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -124,7 +156,6 @@ export function triggerBrowserDownload(blob: Blob, filename = "archivo") {
   URL.revokeObjectURL(url);
 }
 
-/** Devuelve un “kind” simple para iconos en UI a partir de content-type o filename */
 export function detectFileKind(contentType?: string, filename?: string) {
   const ct = (contentType || "").toLowerCase().trim();
   const name = (filename || "").toLowerCase();
@@ -137,55 +168,37 @@ export function detectFileKind(contentType?: string, filename?: string) {
   if (ct.includes("pdf") || byExt === "pdf") return "pdf";
   if (ct.includes("png") || byExt === "png") return "png";
   if (ct.includes("jpeg") || ct.includes("jpg") || byExt === "jpg") return "jpg";
-  return "file"; // fallback genérico
+  return "file";
 }
 
-/** Formatea tamaño en bytes de forma legible (para mostrar debajo del botón Ver/Descargar) */
 export function formatBytes(n?: number) {
   if (!n || n <= 0) return "—";
   const k = 1024;
   const units = ["B", "KB", "MB", "GB"];
   let i = 0;
   let v = n;
-  while (v >= k && i < units.length - 1) {
-    v /= k;
-    i++;
-  }
+  while (v >= k && i < units.length - 1) { v /= k; i++; }
   return `${v.toFixed(v >= 10 || i === 0 ? 0 : 1)} ${units[i]}`;
 }
 
 /* ========= Comprador ========= */
 
-/** GET /api/tickets/:reservationId/status */
 export async function getTicketStatus(reservationId: number): Promise<TicketFlowStatus> {
   const { data } = await api.get(`/tickets/${reservationId}/status`);
   return data as TicketFlowStatus;
 }
 
-/**
- * GET /api/tickets/:reservationId/download
- * Devuelve { blob, filename } para que el caller decida si dispara la descarga o lo guarda.
- */
 export async function downloadTicket(
   reservationId: number
 ): Promise<{ blob: Blob; filename: string }> {
   const resp = await api.get(`/tickets/${reservationId}/download`, { responseType: "blob" });
-  const ct =
-    (resp.headers?.["content-type"] as string | undefined) ||
-    "application/octet-stream";
+  const ct = (resp.headers?.["content-type"] as string | undefined) || "application/octet-stream";
   const blob = new Blob([resp.data], { type: ct });
   const cd = (resp.headers?.["content-disposition"] as string | undefined) ?? null;
-  const filename =
-    extractFilenameFromContentDisposition(cd) || `entrada-${reservationId}.pdf`;
+  const filename = extractFilenameFromContentDisposition(cd) || `entrada-${reservationId}.pdf`;
   return { blob, filename };
 }
 
-/**
- * GET /api/tickets/:id/file?mode=inline|attachment
- * - mode = "inline": pensado para abrir en pestaña (preview)
- * - mode = "attachment": pensado para descargar con nombre de archivo
- * Solo funcionará si el backend expone el endpoint y valida APROBADO/ENTREGADO.
- */
 export async function buyerGetTicketFile(
   reservationId: number,
   mode: "inline" | "attachment" = "inline"
@@ -194,49 +207,50 @@ export async function buyerGetTicketFile(
     params: { mode },
     responseType: "blob",
   });
-
-  const ct =
-    (resp.headers?.["content-type"] as string | undefined) ||
-    "application/octet-stream";
+  const ct = (resp.headers?.["content-type"] as string | undefined) || "application/octet-stream";
   const blob = new Blob([resp.data], { type: ct });
   const cd = (resp.headers?.["content-disposition"] as string | undefined) ?? null;
   const filename = extractFilenameFromContentDisposition(cd);
-
   return { blob, filename, contentType: ct };
 }
 
-/** GET /api/tickets/my — listado de entradas del comprador autenticado */
 export async function getMyTickets(params: { q?: string; page?: number; pageSize?: number }) {
   const { data } = await api.get<TicketListResponse>("/tickets/my", { params });
   return data;
 }
 
+/** ✅ NUEVO: detalle completo de una reserva (seguimiento) */
+export async function getReservationDetail(reservationId: number): Promise<ReservationDetail> {
+  const { data } = await api.get(`/tickets/reservations/${reservationId}`);
+  return data as ReservationDetail;
+}
+
+/** ✅ NUEVO: refrescar estado del pago asociado a la reserva */
+export async function refreshPaymentStatus(reservationId: number): Promise<ReservationDetail> {
+  const { data } = await api.post(`/tickets/reservations/${reservationId}/refresh-payment`);
+  return data as ReservationDetail;
+}
+
+/** ✅ NUEVO: refrescar estado del flujo de ticket */
+export async function refreshTicketStatus(reservationId: number): Promise<TicketFlowStatus> {
+  const { data } = await api.post(`/tickets/reservations/${reservationId}/refresh-ticket`);
+  return data as TicketFlowStatus;
+}
+
 /* ========= Organizador ========= */
 
-/**
- * GET /api/organizer/reservations — listado de reservas del organizador
- * Query:
- *  - page?, pageSize?, q?, status?, eventId?
- *  - needsTicket? (boolean) → si true, solo PAID que requieren acción
- *  - maxAgeHours? (number)  → limita PENDING_PAYMENT por antigüedad
- */
 export async function listOrganizerReservations(params: {
   page?: number;
   pageSize?: number;
   q?: string;
-  status?: string;        // "PAID" | "PENDING_PAYMENT" | ...
+  status?: string;
   eventId?: number;
-  needsTicket?: boolean;  // NUEVO
-  maxAgeHours?: number;   // NUEVO (solo aplica a PENDING_PAYMENT)
+  needsTicket?: boolean;
 }): Promise<OrganizerReservationsResponse> {
   const { data } = await api.get("/organizer/reservations", { params });
   return data as OrganizerReservationsResponse;
 }
 
-/**
- * POST /api/organizer/reservations/:reservationId/ticket
- * Body: multipart/form-data con campo "ticket" (pdf/png/jpg)
- */
 export async function organizerUploadTicket(
   reservationId: number,
   file: File
@@ -253,7 +267,6 @@ export async function organizerUploadTicket(
 
 /* ========= Admin ========= */
 
-/** GET /api/admin/tickets/pending — listado de pendientes */
 export async function adminListPendingTickets(params?: {
   page?: number;
   pageSize?: number;
@@ -263,13 +276,11 @@ export async function adminListPendingTickets(params?: {
   return data;
 }
 
-/** POST /api/admin/reservations/:id/approve-ticket */
 export async function adminApproveTicket(reservationId: number): Promise<any> {
   const { data } = await api.post(`/admin/reservations/${reservationId}/approve-ticket`);
   return data;
 }
 
-/** POST /api/admin/reservations/:id/reject-ticket  Body: { reason?: string } */
 export async function adminRejectTicket(reservationId: number, reason?: string): Promise<any> {
   const { data } = await api.post(
     `/admin/reservations/${reservationId}/reject-ticket`,
@@ -278,11 +289,22 @@ export async function adminRejectTicket(reservationId: number, reason?: string):
   return data;
 }
 
-/**
- * GET /api/admin/reservations/:id/ticket-file?mode=inline|attachment
- * - mode = "inline": abrir en pestaña (preview)
- * - mode = "attachment": descargar con nombre de archivo
- */
+/** ✅ NUEVO preferido: aprobar, capturar y crear payout en un paso */
+export async function adminApproveAndCapture(reservationId: number): Promise<{
+  ok: boolean; capturedAmount: number; paymentId: number; reservationId: number; payoutId?: number | null;
+}> {
+  const { data } = await api.post(`/admin/reservations/${reservationId}/approve-and-capture`);
+  return data;
+}
+
+/** Fallback: capturar diferida si ya fue aprobada por la ruta antigua */
+export async function adminCapturePayment(reservationId: number): Promise<{
+  ok: boolean; capturedAmount: number; paymentId: number; reservationId: number; payoutId?: number | null;
+}> {
+  const { data } = await api.post("/payments/capture", { reservationId });
+  return data;
+}
+
 export async function adminGetTicketFile(
   reservationId: number,
   mode: "inline" | "attachment" = "inline"
@@ -291,20 +313,13 @@ export async function adminGetTicketFile(
     params: { mode },
     responseType: "blob",
   });
-
-  const ct =
-    (resp.headers?.["content-type"] as string | undefined) ||
-    "application/octet-stream";
-
+  const ct = (resp.headers?.["content-type"] as string | undefined) || "application/octet-stream";
   const blob = new Blob([resp.data], { type: ct });
-
   const cd = (resp.headers?.["content-disposition"] as string | undefined) ?? null;
   const filename = extractFilenameFromContentDisposition(cd);
-
   return { blob, filename };
 }
 
-/** POST /api/admin/tickets/sweep-overdue  Body: { limit?: number } */
 export async function adminSweepOverdue(limit?: number): Promise<{
   processed: number;
   results: Array<{ reservationId: number; ok: boolean; reason?: string }>;
@@ -314,13 +329,15 @@ export async function adminSweepOverdue(limit?: number): Promise<{
 }
 
 /* ========= Export por defecto ========= */
-
 const ticketsService = {
   // Comprador
   getTicketStatus,
   downloadTicket,
   buyerGetTicketFile,
   getMyTickets,
+  getReservationDetail,     // nuevo
+  refreshPaymentStatus,     // nuevo
+  refreshTicketStatus,      // nuevo
   // Organizador
   listOrganizerReservations,
   organizerUploadTicket,
@@ -328,6 +345,8 @@ const ticketsService = {
   adminListPendingTickets,
   adminApproveTicket,
   adminRejectTicket,
+  adminApproveAndCapture,  // nuevo
+  adminCapturePayment,     // fallback
   adminGetTicketFile,
   adminSweepOverdue,
   // Utils
@@ -338,6 +357,11 @@ const ticketsService = {
 };
 
 export default ticketsService;
+
+
+
+
+
 
 
 

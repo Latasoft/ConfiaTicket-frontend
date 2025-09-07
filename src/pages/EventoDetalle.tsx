@@ -1,10 +1,33 @@
 // src/pages/EventoDetalle.tsx
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import api from "@/services/api";
 import type { EventItem } from "@/types/event";
 import BuyBox from "@/components/BuyBox";
 import { useAuth } from "@/context/AuthContext";
+
+/* ================= Helpers para HOLD ================= */
+function calcHoldRemainingSeconds(opts: {
+  expiresAt?: string | null;
+  createdAt?: string | null;
+  holdMinutes?: number | null;
+}): number {
+  const now = Date.now();
+  const hmin = Math.max(1, Math.floor(opts.holdMinutes ?? 15));
+  const expiryMs = opts.expiresAt
+    ? new Date(opts.expiresAt).getTime()
+    : opts.createdAt
+    ? new Date(opts.createdAt).getTime() + hmin * 60_000
+    : now;
+  const remaining = Math.max(0, Math.floor((expiryMs - now) / 1000));
+  return Math.min(remaining, hmin * 60);
+}
+function formatCountdownMMSS(totalSeconds: number) {
+  const mm = Math.floor(totalSeconds / 60);
+  const ss = totalSeconds % 60;
+  return `${String(mm).padStart(2, "0")}:${String(ss).padStart(2, "0")}`;
+}
+/* ===================================================== */
 
 export default function EventoDetalle() {
   const { id } = useParams<{ id: string }>();
@@ -17,50 +40,134 @@ export default function EventoDetalle() {
 
   const { user } = useAuth() as { user?: { id: number; role: string } };
 
-  useEffect(() => {
+  const [activeHold, setActiveHold] = useState<null | {
+    id: number;
+    eventId: number;
+    quantity: number;
+    amount: number;
+    createdAt?: string | null;
+    expiresAt?: string | null;
+  }>(() => {
+    try {
+      const raw = localStorage.getItem("pe:lastHold");
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      if (parsed && Number(parsed.eventId) === Number(eventIdNum)) return parsed;
+      return null;
+    } catch {
+      return null;
+    }
+  });
+
+  const initialLeft = useMemo(() => {
+    if (!activeHold) return 0;
+    const holdMinutes =
+      (ev as any)?.holdMinutes ?? (ev as any)?.bookingHoldMinutes ?? null;
+    return calcHoldRemainingSeconds({
+      expiresAt: activeHold.expiresAt,
+      createdAt: activeHold.createdAt,
+      holdMinutes,
+    });
+  }, [activeHold, ev]);
+
+  const [secondsLeft, setSecondsLeft] = useState(initialLeft);
+  const tickRef = useRef<number | null>(null);
+
+  async function fetchEvent() {
     if (!id) return;
-    (async () => {
-      try {
-        const res = await api.get(`/events/${id}`);
-        const item: EventItem = (res.data as any)?.event ?? res.data;
-        setEv(item);
-      } catch (e: any) {
-        setErr(
-          e?.response?.data?.error ||
-            e?.response?.data?.message ||
-            e?.message ||
-            "Error al cargar el evento"
-        );
-      } finally {
-        setLoading(false);
-      }
-    })();
+    try {
+      const res = await api.get(`/events/${id}`);
+      const item: EventItem = (res.data as any)?.event ?? res.data;
+      setEv(item);
+      setErr(null);
+    } catch (e: any) {
+      setErr(
+        e?.response?.data?.error ||
+          e?.response?.data?.message ||
+          e?.message ||
+          "Error al cargar el evento"
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    setLoading(true);
+    fetchEvent();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+
+  useEffect(() => {
+    setSecondsLeft(initialLeft);
+    if (!activeHold) return;
+
+    if (tickRef.current) {
+      clearInterval(tickRef.current);
+      tickRef.current = null;
+    }
+
+    tickRef.current = window.setInterval(() => {
+      setSecondsLeft((s) => {
+        if (s <= 1) {
+          if (tickRef.current) {
+            clearInterval(tickRef.current);
+            tickRef.current = null;
+          }
+          try {
+            localStorage.removeItem("pe:lastHold");
+          } catch {}
+          setActiveHold(null);
+          fetchEvent();
+          return 0;
+        }
+        return s - 1;
+      });
+    }, 1000) as any;
+
+    return () => {
+      if (tickRef.current) {
+        clearInterval(tickRef.current);
+        tickRef.current = null;
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeHold, initialLeft]);
 
   if (loading) return <HeroSkeleton />;
   if (err) return <p className="p-6 text-red-600">{err}</p>;
   if (!ev) return <p className="p-6">No se encontró el evento.</p>;
 
   // Imagen
-  const rawImage = ev.imageUrl ?? ev.coverImageUrl ?? undefined;
+  const rawImage = (ev as any).imageUrl ?? (ev as any).coverImageUrl ?? undefined;
   const imageUrl = normalizeUnsplash(sanitizeGoogleImgUrl(rawImage));
   const showImage = !!imageUrl && !broken;
 
-  // Datos básicos
-  const venue = ev.venue ?? ev.location ?? "";
-  const city = ev.city ?? "";
-  const unitPrice = (typeof ev.price === "number" ? ev.price : ev.priceFrom ?? undefined) as
-    | number
-    | undefined;
-  const capacity = ev.capacity ?? undefined;
-  const remaining = ev.remaining ?? undefined;
-  const dateIso = ev.date ?? ev.startAt ?? undefined;
+  // Datos
+  const venue = (ev as any).venue ?? (ev as any).location ?? "";
+  const city = (ev as any).city ?? "";
+  const unitPrice = (typeof (ev as any).price === "number"
+    ? (ev as any).price
+    : (ev as any).priceFrom ?? undefined) as number | undefined;
+  const capacity = (ev as any).capacity ?? undefined;
+  const remaining = (ev as any).remaining ?? undefined;
+  const dateIso = (ev as any).date ?? (ev as any).startAt ?? undefined;
   const soon = isSoon(dateIso, 7);
+  const organizer = (ev as any).organizer ?? null;
 
-  // 👇 dueño del evento (sólo visual para el usuario)
   const isOwner =
     !!user &&
-    Number(ev.organizerId ?? ev.organizer?.id ?? -1) === Number(user.id);
+    Number((ev as any).organizerId ?? (ev as any).organizer?.id ?? -1) ===
+      Number(user.id);
+
+  const mapsHref = venue
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+        venue
+      )}`
+    : null;
+  const mapsEmbed = venue
+    ? `https://www.google.com/maps?q=${encodeURIComponent(venue)}&output=embed`
+    : null;
 
   return (
     <div className="min-h-[60vh]">
@@ -97,7 +204,9 @@ export default function EventoDetalle() {
             )}
           </div>
 
-          <h1 className="text-3xl md:text-4xl font-extrabold leading-tight">{ev.title}</h1>
+          <h1 className="text-3xl md:text-4xl font-extrabold leading-tight">
+            {ev.title}
+          </h1>
           <div className="mt-2 flex flex-wrap items-center gap-4 text-sm text-white/90">
             <span className="inline-flex items-center gap-2">
               <CalendarIcon />
@@ -117,16 +226,106 @@ export default function EventoDetalle() {
       <section className="max-w-6xl mx-auto p-6 grid gap-6 md:grid-cols-[1fr,360px]">
         {/* Principal */}
         <article className="space-y-6">
-          {ev.description ? (
-            <div className="prose max-w-none">
-              <h2 className="text-xl font-semibold">Descripción</h2>
-              <p className="text-gray-700 whitespace-pre-wrap">{ev.description}</p>
+          <div>
+            <h2 className="text-xl font-semibold mb-3">Acerca del evento</h2>
+
+            <div className="flex flex-wrap gap-2 mb-4">
+              <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-800">
+                📅 {formatFechaLarga(dateIso)}
+              </span>
+              {venue && (
+                <a
+                  href={mapsHref!}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-800 hover:bg-gray-200"
+                  title="Ver en Google Maps"
+                >
+                  📍 {venue}
+                </a>
+              )}
+              {typeof capacity === "number" && (
+                <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-800">
+                  🧑‍🤝‍🧑 Aforo: {capacity}
+                </span>
+              )}
+              {typeof unitPrice === "number" && (
+                <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-800">
+                  💸 Desde: {formatMoney(unitPrice)}
+                </span>
+              )}
             </div>
-          ) : (
-            <div className="rounded-lg border p-4 text-gray-600">
-              El organizador aún no agregó una descripción detallada.
+
+            <div className="prose max-w-none mb-6">
+              {(ev as any)?.description?.trim() ? (
+                <p className="text-gray-700 whitespace-pre-line">
+                  {(ev as any).description}
+                </p>
+              ) : (
+                <p className="text-gray-600">
+                  Aún no hay una descripción detallada. Aquí tienes la
+                  información clave de fecha, lugar y precio. Si necesitas más
+                  detalles, usa el botón de ayuda o contacta al organizador.
+                </p>
+              )}
             </div>
-          )}
+
+            {(organizer?.name || organizer?.email) && (
+              <div className="mb-6 rounded-lg border p-4">
+                <div className="text-sm text-gray-600 mb-1">Organiza</div>
+                <div className="font-medium">
+                  {organizer?.name || "Organizador"}
+                </div>
+                {organizer?.email && (
+                  <a
+                    href={`mailto:${organizer.email}`}
+                    className="text-sm underline text-gray-700 hover:text-gray-900"
+                  >
+                    {organizer.email}
+                  </a>
+                )}
+              </div>
+            )}
+
+            {/* Mapa embebido */}
+            {mapsEmbed && (
+              <div className="mb-6 rounded-lg border overflow-hidden">
+                <div className="flex items-center justify-between px-4 py-2">
+                  <h3 className="font-medium">Cómo llegar</h3>
+                  {mapsHref && (
+                    <a
+                      href={mapsHref}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-sm underline text-gray-700 hover:text-gray-900"
+                    >
+                      Abrir en Google Maps
+                    </a>
+                  )}
+                </div>
+                <div className="w-full h-64">
+                  <iframe
+                    src={mapsEmbed}
+                    className="w-full h-full"
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                    aria-label={`Mapa de ${venue}`}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Notas / políticas */}
+            <div className="mb-6">
+              <h3 className="font-medium mb-2">Notas y políticas</h3>
+              <ul className="list-disc pl-5 text-sm text-gray-700 space-y-1">
+                <li>Entrada digital nominativa: lleva tu cédula para validar el acceso.</li>
+                <li>No se permiten objetos peligrosos ni bebidas alcohólicas externas.</li>
+                <li>Reembolso solo si el evento se cancela o reprograma.</li>
+                <li>Menores de edad: consultar restricciones del recinto.</li>
+              </ul>
+            </div>
+          </div>
 
           {city && (
             <div className="rounded-lg border p-4">
@@ -160,7 +359,50 @@ export default function EventoDetalle() {
               )}
             </div>
 
-            {/* 👇 BuyBox solo con eventId */}
+            {activeHold && secondsLeft > 0 && (
+              <div className="rounded-xl border p-3 bg-indigo-50 text-indigo-900">
+                <div className="font-semibold mb-1">Reserva activa</div>
+                <div className="text-sm">
+                  Tiempo restante:{" "}
+                  <span className="font-mono tabular-nums">
+                    {formatCountdownMMSS(secondsLeft)}
+                  </span>{" "}
+                  <span className="text-gray-500">
+                    ({activeHold.quantity} ×{" "}
+                    {new Intl.NumberFormat("es-CL", {
+                      style: "currency",
+                      currency: "CLP",
+                      maximumFractionDigits: 0,
+                    }).format((ev as any)?.price ?? 0)}
+                    )
+                  </span>
+                  <div className="mt-1">
+                    Total:{" "}
+                    <b>
+                      {new Intl.NumberFormat("es-CL", {
+                        style: "currency",
+                        currency: "CLP",
+                        maximumFractionDigits: 0,
+                      }).format(activeHold.amount)}
+                    </b>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  className="mt-3 w-full rounded-lg bg-indigo-600 text-white py-2 hover:bg-indigo-700"
+                  onClick={() => {
+                    window.dispatchEvent(
+                      new CustomEvent("pe:resume-payment", {
+                        detail: { bookingId: activeHold.id },
+                      })
+                    );
+                  }}
+                >
+                  Reanudar pago
+                </button>
+              </div>
+            )}
+
             {eventIdNum > 0 ? <BuyBox eventId={eventIdNum} /> : null}
 
             {venue && (
@@ -288,6 +530,12 @@ function HeroSkeleton() {
     </div>
   );
 }
+
+
+
+
+
+
 
 
 

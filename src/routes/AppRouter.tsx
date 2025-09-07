@@ -19,9 +19,12 @@ import OrganizerPending from "@/pages/OrganizerPending";
 import OrganizerDashboard from "@/pages/OrganizerDashboard";
 import OrganizerEventForm from "@/pages/OrganizerEventForm";
 import OrganizerTickets from "@/pages/OrganizerTickets";
+import OrganizerPayoutSettings from "@/pages/OrganizerPayoutSettings";
+import OrganizerPayouts from "@/pages/OrganizerPayouts";
 
 // Mis entradas (comprador)
 import MyTickets from "@/pages/MyTickets";
+import ReservationDetail from "@/pages/ReservationDetail"; // ← NUEVO
 
 // Guards
 import RequireAuth from "@/routes/RequireAuth";
@@ -33,6 +36,7 @@ import AdminEvents from "@/pages/AdminEvents";
 import AdminUsers from "@/pages/AdminUsers";
 import AdminOrganizerApps from "@/pages/AdminOrganizerApps";
 import AdminTickets from "@/pages/AdminTickets";
+import AdminPayouts from "@/pages/AdminPayouts"; // ← NUEVO
 
 // Seguridad de cuenta
 import ChangePassword from "@/pages/ChangePassword";
@@ -82,6 +86,25 @@ export const router = createBrowserRouter([
         element: (
           <RequireAuth>
             <MyTickets />
+          </RequireAuth>
+        ),
+      },
+
+      // Detalle de reserva (solo autenticado)
+      {
+        path: "/reservas/:id",
+        element: (
+          <RequireAuth>
+            <ReservationDetail />
+          </RequireAuth>
+        ),
+      },
+      // Alias en inglés opcional
+      {
+        path: "/reservation/:id",
+        element: (
+          <RequireAuth>
+            <ReservationDetail />
           </RequireAuth>
         ),
       },
@@ -156,6 +179,52 @@ export const router = createBrowserRouter([
         ),
       },
 
+      // Mis pagos (organizador)
+      {
+        path: "/organizador/pagos",
+        element: (
+          <RequireAuth>
+            <RequireVerifiedOrganizer>
+              <OrganizerPayouts />
+            </RequireVerifiedOrganizer>
+          </RequireAuth>
+        ),
+      },
+      // Alias en inglés opcional
+      {
+        path: "/organizer/payouts",
+        element: (
+          <RequireAuth>
+            <RequireVerifiedOrganizer>
+              <OrganizerPayouts />
+            </RequireVerifiedOrganizer>
+          </RequireAuth>
+        ),
+      },
+
+      // Configurar cuenta de cobro (organizador)
+      {
+        path: "/organizador/cuenta-cobro",
+        element: (
+          <RequireAuth>
+            <RequireVerifiedOrganizer>
+              <OrganizerPayoutSettings />
+            </RequireVerifiedOrganizer>
+          </RequireAuth>
+        ),
+      },
+      // Alias en inglés
+      {
+        path: "/organizer/payout-settings",
+        element: (
+          <RequireAuth>
+            <RequireVerifiedOrganizer>
+              <OrganizerPayoutSettings />
+            </RequireVerifiedOrganizer>
+          </RequireAuth>
+        ),
+      },
+
       // Zona Admin (superadmin)
       {
         path: "/admin/eventos",
@@ -189,9 +258,21 @@ export const router = createBrowserRouter([
           </RequireSuperadmin>
         ),
       },
+      {
+        path: "/admin/payouts", // ← NUEVO
+        element: (
+          <RequireSuperadmin>
+            <AdminPayouts />
+          </RequireSuperadmin>
+        ),
+      },
     ],
   },
 ]);
+
+
+
+
 
 
 

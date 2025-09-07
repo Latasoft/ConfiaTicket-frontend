@@ -1,5 +1,4 @@
-// src/components/BuyBox.tsx
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { getEventDetails } from "@/services/eventsService";
 import {
@@ -13,6 +12,76 @@ import { useAuth } from "@/context/AuthContext";
 type Props = { eventId: number };
 type Msg = { type: "ok" | "err" | "info"; text: string };
 
+const DEFAULT_HOLD_MINUTES = 15;
+
+/** Limita los segundos restantes al máximo permitido por el hold */
+function clampSecondsLeft(rawSeconds: number, holdMinutes?: number | null) {
+  const hm = Math.max(1, Math.floor(holdMinutes ?? DEFAULT_HOLD_MINUTES));
+  const cap = hm * 60;
+  const s = Math.max(0, Math.floor(rawSeconds || 0));
+  return Math.min(s, cap);
+}
+
+/** Clave para guardar el deadline en localStorage por reserva */
+const deadlineKey = (reservationId: number) => `pe:deadline:${reservationId}`;
+
+/** Deriva el deadline absoluto (ms) desde expiresAt / ttlSeconds / secondsLeft.
+ *  Si existe un valor guardado en localStorage, nunca permitimos AUMENTAR el tiempo,
+ *  salvo que allowExtend sea true (p.ej., tras pulsar "Reanudar").
+ */
+function computeDeadlineMs(
+  info: any,
+  holdMinutesGuess?: number | null,
+  allowExtend = false
+): number | null {
+  if (!info?.reservation?.id) return null;
+
+  // 1) Calculamos un deadline desde el backend
+  let serverDeadline: number | null = null;
+
+  const expiresIso: string | undefined = info?.reservation?.expiresAt;
+  if (expiresIso) {
+    serverDeadline = new Date(expiresIso).getTime();
+  } else if (typeof info?.reservation?.ttlSeconds === "number") {
+    serverDeadline = Date.now() + Math.max(0, Math.floor(info.reservation.ttlSeconds)) * 1000;
+  } else if (typeof info?.secondsLeft === "number") {
+    let s = info.secondsLeft;
+    if (s > 60 * 60 * 24) s = Math.floor(s / 1000); // venía en ms
+    serverDeadline = Date.now() + Math.max(0, Math.floor(s)) * 1000;
+  }
+
+  // 2) Si no pudimos derivar nada, no hay reserva viva
+  if (!serverDeadline) return null;
+
+  // 3) Clampeamos por el holdMinutes para evitar falsos positivos del backend
+  const hm =
+    (typeof info?.holdMinutes === "number" ? info.holdMinutes : null) ??
+    holdMinutesGuess ??
+    DEFAULT_HOLD_MINUTES;
+
+  const maxDelta = hm * 60 * 1000;
+  const now = Date.now();
+  const clampedDeadline = Math.min(serverDeadline, now + maxDelta);
+
+  // 4) Guard para que el tiempo NUNCA SUBA al refrescar (a menos que allowExtend)
+  const key = deadlineKey(info.reservation.id);
+  const stored = Number(localStorage.getItem(key) || "");
+  let finalDeadline = clampedDeadline;
+
+  if (Number.isFinite(stored) && stored > 0) {
+    finalDeadline = allowExtend ? Math.max(stored, clampedDeadline) : Math.min(stored, clampedDeadline);
+  }
+
+  localStorage.setItem(key, String(finalDeadline));
+  return finalDeadline;
+}
+
+/** Pasa de deadline absoluto (ms) a segundos restantes */
+function secondsLeftFromDeadline(deadlineMs: number | null): number {
+  if (!deadlineMs) return 0;
+  return Math.max(0, Math.floor((deadlineMs - Date.now()) / 1000));
+}
+
 export default function BuyBox({ eventId }: Props) {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -24,12 +93,18 @@ export default function BuyBox({ eventId }: Props) {
   // 👇 para bloquear compra si el usuario es el organizador del evento
   const [organizerId, setOrganizerId] = useState<number | null>(null);
 
+  // 👇 minutos de hold expuestos por el backend (si existen, desde detalle del evento)
+  const [eventHoldMinutes, setEventHoldMinutes] = useState<number | null>(null);
+
   const [qty, setQty] = useState(1);
   const [msg, setMsg] = useState<Msg | null>(null);
 
   // ---- Reserva pendiente (hold)
   const [pending, setPending] = useState<PendingInfo | null>(null);
+  const [deadlineMs, setDeadlineMs] = useState<number | null>(null);
   const [secondsLeft, setSecondsLeft] = useState<number>(0);
+
+  const timerRef = useRef<number | null>(null);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -80,7 +155,17 @@ export default function BuyBox({ eventId }: Props) {
           : anyEv.organizer?.id ?? null
       );
 
-      const iso = (anyEv.date as string | undefined) ?? (anyEv.startAt as string | undefined);
+      // minutos de hold si tu backend los expone en el detalle
+      const hm =
+        Number(anyEv.holdMinutes) ||
+        Number(anyEv.bookingHoldMinutes) ||
+        Number(anyEv.reservationHoldMinutes) ||
+        null;
+      setEventHoldMinutes(Number.isFinite(hm as number) ? (hm as number) : null);
+
+      const iso =
+        (anyEv.date as string | undefined) ??
+        (anyEv.startAt as string | undefined);
       setHasStarted(iso ? new Date(iso).getTime() <= Date.now() : false);
     } catch (e: any) {
       setMsg({
@@ -106,55 +191,67 @@ export default function BuyBox({ eventId }: Props) {
   useEffect(() => {
     if (!isAuthed) {
       setPending(null);
+      setDeadlineMs(null);
       setSecondsLeft(0);
       return;
     }
     (async () => {
       try {
-        const info = await getMyPending(eventId);
+        const info: any = await getMyPending(eventId);
         if (info && info.exists && info.reservation) {
           setPending(info);
-          setSecondsLeft(info.secondsLeft ?? 0);
+          const dl = computeDeadlineMs(info, eventHoldMinutes, /*allowExtend*/ false);
+          setDeadlineMs(dl);
+          setSecondsLeft(secondsLeftFromDeadline(dl));
         } else {
           setPending(null);
+          setDeadlineMs(null);
           setSecondsLeft(0);
         }
       } catch {
         // no bloquear por error aquí
       }
     })();
-  }, [isAuthed, eventId]);
+  }, [isAuthed, eventId, eventHoldMinutes]);
 
-  // Contador regresivo para la reserva pendiente
+  // Contador basado en deadline absoluto (evita drift y reseteos)
   useEffect(() => {
-    if (!pending) return;
-    if (!secondsLeft || secondsLeft <= 0) return;
-
-    const id = window.setInterval(() => {
-      setSecondsLeft((s) => {
-        if (s <= 1) {
-          window.clearInterval(id);
-          // expirada en UI → limpiar y refrescar stock
-          setPending(null);
-          refreshAvailability();
-          setMsg({
-            type: "err",
-            text: "La reserva venció. Puedes intentar nuevamente.",
-          });
-          return 0;
-        }
-        return s - 1;
-      });
-    }, 1000);
-
-    return () => window.clearInterval(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pending?.reservation?.id, secondsLeft]);
+    if (timerRef.current) {
+      window.clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    if (!deadlineMs) {
+      setSecondsLeft(0);
+      return;
+    }
+    const tick = () => {
+      const s = secondsLeftFromDeadline(deadlineMs);
+      setSecondsLeft(s);
+      if (s <= 0 && timerRef.current) {
+        window.clearInterval(timerRef.current);
+        timerRef.current = null;
+        // expirada en UI → limpiar y refrescar stock
+        setPending(null);
+        refreshAvailability();
+        setMsg({
+          type: "err",
+          text: "La reserva venció. Puedes intentar nuevamente.",
+        });
+      }
+    };
+    tick();
+    timerRef.current = window.setInterval(tick, 1000);
+    return () => {
+      if (timerRef.current) window.clearInterval(timerRef.current);
+      timerRef.current = null;
+    };
+  }, [deadlineMs]);
 
   // Ajustar qty si el remaining baja debajo del valor actual
   useEffect(() => {
-    if (qty > maxPerPurchase) setQty(maxPerPurchase);
-  }, [maxPerPurchase, qty]);
+    const max = Math.max(1, Math.min(4, remaining));
+    if (qty > max) setQty(max);
+  }, [remaining, qty]);
 
   // Comprar ahora: crea transacción en backend y redirige a Webpay
   async function onPayNow() {
@@ -179,10 +276,14 @@ export default function BuyBox({ eventId }: Props) {
     if (remaining <= 0) {
       return setMsg({ type: "err", text: "No quedan entradas disponibles." });
     }
+    const maxPerPurchase = Math.max(1, Math.min(4, remaining));
     if (!Number.isInteger(qty) || qty < 1 || qty > maxPerPurchase) {
-      return setMsg({ type: "err", text: `Cantidad inválida (1 a ${maxPerPurchase}).` });
+      return setMsg({
+        type: "err",
+        text: `Cantidad inválida (1 a ${maxPerPurchase}).`,
+      });
     }
-    if (pending) {
+    if (pending?.reservation?.id) {
       return setMsg({
         type: "info",
         text: "Ya tienes una reserva activa. Reanúdala o espera a que expire.",
@@ -210,12 +311,21 @@ export default function BuyBox({ eventId }: Props) {
     }
   }
 
-  // Reanudar el pago (misma reserva)
+  // Reanudar el pago (misma reserva). Aquí sí permitimos extender el hold.
   async function onResume() {
     if (!pending?.reservation?.id) return;
     try {
       setBusy(true);
-      await restartPayment(pending.reservation.id); // redirige a Webpay
+      // Antes de re-consultar, limpiamos el deadline guardado para permitir la extensión
+      localStorage.removeItem(deadlineKey(pending.reservation.id));
+      await restartPayment(pending.reservation.id); // redirige a Webpay (y en backend renueva expiresAt)
+      // Si por UX no redirige aún, volvemos a consultar el pending para refrescar el contador
+      const info: any = await getMyPending(eventId);
+      if (info && info.exists && info.reservation) {
+        const dl = computeDeadlineMs(info, eventHoldMinutes, /*allowExtend*/ true);
+        setDeadlineMs(dl);
+        setPending(info);
+      }
     } catch (e: any) {
       const errText =
         e?.response?.data?.error ||
@@ -249,8 +359,8 @@ export default function BuyBox({ eventId }: Props) {
   const disabled = hasStarted || busy || isOwnEvent;
 
   // Datos de la reserva pendiente (si existe)
-  const pendingQty = pending?.reservation?.quantity ?? null;
-  const pendingAmount = pending?.reservation?.amount ?? null;
+  const pendingQty = (pending as any)?.reservation?.quantity ?? null;
+  const pendingAmount = (pending as any)?.reservation?.amount ?? null;
 
   return (
     <div className="rounded-xl border p-4">
@@ -406,6 +516,8 @@ export default function BuyBox({ eventId }: Props) {
     </div>
   );
 }
+
+
 
 
 

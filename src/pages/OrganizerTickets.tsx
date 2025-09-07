@@ -1,3 +1,4 @@
+// src/pages/OrganizerTickets.tsx
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   organizerUploadTicket,
@@ -52,9 +53,6 @@ export default function OrganizerTickets() {
   const [payStatus, setPayStatus] =
     useState<"PAID" | "PENDING_PAYMENT" | "CANCELED" | "">("PAID");
 
-  // Para PENDING_PAYMENT limitar antigüedad (en horas)
-  const [pendingMaxAge, setPendingMaxAge] = useState<number>(24);
-
   const [loadingList, setLoadingList] = useState(false);
 
   // input de archivo “invisible” reutilizable para subir desde la tabla
@@ -101,7 +99,7 @@ export default function OrganizerTickets() {
     try {
       await organizerUploadTicket(validReservationId, file);
       setOkMsg(
-        "Archivo subido correctamente. Queda en revisión de un administrador."
+        "Archivo subido correctamente. Queda en revisión — esperando aprobación de superadmin."
       );
       try {
         const st = await getTicketStatus(validReservationId);
@@ -161,13 +159,7 @@ export default function OrganizerTickets() {
         params.needsTicket = true;
       } else {
         if (payStatus) params.status = payStatus;
-        if (
-          payStatus === "PENDING_PAYMENT" &&
-          Number.isFinite(pendingMaxAge) &&
-          pendingMaxAge > 0
-        ) {
-          params.maxAgeHours = pendingMaxAge;
-        }
+        // ⛔️ ya no se envía maxAgeHours (se quitó del UI)
       }
 
       const resp: OrganizerReservationsResponse =
@@ -184,12 +176,12 @@ export default function OrganizerTickets() {
     } finally {
       setLoadingList(false);
     }
-  }, [page, pageSize, q, needsTicket, payStatus, pendingMaxAge]);
+  }, [page, pageSize, q, needsTicket, payStatus]);
 
   useEffect(() => {
     fetchReservations();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, pageSize, q, needsTicket, payStatus, pendingMaxAge]);
+  }, [page, pageSize, q, needsTicket, payStatus]);
 
   // ---------- Subir desde tabla ----------
   function openUploadForRow(reservationId: number) {
@@ -215,7 +207,9 @@ export default function OrganizerTickets() {
     setOkMsg(null);
     try {
       await organizerUploadTicket(targetReservationForUpload, f);
-      setOkMsg(`Archivo subido para la reserva #${targetReservationForUpload}.`);
+      setOkMsg(
+        `Archivo subido para la reserva #${targetReservationForUpload}. Queda en revisión — esperando aprobación de superadmin.`
+      );
       // Actualiza tabla
       fetchReservations();
       // Si coincide con el ID del formulario, refresca estado
@@ -239,12 +233,13 @@ export default function OrganizerTickets() {
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
-  /** Devuelve clases y texto para el contador de un deadline ISO */
+  /** Badge del deadline con 10s de tolerancia para evitar falsos “Vencido” por desfase de reloj. */
   function getDeadlineBadge(deadlineISO?: string | null) {
     if (!deadlineISO) return { text: "—", className: "text-xs text-gray-400" };
 
     const deadlineMs = new Date(deadlineISO).getTime();
-    const diffSec = Math.floor((deadlineMs - Date.now()) / 1000);
+    // tolerancia de 10s
+    const diffSec = Math.floor((deadlineMs - Date.now()) / 1000) + 10;
 
     if (diffSec <= 0) {
       return {
@@ -406,34 +401,11 @@ export default function OrganizerTickets() {
                 : ""
             }
           >
-            {/* OJO: el value sigue siendo el código que espera el backend */}
             <option value="PAID">Pagadas (Pagado)</option>
             <option value="PENDING_PAYMENT">Pendientes (Pendiente de pago)</option>
             <option value="CANCELED">Canceladas</option>
             <option value="">Todas</option>
           </select>
-
-          {/* Máx. horas solo cuando status=PENDING_PAYMENT y el toggle está OFF */}
-          {!needsTicket && payStatus === "PENDING_PAYMENT" && (
-            <div className="flex items-center gap-2">
-              <label className="text-sm text-gray-700 whitespace-nowrap">
-                Máx. horas
-              </label>
-              <input
-                type="number"
-                min={1}
-                step={1}
-                value={pendingMaxAge}
-                onChange={(e) => {
-                  setPage(1);
-                  setPendingMaxAge(
-                    Math.max(1, parseInt(e.target.value || "1", 10))
-                  );
-                }}
-                className="w-24 rounded-md border px-3 py-2 text-sm focus:outline-none"
-              />
-            </div>
-          )}
 
           {/* Page size */}
           <select
@@ -487,6 +459,32 @@ export default function OrganizerTickets() {
                     ? new Date(r.ticketUploadDeadlineAt).toLocaleString()
                     : undefined;
 
+                  // Mostrar/ocultar botón según flujo (además de canUpload que viene del backend)
+                  const flow = (r.fulfillmentStatus || "").toUpperCase();
+                  const blockedByFlow =
+                    flow === "TICKET_UPLOADED" ||
+                    flow === "TICKET_APPROVED" ||
+                    flow === "DELIVERED";
+
+                  // ❗ Bloqueo de primera subida con plazo vencido.
+                  // Usamos el flag del backend si viene; si no, lo calculamos.
+                  const expiredByNow =
+                    (r as any).deadlineExpired ??
+                    (r.ticketUploadDeadlineAt
+                      ? new Date(r.ticketUploadDeadlineAt).getTime() < Date.now()
+                      : false);
+                  const initialUploadBlocked = expiredByNow && !r.hasTicket;
+
+                  const showUploadBtn =
+                    r.canUpload && !blockedByFlow && !initialUploadBlocked;
+
+                  // ✅ Mostrar el plazo solo si realmente requiere acción:
+                  // 1) Usar el flag del backend si viene; 2) Fallback local.
+                  const showDeadline =
+                    (r as any).showDeadline ??
+                    ((flow === "WAITING_TICKET" || flow === "TICKET_REJECTED") &&
+                      !!r.ticketUploadDeadlineAt);
+
                   return (
                     <tr key={r.reservationId} className="border-t">
                       <td className="px-3 py-2">
@@ -512,7 +510,14 @@ export default function OrganizerTickets() {
                       <td className="px-3 py-2">{r.quantity}</td>
                       <td className="px-3 py-2">{tReservationStatus(r.status as string)}</td>
                       <td className="px-3 py-2">
-                        {tFulfillmentStatus(r.fulfillmentStatus ?? undefined)}
+                        <div>
+                          {tFulfillmentStatus(r.fulfillmentStatus ?? undefined)}
+                        </div>
+                        {flow === "TICKET_UPLOADED" && (
+                          <div className="mt-0.5 text-xs text-amber-700">
+                            (en revisión — esperando aprobación de superadmin)
+                          </div>
+                        )}
                       </td>
                       <td className="px-3 py-2">
                         {r.hasTicket ? (
@@ -531,20 +536,35 @@ export default function OrganizerTickets() {
                         )}
                       </td>
                       <td className="px-3 py-2">
-                        <span className={badge.className} title={deadlineTitle}>
-                          {badge.text}
-                        </span>
+                        {showDeadline ? (
+                          <span className={badge.className} title={deadlineTitle}>
+                            {badge.text}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-gray-400">—</span>
+                        )}
                       </td>
                       <td className="px-3 py-2">
                         <div className="flex flex-wrap gap-2">
-                          <button
-                            className="rounded-md bg-indigo-600 px-3 py-1.5 text-white text-xs hover:bg-indigo-700 disabled:opacity-50"
-                            disabled={!r.canUpload}
-                            onClick={() => openUploadForRow(r.reservationId)}
-                            title={r.canUpload ? "Subir archivo" : "No disponible"}
-                          >
-                            Subir archivo
-                          </button>
+                          {showUploadBtn ? (
+                            <button
+                              className="rounded-md bg-indigo-600 px-3 py-1.5 text-white text-xs hover:bg-indigo-700 disabled:opacity-50"
+                              onClick={() => openUploadForRow(r.reservationId)}
+                            >
+                              Subir archivo
+                            </button>
+                          ) : initialUploadBlocked ? (
+                            <span
+                              className="rounded-md bg-gray-100 px-3 py-1.5 text-xs text-gray-500"
+                              title="No se puede realizar la primera subida: plazo vencido"
+                            >
+                              Plazo vencido
+                            </span>
+                          ) : (
+                            <span className="rounded-md bg-gray-100 px-3 py-1.5 text-xs text-gray-500">
+                              {flow === "TICKET_UPLOADED" ? "En revisión" : "—"}
+                            </span>
+                          )}
                           <button
                             className="rounded-md border px-3 py-1.5 text-xs hover:bg-gray-50"
                             onClick={() => setReservationId(String(r.reservationId))}
@@ -655,6 +675,10 @@ export default function OrganizerTickets() {
     </div>
   );
 }
+
+
+
+
 
 
 

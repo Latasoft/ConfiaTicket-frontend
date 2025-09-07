@@ -1,9 +1,7 @@
-// src/pages/Eventos.tsx
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import api from "@/services/api";
 import type { EventItem } from "@/types/event";
-import { getEventDetails } from "@/services/eventsService";
+import { getEventDetails, getPublicEvents } from "@/services/eventsService";
 import { useAuth } from "@/context/AuthContext";
 
 type SortKey = "date-asc" | "date-desc" | "price-asc" | "price-desc" | "title-asc";
@@ -21,6 +19,7 @@ export default function Eventos() {
 
   const [sort, setSort] = useState<SortKey>("date-asc");
   const [showPast, setShowPast] = useState(false);
+  const [includeSoldOut, setIncludeSoldOut] = useState(false);
 
   // si cambia ?q= por navegación, sincroniza
   useEffect(() => {
@@ -49,69 +48,38 @@ export default function Eventos() {
       setLoading(true);
       setErr(null);
 
-      const { orderBy, orderDir } = (() => {
-        switch (sort) {
-          case "date-asc":  return { orderBy: "date",  orderDir: "asc" as const };
-          case "date-desc": return { orderBy: "date",  orderDir: "desc" as const };
-          case "price-asc": return { orderBy: "price", orderDir: "asc" as const };
-          case "price-desc":return { orderBy: "price", orderDir: "desc" as const };
-          case "title-asc": return { orderBy: "title", orderDir: "asc" as const };
-        }
-      })();
-
-      const nowIso = new Date().toISOString();
-      const baseParams: Record<string, any> = {
-        page: 1,
-        limit: 12,
-        orderBy,
-        orderDir,
-        ...(showPast ? { dateTo: nowIso } : { dateFrom: nowIso }),
-      };
-
-      let items: EventItem[] = [];
-      let fallbackFiltered = false;
+      const order =
+        sort === "date-asc" ? "DATE_ASC" :
+        sort === "date-desc" ? "DATE_DESC" :
+        sort === "price-asc" ? "PRICE_ASC" :
+        sort === "price-desc" ? "PRICE_DESC" :
+        "DATE_ASC";
 
       try {
-        // 1) intento con q (si hay)
-        const paramsWithQ = debouncedQ ? { ...baseParams, q: debouncedQ } : baseParams;
-        const res = await api.get("/events/public-events", { params: paramsWithQ });
-        items = Array.isArray(res.data) ? res.data : res.data?.events ?? [];
+        const resp = await getPublicEvents({
+          q: debouncedQ || undefined,
+          order,
+          page: 1,
+          pageSize: 12,
+          includePast: showPast,
+          includeSoldOut: showPast ? true : includeSoldOut,
+        });
+        setData(resp.items || []);
       } catch (e: any) {
-        const status = e?.response?.status;
-
-        // Si falló solo por el filtro (400/422, por ejemplo), reintenta sin q y filtra client-side.
-        if (debouncedQ && (status === 400 || status === 422)) {
-          try {
-            const res2 = await api.get("/events/public-events", { params: baseParams });
-            items = Array.isArray(res2.data) ? res2.data : res2.data?.events ?? [];
-            fallbackFiltered = true;
-          } catch (e2: any) {
-            const msg =
-              e2?.response?.data?.error ||
-              e2?.response?.data?.message ||
-              e2?.message ||
-              "Error al cargar eventos";
-            setErr(msg);
-            items = [];
-          }
-        } else {
-          const msg =
-            e?.response?.data?.error ||
-            e?.response?.data?.message ||
-            e?.message ||
-            "Error al cargar eventos";
-          setErr(msg);
-          items = [];
-        }
+        const msg =
+          e?.response?.data?.error ||
+          e?.response?.data?.message ||
+          e?.message ||
+          "Error al cargar eventos públicos";
+        setErr(msg);
+        setData([]);
       } finally {
-        if (fallbackFiltered) setErr(null);
-        setData(items);
         setLoading(false);
       }
     })();
-  }, [sort, showPast, debouncedQ]);
+  }, [sort, showPast, includeSoldOut, debouncedQ]);
 
-  // Filtro extra client-side (y también se usa si hubo fallback)
+  // Filtro extra client-side (también opera si el backend ignoró q)
   const filtered = useMemo(() => {
     const term = debouncedQ.toLowerCase();
     if (!term) return data;
@@ -179,6 +147,16 @@ export default function Eventos() {
               className="rounded border-gray-300"
             />
             Mostrar pasados
+          </label>
+
+          <label className="inline-flex items-center gap-2 text-sm text-gray-700">
+            <input
+              type="checkbox"
+              checked={includeSoldOut}
+              onChange={(e) => setIncludeSoldOut(e.target.checked)}
+              className="rounded border-gray-300"
+            />
+            Incluir agotados
           </label>
         </div>
       </div>
@@ -289,8 +267,9 @@ function EventCard({ ev }: { ev: EventItem }) {
   const soon = isSoon((ev as any).date, 7);
   const past = isPast((ev as any).date);
 
-  // estado desde el detalle: remaining + cierre de ventas
+  // estado desde el detalle: remaining (pagados+pendientes), remainingPaidOnly y cierre de ventas
   const [remaining, setRemaining] = useState<number | null>(null);
+  const [remainingPaidOnly, setRemainingPaidOnly] = useState<number | null>(null);
   const [salesClosed, setSalesClosed] = useState<boolean>(false);
   const [salesCloseAt, setSalesCloseAt] = useState<string | null>(null);
 
@@ -306,8 +285,12 @@ function EventCard({ ev }: { ev: EventItem }) {
       try {
         const detail = await getEventDetails(ev.id);
         if (!active) return;
+
+        // stocks
         const rem = typeof detail?.remaining === "number" ? detail.remaining : null;
+        const remPaid = typeof (detail as any)?.remainingPaidOnly === "number" ? (detail as any).remainingPaidOnly : null;
         setRemaining(rem);
+        setRemainingPaidOnly(remPaid);
 
         // cierre de ventas
         setSalesClosed(Boolean((detail as any)?.salesClosed));
@@ -328,10 +311,12 @@ function EventCard({ ev }: { ev: EventItem }) {
     };
   }, [ev.id, user]);
 
-  const soldOut = !past && remaining !== null && remaining <= 0;
+  // "agotado visual": incluye reservas pendientes
+  const soldOutVisual = !past && remaining !== null && remaining <= 0;
 
-  // Si las ventas están cerradas tratamos la card como "no disponible"
-  const isDisabled = past || soldOut || salesClosed;
+  // 🔑 Solo deshabilitar si NO queda stock considerando solo pagados
+  const trulySoldOut = remainingPaidOnly !== null && remainingPaidOnly <= 0;
+  const isDisabled = past || salesClosed || trulySoldOut;
 
   const toHref = isDisabled ? "#" : `/eventos/${ev.id}`;
   const linkClass =
@@ -367,7 +352,9 @@ function EventCard({ ev }: { ev: EventItem }) {
         <div className="absolute top-2 left-2 flex gap-2">
           {past ? (
             <span className="bg-neutral-300 text-neutral-900 text-xs font-semibold px-2 py-1 rounded-full shadow">Finalizado</span>
-          ) : soldOut ? (
+          ) : soldOutVisual && (remainingPaidOnly ?? 0) > 0 ? (
+            <span className="bg-amber-400 text-amber-900 text-xs font-semibold px-2 py-1 rounded-full shadow">Reservado</span>
+          ) : soldOutVisual ? (
             <span className="bg-red-500 text-white text-xs font-semibold px-2 py-1 rounded-full shadow">Agotado</span>
           ) : salesClosed ? (
             <span className="bg-purple-600 text-white text-xs font-semibold px-2 py-1 rounded-full shadow">Ventas cerradas</span>
@@ -417,7 +404,13 @@ function EventCard({ ev }: { ev: EventItem }) {
               Cierra ventas: {formatFechaCorta(salesCloseAt)}
             </span>
           )}
-          {soldOut && (
+          {/* Chip informativo cuando está “agotado” por reservas pero aún queda stock real por pagados */}
+          {soldOutVisual && (remainingPaidOnly ?? 0) > 0 && (
+            <span className="text-xs bg-amber-50 text-amber-800 px-2 py-1 rounded-full border border-amber-200">
+              Reservado por otros • vuelve en minutos
+            </span>
+          )}
+          {soldOutVisual && (remainingPaidOnly ?? 0) <= 0 && (
             <span className="text-xs bg-red-50 text-red-700 px-2 py-1 rounded-full border border-red-200">Entradas agotadas</span>
           )}
         </div>
@@ -493,6 +486,13 @@ function ArrowRight() {
     </svg>
   );
 }
+
+
+
+
+
+
+
 
 
 

@@ -1,5 +1,6 @@
 // src/pages/MyTickets.tsx
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import {
   getMyTickets,
   downloadTicket,
@@ -154,8 +155,9 @@ export default function MyTickets() {
     try {
       setPreviewingId(reservationId);
       setError(null);
-      const { blob } = await buyerGetTicketFile(reservationId, "inline");
-      const url = URL.createObjectURL(blob);
+      const { blob, contentType } = await buyerGetTicketFile(reservationId, "inline");
+      const file = new Blob([blob], { type: contentType || "application/octet-stream" });
+      const url = URL.createObjectURL(file);
       window.open(url, "_blank", "noopener,noreferrer");
       setTimeout(() => URL.revokeObjectURL(url), 60_000);
     } catch (e: any) {
@@ -218,13 +220,12 @@ export default function MyTickets() {
             </thead>
             <tbody>
               {(data?.items ?? []).map((it: any) => {
-                // el backend ya envía canDownload; canPreview (igual condición) y meta extra
                 const canDownload = !!it.canDownload;
                 const canPreview = !!(it.canPreview ?? it.canDownload);
                 const isPrev = previewingId === it.reservationId;
                 const isDown = downloadingId === it.reservationId;
 
-                const kind = detectFileKind(it.mime, it.fileName); // mime viene del backend; fileName opcional
+                const kind = detectFileKind(it.mime, it.fileName);
                 const sizeText = formatBytes(it.size);
 
                 return (
@@ -232,7 +233,7 @@ export default function MyTickets() {
                     <td className="px-3 py-2">#{it.reservationId}</td>
                     <td className="px-3 py-2">{it.event?.title ?? "—"}</td>
                     <td className="px-3 py-2">
-                      {it.event?.date ? new Date(it.event.date).toLocaleString() : "—"}
+                      {it.event?.date ? new Date(it.event.date).toLocaleString("es-CL") : "—"}
                     </td>
                     <td className="px-3 py-2">{it.quantity}</td>
                     <td className="px-3 py-2">{formatMoneyCLP(it.amount)}</td>
@@ -256,39 +257,57 @@ export default function MyTickets() {
 
                     <td className="px-3 py-2">
                       <StatusBadge s={it.flowStatus} />
+                      {it.ticketUploadDeadlineAt && (
+                        <div className="text-[11px] text-gray-500 mt-1">
+                          Plazo ticket: {new Date(it.ticketUploadDeadlineAt).toLocaleString("es-CL")}
+                        </div>
+                      )}
+                      {it.refundStatus && it.refundStatus !== "NONE" && (
+                        <div className="text-[11px] text-rose-600 mt-1">
+                          Reembolso: {it.refundStatus}
+                        </div>
+                      )}
                     </td>
 
                     <td className="px-3 py-2">
-                      {canPreview || canDownload ? (
-                        <div className="flex flex-wrap items-center gap-2">
-                          <button
-                            onClick={() => handlePreview(it.reservationId)}
-                            disabled={!canPreview || isPrev}
-                            className={`inline-flex items-center px-3 py-1.5 rounded border ${
-                              !canPreview || isPrev
-                                ? "opacity-50 cursor-not-allowed"
-                                : "hover:bg-gray-50"
-                            }`}
-                            title={canPreview ? "Abrir en otra pestaña" : "No disponible"}
-                          >
-                            {isPrev ? "Abriendo…" : "Ver"}
-                          </button>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Link
+                          to={`/reservas/${it.reservationId}`}
+                          className="inline-flex items-center px-3 py-1.5 rounded border hover:bg-gray-50"
+                          title="Ver detalle de esta compra"
+                        >
+                          Ver detalle
+                        </Link>
 
-                          <button
-                            onClick={() => handleDownload(it.reservationId)}
-                            disabled={!canDownload || isDown}
-                            className={`inline-flex items-center px-3 py-1.5 rounded ${
-                              !canDownload || isDown
-                                ? "bg-indigo-300 text-white cursor-not-allowed"
-                                : "bg-indigo-600 text-white hover:bg-indigo-700"
-                            }`}
-                          >
-                            {isDown ? "Descargando…" : "Descargar"}
-                          </button>
-                        </div>
-                      ) : (
-                        <span className="text-gray-400">No disponible</span>
-                      )}
+                        {canPreview || canDownload ? (
+                          <>
+                            <button
+                              onClick={() => handlePreview(it.reservationId)}
+                              disabled={!canPreview || isPrev}
+                              className={`inline-flex items-center px-3 py-1.5 rounded border ${
+                                !canPreview || isPrev ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-50"
+                              }`}
+                              title={canPreview ? "Abrir en otra pestaña" : "No disponible"}
+                            >
+                              {isPrev ? "Abriendo…" : "Ver ticket"}
+                            </button>
+
+                            <button
+                              onClick={() => handleDownload(it.reservationId)}
+                              disabled={!canDownload || isDown}
+                              className={`inline-flex items-center px-3 py-1.5 rounded ${
+                                !canDownload || isDown
+                                  ? "bg-indigo-300 text-white cursor-not-allowed"
+                                  : "bg-indigo-600 text-white hover:bg-indigo-700"
+                              }`}
+                            >
+                              {isDown ? "Descargando…" : "Descargar"}
+                            </button>
+                          </>
+                        ) : (
+                          <span className="text-gray-400">No disponible</span>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );
@@ -335,4 +354,5 @@ export default function MyTickets() {
     </div>
   );
 }
+
 

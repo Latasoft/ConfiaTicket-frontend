@@ -1,10 +1,8 @@
-// src/pages/AdminUsers.tsx
 import { useEffect, useMemo, useState } from "react";
 import { NavLink } from "react-router-dom";
 import {
   adminListUsers,
   adminSetUserCanSell,
-  adminSetUserVerified,
   adminActivateUser,
   adminDeactivateUser,
   adminDeleteUserPreview,
@@ -16,7 +14,6 @@ function formatDateTime(iso?: string | null) {
   if (!iso) return "—";
   try {
     const d = new Date(iso);
-    // fecha corta + hora corta en es-CL
     const s = new Intl.DateTimeFormat("es-CL", {
       day: "2-digit",
       month: "2-digit",
@@ -30,15 +27,16 @@ function formatDateTime(iso?: string | null) {
   }
 }
 
-function StatusPill({ s }: { s: AdminUser["latestOrganizerAppStatus"] }) {
-  if (!s) return <span className="text-xs px-2 py-1 rounded bg-gray-100 text-gray-700">—</span>;
-  const cls =
-    s === "APPROVED"
-      ? "bg-green-100 text-green-800"
-      : s === "PENDING"
-      ? "bg-yellow-100 text-yellow-900"
-      : "bg-red-100 text-red-800";
-  return <span className={`text-xs px-2 py-1 rounded ${cls}`}>{s}</span>;
+function SolicitudBadge({ s }: { s: AdminUser["latestOrganizerAppStatus"] }) {
+  const map = {
+    APPROVED: { label: "ACEPTADO", cls: "bg-green-100 text-green-800" },
+    PENDING:  { label: "PENDIENTE", cls: "bg-yellow-100 text-yellow-900" },
+    REJECTED: { label: "RECHAZADO", cls: "bg-red-100 text-red-800" },
+    NULL:     { label: "—",        cls: "bg-gray-100 text-gray-700" },
+  } as const;
+  const key = (s ?? "NULL") as keyof typeof map;
+  const { label, cls } = map[key];
+  return <span className={`text-xs px-2 py-1 rounded ${cls}`}>{label}</span>;
 }
 
 function ActiveBadge({ u }: { u: AdminUser }) {
@@ -59,6 +57,11 @@ function ActiveBadge({ u }: { u: AdminUser }) {
   );
 }
 
+/** Puede vender efectivo: organizer + canSell + activo + no eliminado */
+function computeCanSell(u: AdminUser) {
+  return u.role === "organizer" && !!u.canSell && !!u.isActive && !u.deletedAt;
+}
+
 export default function AdminUsers() {
   const [rows, setRows] = useState<AdminUser[]>([]);
   const [total, setTotal] = useState(0);
@@ -68,7 +71,6 @@ export default function AdminUsers() {
 
   const [q, setQ] = useState("");
   const [role, setRole] = useState<AdminUser["role"] | "">("");
-  const [verified, setVerified] = useState<"" | "true" | "false">("");
   const [canSell, setCanSell] = useState<"" | "true" | "false">("");
 
   const totalPages = useMemo(
@@ -84,7 +86,7 @@ export default function AdminUsers() {
         pageSize,
         q: q || undefined,
         role: role || undefined,
-        verified: (verified || undefined) as "true" | "false" | undefined,
+        // ya NO enviamos verified
         canSell: (canSell || undefined) as "true" | "false" | undefined,
       });
       setRows(data.items);
@@ -98,16 +100,7 @@ export default function AdminUsers() {
   useEffect(() => {
     load(1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [q, role, verified, canSell]);
-
-  const toggleVerified = async (u: AdminUser) => {
-    try {
-      await adminSetUserVerified(u.id, !u.isVerified);
-      load();
-    } catch (e: any) {
-      alert(e?.response?.data?.error || "No se pudo actualizar verificación");
-    }
-  };
+  }, [q, role, canSell]);
 
   const toggleCanSell = async (u: AdminUser) => {
     try {
@@ -160,7 +153,7 @@ export default function AdminUsers() {
         <h1 className="text-2xl font-bold">Usuarios — Superadmin</h1>
       </div>
 
-      {/* Atajos de navegación */}
+      {/* Atajos */}
       <div className="flex gap-4 text-sm mb-4">
         <NavLink to="/admin/eventos" className="underline hover:text-blue-600">
           Eventos
@@ -177,7 +170,7 @@ export default function AdminUsers() {
       </div>
 
       {/* Filtros */}
-      <div className="grid md:grid-cols-5 gap-2 mb-4">
+      <div className="grid md:grid-cols-4 gap-2 mb-4">
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
@@ -195,15 +188,6 @@ export default function AdminUsers() {
           <option value="buyer">Buyer</option>
         </select>
         <select
-          value={verified}
-          onChange={(e) => setVerified(e.target.value as any)}
-          className="border rounded px-3 py-2"
-        >
-          <option value="">Verificado?</option>
-          <option value="true">Sí</option>
-          <option value="false">No</option>
-        </select>
-        <select
           value={canSell}
           onChange={(e) => setCanSell(e.target.value as any)}
           className="border rounded px-3 py-2"
@@ -216,7 +200,6 @@ export default function AdminUsers() {
           onClick={() => {
             setQ("");
             setRole("");
-            setVerified("");
             setCanSell("");
           }}
           className="border rounded px-3 py-2 hover:bg-black/5"
@@ -232,11 +215,10 @@ export default function AdminUsers() {
             <tr>
               <th className="text-left p-3">Nombre</th>
               <th className="text-left p-3">Email</th>
-              <th className="text-left p-3">Creado</th>{/* 👈 NUEVO */}
+              <th className="text-left p-3">Creado</th>
               <th className="text-left p-3">Rol</th>
               <th className="text-left p-3">Solicitud</th>
               <th className="text-left p-3">Estado</th>
-              <th className="text-left p-3">Verificado</th>
               <th className="text-left p-3">Puede vender</th>
               <th className="text-right p-3">Acciones</th>
             </tr>
@@ -244,62 +226,50 @@ export default function AdminUsers() {
           <tbody>
             {loading ? (
               <tr>
-                <td className="p-6 text-center" colSpan={9}>
+                <td className="p-6 text-center" colSpan={8}>
                   Cargando…
                 </td>
               </tr>
             ) : rows.length === 0 ? (
               <tr>
-                <td className="p-6 text-center" colSpan={9}>
+                <td className="p-6 text-center" colSpan={8}>
                   Sin resultados.
                 </td>
               </tr>
             ) : (
               rows.map((u) => {
-                const orgApproved =
-                  u.role === "organizer" && u.latestOrganizerAppStatus === "APPROVED";
+                const isOrganizer = u.role === "organizer";
                 const deleted = Boolean(u.deletedAt);
 
                 return (
                   <tr key={u.id} className={`border-t ${deleted ? "opacity-60" : ""}`}>
                     <td className="p-3">{u.name}</td>
                     <td className="p-3">{u.email}</td>
-                    <td className="p-3">{formatDateTime(u.createdAt)}</td>{/* 👈 NUEVO */}
+                    <td className="p-3">{formatDateTime(u.createdAt)}</td>
                     <td className="p-3">{u.role}</td>
+
                     <td className="p-3">
-                      <StatusPill s={u.latestOrganizerAppStatus} />
+                      <SolicitudBadge s={u.latestOrganizerAppStatus} />
                     </td>
+
                     <td className="p-3">
                       <ActiveBadge u={u} />
                     </td>
-                    <td className="p-3">{u.isVerified ? "Sí" : "No"}</td>
-                    <td className="p-3">{u.canSell ? "Sí" : "No"}</td>
+
+                    <td className="p-3">{computeCanSell(u) ? "Sí" : "No"}</td>
+
                     <td className="p-3 text-right">
-                      {/* Verificación / Venta */}
+                      {/* Venta */}
                       <button
-                        onClick={() => orgApproved && !deleted && toggleVerified(u)}
-                        disabled={!orgApproved || deleted}
-                        className="px-2 py-1 mr-2 rounded border disabled:opacity-40 hover:bg-black/5"
-                        title={
-                          orgApproved
-                            ? deleted
-                              ? "Cuenta eliminada"
-                              : ""
-                            : "Requiere solicitud de organizador APROBADA"
-                        }
-                      >
-                        {u.isVerified ? "Quitar verificado" : "Verificar"}
-                      </button>
-                      <button
-                        onClick={() => orgApproved && !deleted && toggleCanSell(u)}
-                        disabled={!orgApproved || deleted}
+                        onClick={() => isOrganizer && !deleted && toggleCanSell(u)}
+                        disabled={!isOrganizer || deleted}
                         className="px-2 py-1 mr-4 rounded border disabled:opacity-40 hover:bg-black/5"
                         title={
-                          orgApproved
+                          isOrganizer
                             ? deleted
                               ? "Cuenta eliminada"
                               : ""
-                            : "Requiere solicitud de organizador APROBADA"
+                            : "Requiere rol organizer"
                         }
                       >
                         {u.canSell ? "Deshabilitar venta" : "Habilitar venta"}
@@ -365,6 +335,8 @@ export default function AdminUsers() {
     </div>
   );
 }
+
+
 
 
 

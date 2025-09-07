@@ -4,8 +4,10 @@ import {
   adminListPendingTickets,
   adminApproveTicket,
   adminRejectTicket,
-  adminGetTicketFile,           // ⬅️ nuevo
-  triggerBrowserDownload,       // ⬅️ helper para descargar
+  adminGetTicketFile,
+  adminCapturePayment,        // fallback
+  triggerBrowserDownload,
+  adminApproveAndCapture,     // ✅ preferido (todo en uno)
 } from "@/services/ticketsService";
 
 type PendingItem = any;
@@ -14,11 +16,7 @@ type PendingItem = any;
 
 function formatDateTime(v?: string | null) {
   if (!v) return "—";
-  try {
-    return new Date(v).toLocaleString();
-  } catch {
-    return String(v);
-  }
+  try { return new Date(v).toLocaleString(); } catch { return String(v); }
 }
 
 function cls(...xs: Array<string | false | undefined | null>) {
@@ -37,9 +35,10 @@ export default function AdminTickets() {
   const [total, setTotal] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // loading por fila (preview/descarga)
+  // loading por fila (preview/descarga/aprobar)
   const [previewingId, setPreviewingId] = useState<number | null>(null);
   const [downloadingId, setDownloadingId] = useState<number | null>(null);
+  const [approvingId, setApprovingId] = useState<number | null>(null);
 
   const pages = useMemo(() => {
     if (!total) return 1;
@@ -53,7 +52,6 @@ export default function AdminTickets() {
       const data = await adminListPendingTickets({ page, pageSize, q: q.trim() || undefined });
       let list: any[] = [];
       let tot: number | null = null;
-
       if (Array.isArray(data)) {
         list = data;
       } else if (data && typeof data === "object") {
@@ -84,18 +82,43 @@ export default function AdminTickets() {
     fetchData();
   }
 
+  // ✅ Preferido: aprobar + capturar + crear payout (con fallback)
   async function onApprove(reservationId: number) {
-    const ok = window.confirm(`¿Aprobar la entrada de la reserva #${reservationId}?`);
+    const ok = window.confirm(`¿Aprobar y capturar el pago de la reserva #${reservationId}?`);
     if (!ok) return;
     try {
-      setLoading(true);
-      await adminApproveTicket(reservationId);
+      setApprovingId(reservationId);
+      setError(null);
+
+      // 1) Intentar el endpoint todo-en-uno
+      try {
+        const res = await adminApproveAndCapture(reservationId);
+        if (!res?.ok) {
+          throw new Error("La operación todo-en-uno no confirmó ok.");
+        }
+      } catch (primaryErr: any) {
+        // 2) Fallback: capturar y luego aprobar
+        try {
+          await adminCapturePayment(reservationId);
+          await adminApproveTicket(reservationId);
+        } catch (fallbackErr: any) {
+          const msg =
+            fallbackErr?.response?.data?.error ||
+            fallbackErr?.message ||
+            primaryErr?.response?.data?.error ||
+            primaryErr?.message ||
+            "No se pudo completar la aprobación y captura.";
+          setError(msg);
+          return;
+        }
+      }
+
       await fetchData();
     } catch (e: any) {
       const msg = e?.response?.data?.error || e?.message || "No se pudo aprobar.";
       setError(msg);
     } finally {
-      setLoading(false);
+      setApprovingId(null);
     }
   }
 
@@ -116,7 +139,6 @@ export default function AdminTickets() {
     }
   }
 
-  // ⬅️ Nuevo: previsualizar (abre nueva pestaña con el blob)
   async function onPreview(reservationId: number) {
     try {
       setPreviewingId(reservationId);
@@ -124,7 +146,6 @@ export default function AdminTickets() {
       const { blob } = await adminGetTicketFile(reservationId, "inline");
       const url = URL.createObjectURL(blob);
       window.open(url, "_blank", "noopener,noreferrer");
-      // liberar el objectURL luego de un rato
       setTimeout(() => URL.revokeObjectURL(url), 60_000);
     } catch (e: any) {
       const msg =
@@ -138,7 +159,6 @@ export default function AdminTickets() {
     }
   }
 
-  // ⬅️ Nuevo: descargar (adjunta Content-Disposition correcto)
   async function onDownload(reservationId: number) {
     try {
       setDownloadingId(reservationId);
@@ -239,6 +259,7 @@ export default function AdminTickets() {
 
                   const isPrev = previewingId === rid;
                   const isDown = downloadingId === rid;
+                  const isApprove = approvingId === rid;
 
                   return (
                     <tr
@@ -278,9 +299,10 @@ export default function AdminTickets() {
                         <div className="inline-flex gap-2">
                           <button
                             onClick={() => onApprove(rid)}
-                            className="rounded-md bg-emerald-600 px-3 py-1.5 text-white hover:bg-emerald-700"
+                            disabled={isApprove}
+                            className="rounded-md bg-emerald-600 px-3 py-1.5 text-white hover:bg-emerald-700 disabled:opacity-50"
                           >
-                            Aprobar
+                            {isApprove ? "Aprobando y capturando…" : "Aprobar y capturar"}
                           </button>
                           <button
                             onClick={() => onReject(rid)}
@@ -345,3 +367,5 @@ export default function AdminTickets() {
     </div>
   );
 }
+
+

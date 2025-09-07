@@ -6,6 +6,10 @@ import {
   deleteMyEvent,
   type OrganizerEvent,
 } from "@/services/organizerEventsService";
+import {
+  getMyConnectedAccount,
+  type ConnectedAccount,
+} from "@/services/paymentsService";
 
 type PageToast = { kind: "info" | "success" | "error"; text: string } | null;
 
@@ -21,6 +25,10 @@ export default function OrganizerDashboard() {
   const navigate = useNavigate();
   const location = useLocation();
   const [toast, setToast] = useState<PageToast>(null);
+
+  // Connected account (para banner)
+  const [account, setAccount] = useState<ConnectedAccount | null>(null);
+  const [accLoading, setAccLoading] = useState<boolean>(true);
 
   const totalPages = useMemo(
     () => Math.max(1, Math.ceil(total / pageSize)),
@@ -61,6 +69,25 @@ export default function OrganizerDashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // solo al montar
 
+  // ===== Connected Account: traer para decidir si mostramos banner =====
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        setAccLoading(true);
+        const acc = await getMyConnectedAccount();
+        if (mounted) setAccount(acc || null);
+      } catch {
+        if (mounted) setAccount(null);
+      } finally {
+        if (mounted) setAccLoading(false);
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   function formatDate(value?: string | null) {
     if (!value) return "—";
     try {
@@ -69,6 +96,79 @@ export default function OrganizerDashboard() {
     } catch {
       return value ?? "—";
     }
+  }
+
+  // Validaciones mínimas para considerar "completa" la cuenta
+  function cleanRut(v?: string | null) {
+    return (v || "").replace(/[.\-]/g, "").trim().toUpperCase();
+  }
+  function isValidRut(v?: string | null) {
+    const s = cleanRut(v);
+    if (!/^\d{1,8}[0-9K]$/.test(s)) return false;
+    const cuerpo = s.slice(0, -1);
+    const dv = s.slice(-1);
+    let m = 0,
+      r = 1;
+    for (let i = cuerpo.length - 1; i >= 0; i--) {
+      r = (r + Number(cuerpo[i]) * (9 - (m++ % 6))) % 11;
+    }
+    const dvCalc = r ? String(r - 1) : "K";
+    return dv === dvCalc;
+  }
+  function isAccountComplete(acc?: ConnectedAccount | null) {
+    if (!acc) return false;
+    const hasBank = !!acc.payoutBankName;
+    const hasType = !!acc.payoutAccountType;
+    const hasNumber = !!acc.payoutAccountNumber && /^\d{7,14}$/.test(acc.payoutAccountNumber);
+    const hasHolder = !!acc.payoutHolderName && acc.payoutHolderName.trim().length >= 2;
+    const hasRut = isValidRut(acc.payoutHolderRut);
+    return hasBank && hasType && hasNumber && hasHolder && hasRut;
+  }
+
+  const showPayoutBanner =
+    !accLoading && (!account?.payoutsEnabled || !isAccountComplete(account));
+
+  function Banner() {
+    if (!showPayoutBanner) return null;
+    const notEnabled = account?.payoutsEnabled !== true;
+    const base =
+      "mb-4 rounded-md border px-3 py-3 text-sm flex items-start justify-between gap-3";
+    const cls = notEnabled
+      ? "border-blue-200 bg-blue-50 text-blue-800"
+      : "border-amber-200 bg-amber-50 text-amber-800";
+    return (
+      <div className={`${base} ${cls}`}>
+        <div className="space-y-1">
+          {notEnabled ? (
+            <>
+              <strong>Importante:</strong>{" "}
+              <span>
+                tus pagos están deshabilitados. Configura tu{" "}
+                <Link to="/organizador/cuenta-cobro" className="underline">
+                  cuenta de cobro
+                </Link>{" "}
+                para que podamos programar depósitos cuando el admin apruebe tus
+                ventas.
+              </span>
+            </>
+          ) : (
+            <>
+              <strong>Atención:</strong>{" "}
+              <span>
+                tu cuenta de cobro tiene datos incompletos. Revísala para
+                habilitar pagos y recibir transferencias.
+              </span>
+            </>
+          )}
+        </div>
+        <Link
+          to="/organizador/cuenta-cobro"
+          className="shrink-0 px-3 py-2 rounded border hover:bg-black/5"
+        >
+          Configurar ahora
+        </Link>
+      </div>
+    );
   }
 
   function Badge({ s }: { s: OrganizerEvent["status"] }) {
@@ -95,7 +195,10 @@ export default function OrganizerDashboard() {
         </Link>
       </div>
 
-      {/* Toast / Banner */}
+      {/* Banner de cuenta de cobro (si corresponde) */}
+      <Banner />
+
+      {/* Toast / Banner de navegación */}
       {toast && (
         <div
           className={
@@ -237,6 +340,7 @@ export default function OrganizerDashboard() {
     </div>
   );
 }
+
 
 
 

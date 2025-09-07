@@ -6,6 +6,7 @@ import api from "@/services/api";
 
 type LocalStatus =
   | "success"
+  | "authorized"          // ✅ pre-autorizado (captura diferida)
   | "failed"
   | "aborted"
   | "own-event-forbidden"
@@ -24,6 +25,8 @@ type TicketFlowStatus = {
   approvedAt?: string | null;
   deliveredAt?: string | null;
   rejectionReason?: string | null;
+  ticketUploadDeadlineAt?: string | null;
+  refundStatus?: "NONE" | "REQUESTED" | "SUCCEEDED" | "FAILED";
 };
 
 function formatMoneyCLP(v: number | null | undefined) {
@@ -37,6 +40,15 @@ function formatMoneyCLP(v: number | null | undefined) {
   } catch {
     return `$${v}`;
   }
+}
+
+function formatHMS(seconds: number) {
+  const s = Math.max(0, seconds | 0);
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const r = s % 60;
+  const pad = (x: number) => String(x).padStart(2, "0");
+  return `${pad(h)}:${pad(m)}:${pad(r)}`;
 }
 
 export default function PaymentResult() {
@@ -57,7 +69,7 @@ export default function PaymentResult() {
   const eventIdParam = params.get("eventId") || "";
   const orderIdParam = params.get("orderId") || ""; // reventa
 
-  // NUEVO: plazo para subida (cuando success)
+  // ✅ NUEVO: plazo para subida (cuando commit devolvió autorizado)
   const uploadDeadlineAt = params.get("uploadDeadlineAt") || "";
 
   const [loading, setLoading] = useState<boolean>(!!(token || buyOrderParam));
@@ -75,23 +87,40 @@ export default function PaymentResult() {
   const [ticketStatus, setTicketStatus] = useState<TicketFlowStatus | null>(null);
   const [downloading, setDownloading] = useState(false);
 
+  // ✅ contador hacia el deadline (si viene)
+  const [deadlineLeft, setDeadlineLeft] = useState<number | null>(null);
+  useEffect(() => {
+    if (!uploadDeadlineAt) {
+      setDeadlineLeft(null);
+      return;
+    }
+    const target = new Date(uploadDeadlineAt).getTime();
+    const tick = () =>
+      setDeadlineLeft(Math.max(0, Math.floor((target - Date.now()) / 1000)));
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [uploadDeadlineAt]);
+
   const amountFromQuery = useMemo(() => {
     const n = Number(amountParam);
     return Number.isFinite(n) ? n : undefined;
   }, [amountParam]);
 
   const localStatus: LocalStatus = useMemo(() => {
-    // Si el backend especifica un status conocido en la URL, se respeta
+    // Si el backend puso algo explícito en la URL, respétalo
     if (
       statusParam === "success" ||
       statusParam === "failed" ||
       statusParam === "aborted" ||
-      statusParam === "own-event-forbidden"
+      statusParam === "own-event-forbidden" ||
+      statusParam === "authorized"
     ) {
       return statusParam;
     }
-    // Si no vino, inferimos por estado local
-    if (localInfo?.status === "COMMITTED") return "success";
+    // Si no vino, inferimos por estado local del pago
+    if (localInfo?.status === "COMMITTED" || localInfo?.status === "CAPTURED") return "success";
+    if (localInfo?.status === "AUTHORIZED") return "authorized";
     if (localInfo?.status === "FAILED") return "failed";
     if (localInfo?.status === "ABORTED") return "aborted";
     return "unknown";
@@ -102,6 +131,8 @@ export default function PaymentResult() {
     switch (localStatus) {
       case "success":
         return "Aprobado";
+      case "authorized":
+        return "Pre-autorizado (pendiente de captura)";
       case "failed":
         return "Rechazado";
       case "aborted":
@@ -165,10 +196,10 @@ export default function PaymentResult() {
     };
   }, [token, buyOrderParam]);
 
-  // Si el pago fue aprobado y hay reservationId, consultamos el estado del ticket
+  // Si el pago fue aprobado o autorizado y hay reservationId, consultamos el estado del ticket
   useEffect(() => {
     const id = Number(reservationIdParam || (localInfo?.reservationId ?? ""));
-    if (localStatus !== "success" || !Number.isFinite(id)) {
+    if ((localStatus !== "success" && localStatus !== "authorized") || !Number.isFinite(id)) {
       setTicketStatus(null);
       return;
     }
@@ -247,7 +278,7 @@ export default function PaymentResult() {
 
   return (
     <div className="max-w-2xl mx-auto p-4">
-      {/* Encabezado según estado */}
+      {/* Encabezados según estado */}
       {localStatus === "success" && (
         <div className="mb-4 rounded-lg border border-green-200 bg-green-50 p-4 text-green-800">
           <h1 className="text-xl font-semibold">
@@ -261,20 +292,33 @@ export default function PaymentResult() {
           ) : (
             <>
               <p className="text-sm">Tu transacción fue confirmada correctamente.</p>
-
               {ticketMessage && <p className="mt-1 text-sm">{ticketMessage}</p>}
               {!ticketMessage && (
                 <p className="mt-1 text-sm text-gray-700">Consultando estado del ticket…</p>
               )}
-
-              {uploadDeadlineAt && (
-                <p className="mt-1 text-sm">
-                  Plazo para que el organizador suba la entrada:{" "}
-                  <b>{new Date(uploadDeadlineAt).toLocaleString()}</b>
-                </p>
-              )}
             </>
           )}
+        </div>
+      )}
+
+      {localStatus === "authorized" && (
+        <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-900">
+          <h1 className="text-xl font-semibold">Pago pre-autorizado</h1>
+          <p className="text-sm">
+            Tu pago quedó <strong>pre-autorizado</strong>.{" "}
+            <strong>El organizador tiene {uploadDeadlineAt ? "hasta el plazo indicado" : "24 horas"}</strong>{" "}
+            para subir tu entrada. Si no lo hace dentro de ese plazo,{" "}
+            <strong>te devolveremos tu dinero automáticamente</strong>.
+          </p>
+          {uploadDeadlineAt && (
+            <p className="mt-1 text-sm">
+              Plazo: <b>{new Date(uploadDeadlineAt).toLocaleString()}</b>
+              {deadlineLeft != null && (
+                <> • tiempo restante: <b>{formatHMS(deadlineLeft)}</b></>
+              )}
+            </p>
+          )}
+          {ticketMessage && <p className="mt-1 text-sm">{ticketMessage}</p>}
         </div>
       )}
 
@@ -312,7 +356,7 @@ export default function PaymentResult() {
         <div className="mb-4 rounded-lg border border-gray-200 bg-gray-50 p-4 text-gray-800">
           <h1 className="text-xl font-semibold">Estado en revisión</h1>
           <p className="text-sm">
-            No pudimos determinar el estado del pago. A continuación te mostramos la información disponible.
+            No pudimos determinar el estado del pago todavía. A continuación te mostramos la información disponible.
           </p>
         </div>
       )}
@@ -379,6 +423,16 @@ export default function PaymentResult() {
 
         {/* Acciones */}
         <div className="mt-4 flex flex-col sm:flex-row gap-2">
+          {/* NUEVO: Ver resumen/seguimiento de la reserva */}
+          {!isResale && reservationIdToShow !== "—" && (
+            <Link
+              to={`/reservas/${reservationIdToShow}`}
+              className="inline-flex items-center justify-center rounded-md px-4 py-2 bg-emerald-600 text-white hover:bg-emerald-700"
+            >
+              Ver resumen / seguimiento
+            </Link>
+          )}
+
           {isResale ? (
             <>
               <Link
@@ -418,6 +472,12 @@ export default function PaymentResult() {
                   Volver al inicio
                 </Link>
               )}
+              <Link
+                to="/mis-entradas"
+                className="inline-flex items-center justify-center rounded-md px-4 py-2 border border-gray-300 text-gray-700 hover:bg-gray-50"
+              >
+                Ver mis entradas
+              </Link>
             </>
           )}
 
@@ -480,31 +540,32 @@ export default function PaymentResult() {
             )}
 
           {/* Refrescar estado del ticket */}
-          {localStatus === "success" && reservationIdToShow !== "—" && (
-            <button
-              onClick={async () => {
-                try {
-                  const id = Number(reservationIdParam || localInfo?.reservationId);
-                  if (!Number.isFinite(id)) return;
-                  setLoading(true);
-                  setError(null);
-                  const { data } = await api.get(`/tickets/${id}/status`);
-                  setTicketStatus(data as TicketFlowStatus);
-                } catch (e: any) {
-                  setError(
-                    e?.response?.data?.error ||
-                      e?.message ||
-                      "No se pudo actualizar el estado del ticket."
-                  );
-                } finally {
-                  setLoading(false);
-                }
-              }}
-              className="inline-flex items-center justify-center rounded-md px-4 py-2 border border-gray-300 text-gray-700 hover:bg-gray-50"
-            >
-              Refrescar estado ticket
-            </button>
-          )}
+          {(localStatus === "success" || localStatus === "authorized") &&
+            reservationIdToShow !== "—" && (
+              <button
+                onClick={async () => {
+                  try {
+                    const id = Number(reservationIdParam || localInfo?.reservationId);
+                    if (!Number.isFinite(id)) return;
+                    setLoading(true);
+                    setError(null);
+                    const { data } = await api.get(`/tickets/${id}/status`);
+                    setTicketStatus(data as TicketFlowStatus);
+                  } catch (e: any) {
+                    setError(
+                      e?.response?.data?.error ||
+                        e?.message ||
+                        "No se pudo actualizar el estado del ticket."
+                    );
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
+                className="inline-flex items-center justify-center rounded-md px-4 py-2 border border-gray-300 text-gray-700 hover:bg-gray-50"
+              >
+                Refrescar estado ticket
+              </button>
+            )}
         </div>
 
         {/* Cargas / errores */}
@@ -537,6 +598,9 @@ export default function PaymentResult() {
     </div>
   );
 }
+
+
+
 
 
 

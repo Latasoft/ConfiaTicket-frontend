@@ -1,8 +1,9 @@
 // src/layout/AppLayout.tsx
-import { Outlet, useLocation } from "react-router-dom";
+import { Outlet, useLocation, Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import { useEffect, useRef, useState } from "react";
 import FAQChatbot from "@/components/FAQChatbot";
+import paymentsService from "@/services/paymentsService";
 
 function messageFromReason(reason?: string) {
   switch (reason) {
@@ -24,15 +25,17 @@ export default function AppLayout() {
   const [banner, setBanner] = useState<string | null>(null);
   const timerRef = useRef<number | null>(null);
 
+  // Aviso para organizadores si los pagos no están listos
+  // null = oculto | "disabled" = pagos deshabilitados | "incomplete" = datos faltantes
+  const [payoutNotice, setPayoutNotice] = useState<null | "disabled" | "incomplete">(null);
+
   // Escucha el evento global emitido por api.ts => window.dispatchEvent(new CustomEvent("auth:logout", { detail: { reason } }))
   useEffect(() => {
     function onLogout(ev: Event) {
-      // TypeScript: castear a CustomEvent con detail.reason opcional
       const ce = ev as CustomEvent<{ reason?: string }>;
       const msg = messageFromReason(ce?.detail?.reason);
       setBanner(msg);
 
-      // Autocerrar a los 6s
       if (timerRef.current) window.clearTimeout(timerRef.current);
       timerRef.current = window.setTimeout(() => setBanner(null), 6000);
     }
@@ -44,19 +47,91 @@ export default function AppLayout() {
     };
   }, []);
 
-  // Si cambias de ruta, cerramos el banner
+  // Si cambias de ruta, cerramos el toast de logout
   useEffect(() => {
     if (banner) setBanner(null);
-  }, [location.pathname]); // eslint-disable-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname]);
+
+  // Chequeo de payoutsReady en rutas de organizador aprobadas
+  useEffect(() => {
+    let cancelled = false;
+
+    async function checkPayoutNotice() {
+      const p = location.pathname;
+
+      // Solo aplicar en zona organizador (excepto pendiente y la propia página de cuenta)
+      const isOrganizerArea = p.startsWith("/organizador") || p.startsWith("/organizer");
+      const isPending = p.startsWith("/organizador/pendiente");
+      const isSettings = p.startsWith("/organizador/cuenta-cobro") || p.startsWith("/organizer/payout-settings");
+
+      if (!isOrganizerArea || isPending || isSettings) {
+        if (!cancelled) setPayoutNotice(null);
+        return;
+      }
+
+      try {
+        const acc = await paymentsService.getMyConnectedAccount();
+        // Si no está listo, decidimos el motivo para el copy del banner
+        if (!acc?.payoutsReady) {
+          const reason = acc?.payoutsEnabled === false ? "disabled" : "incomplete";
+          if (!cancelled) setPayoutNotice(reason);
+        } else {
+          if (!cancelled) setPayoutNotice(null);
+        }
+      } catch {
+        // Si responde 403 (no organizer o no aprobado), ocultamos el aviso.
+        if (!cancelled) setPayoutNotice(null);
+      }
+    }
+
+    checkPayoutNotice();
+    return () => {
+      cancelled = true;
+    };
+  }, [location.pathname]);
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
       <Navbar />
       <main className="flex-1">
+        {/* Aviso para organizadores si pagos no están listos */}
+        {payoutNotice && (
+          <div className="mx-auto max-w-6xl px-4 pt-4">
+            <div className="rounded-md border border-sky-200 bg-sky-50 text-sky-900 p-3 flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-start gap-2">
+                <span aria-hidden>💳</span>
+                <div className="text-sm">
+                  {payoutNotice === "disabled" ? (
+                    <>
+                      <strong className="font-medium">Importante:</strong>{" "}
+                      tus pagos están <span className="font-semibold">deshabilitados</span>. Configura tu{" "}
+                      <span className="font-semibold">cuenta de cobro</span> para que podamos
+                      programar depósitos cuando el admin apruebe tus ventas.
+                    </>
+                  ) : (
+                    <>
+                      <strong className="font-medium">Atención:</strong>{" "}
+                      tu <span className="font-semibold">cuenta de cobro</span> tiene datos{" "}
+                      <span className="font-semibold">incompletos</span>. Complétala para habilitar pagos y recibir transferencias.
+                    </>
+                  )}
+                </div>
+              </div>
+              <Link
+                to="/organizador/cuenta-cobro"
+                className="inline-flex items-center rounded-md bg-sky-600 px-3 py-2 text-white text-sm hover:bg-sky-700"
+              >
+                Configurar ahora
+              </Link>
+            </div>
+          </div>
+        )}
+
         <Outlet />
       </main>
 
-      {/* Toast superior */}
+      {/* Toast superior (logout / auth) */}
       {banner && (
         <div className="fixed top-16 left-1/2 -translate-x-1/2 z-[60] px-4">
           <div className="max-w-[680px] w-full rounded-md border shadow bg-amber-50 text-amber-900 p-3 flex items-start gap-3">
@@ -80,6 +155,8 @@ export default function AppLayout() {
     </div>
   );
 }
+
+
 
 
 
