@@ -14,6 +14,14 @@ type Msg = { type: "ok" | "err" | "info"; text: string };
 
 const DEFAULT_HOLD_MINUTES = 15;
 
+/** Limita los segundos restantes al máximo permitido por el hold */
+//function clampSecondsLeft(rawSeconds: number, holdMinutes?: number | null) {
+  //const hm = Math.max(1, Math.floor(holdMinutes ?? DEFAULT_HOLD_MINUTES));
+  //const cap = hm * 60;
+  //const s = Math.max(0, Math.floor(rawSeconds || 0));
+ // return Math.min(s, cap);
+//}
+
 /** Clave para guardar el deadline en localStorage por reserva */
 const deadlineKey = (reservationId: number) => `pe:deadline:${reservationId}`;
 
