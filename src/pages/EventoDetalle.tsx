@@ -149,7 +149,6 @@ export default function EventoDetalle() {
   const unitPrice = (typeof (ev as any).price === "number"
     ? (ev as any).price
     : (ev as any).priceFrom ?? undefined) as number | undefined;
-  const capacity = (ev as any).capacity ?? undefined;
   const remaining = (ev as any).remaining ?? undefined;
   const dateIso = (ev as any).date ?? (ev as any).startAt ?? undefined;
   const soon = isSoon(dateIso, 7);
@@ -244,16 +243,6 @@ export default function EventoDetalle() {
                   📍 {venue}
                 </a>
               )}
-              {typeof capacity === "number" && (
-                <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-800">
-                  🧑‍🤝‍🧑 Aforo: {capacity}
-                </span>
-              )}
-              {typeof unitPrice === "number" && (
-                <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-800">
-                  💸 Desde: {formatMoney(unitPrice)}
-                </span>
-              )}
             </div>
 
             <div className="prose max-w-none mb-6">
@@ -315,16 +304,6 @@ export default function EventoDetalle() {
               </div>
             )}
 
-            {/* Notas / políticas */}
-            <div className="mb-6">
-              <h3 className="font-medium mb-2">Notas y políticas</h3>
-              <ul className="list-disc pl-5 text-sm text-gray-700 space-y-1">
-                <li>Entrada digital nominativa: lleva tu cédula para validar el acceso.</li>
-                <li>No se permiten objetos peligrosos ni bebidas alcohólicas externas.</li>
-                <li>Reembolso solo si el evento se cancela o reprograma.</li>
-                <li>Menores de edad: consultar restricciones del recinto.</li>
-              </ul>
-            </div>
           </div>
 
           {city && (
@@ -341,15 +320,9 @@ export default function EventoDetalle() {
             <div className="space-y-2">
               {typeof unitPrice === "number" && (
                 <div>
-                  <span className="text-sm text-gray-500">Desde</span>
+                  <span className="text-sm text-gray-500">Valor Unitario</span>
                   <div className="text-2xl font-bold">{formatMoney(unitPrice)}</div>
                 </div>
-              )}
-
-              {typeof capacity === "number" && (
-                <p className="text-sm text-gray-600">
-                  Aforo (máx.): <strong>{capacity}</strong>
-                </p>
               )}
 
               {typeof remaining === "number" && (
