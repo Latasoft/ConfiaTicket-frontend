@@ -1,6 +1,6 @@
 // src/pages/AdminEvents.tsx
 import { useEffect, useMemo, useState } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, Link } from "react-router-dom";
 import {
   adminListEvents,
   adminSetEventStatus,
@@ -236,7 +236,14 @@ export default function AdminEvents() {
                   <td className="p-3 align-middle">
                     <Thumb url={ev.coverImageUrl ?? null} />
                   </td>
-                  <td className="p-3">{ev.title}</td>
+                  <td className="p-3">
+                    <Link 
+                      to={`/admin/eventos/${ev.id}`}
+                      className="text-blue-600 hover:text-blue-800 hover:underline font-medium"
+                    >
+                      {ev.title}
+                    </Link>
+                  </td>
                   <td className="p-3">{formatDateTime(ev.startAt)}</td>
                   <td className="p-3">{formatDateTime(ev.createdAt)}</td>{/* 👈 NUEVO DATO */}
                   <td className="p-3">{ev.venue}</td>

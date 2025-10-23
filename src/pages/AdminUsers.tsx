@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, Link } from "react-router-dom";
 import {
   adminListUsers,
   adminSetUserCanSell,
@@ -243,7 +243,14 @@ export default function AdminUsers() {
 
                 return (
                   <tr key={u.id} className={`border-t ${deleted ? "opacity-60" : ""}`}>
-                    <td className="p-3">{u.name}</td>
+                    <td className="p-3">
+                      <Link 
+                        to={`/admin/usuarios/${u.id}`}
+                        className="text-blue-600 hover:text-blue-800 hover:underline font-medium"
+                      >
+                        {u.name}
+                      </Link>
+                    </td>
                     <td className="p-3">{u.email}</td>
                     <td className="p-3">{formatDateTime(u.createdAt)}</td>
                     <td className="p-3">{u.role}</td>
