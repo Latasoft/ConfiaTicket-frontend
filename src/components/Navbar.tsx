@@ -182,7 +182,7 @@ export default function Navbar() {
                     ref={adminMenuRef}
                     onMouseEnter={() => setAdminOpen(true)}
                     onMouseLeave={() => setAdminOpen(false)}
-                    className={`absolute right-0 mt-1 min-w-[220px] border rounded-md bg-white shadow transition-opacity ${
+                    className={`absolute right-0 top-full min-w-[220px] border rounded-md bg-white shadow transition-opacity ${
                       adminOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
                     }`}
                     role="menu"
@@ -274,7 +274,7 @@ export default function Navbar() {
                     ref={orgMenuRef}
                     onMouseEnter={() => setOrgOpen(true)}
                     onMouseLeave={() => setOrgOpen(false)}
-                    className={`absolute right-0 mt-1 min-w-[220px] border rounded-md bg-white shadow transition-opacity ${
+                    className={`absolute right-0 top-full min-w-[220px] border rounded-md bg-white shadow transition-opacity ${
                       orgOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
                     }`}
                     role="menu"
