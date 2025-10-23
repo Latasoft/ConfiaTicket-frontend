@@ -25,12 +25,46 @@ export type AdminEvent = {
   updatedAt?: string | null;
 
   organizerId?: number;
-  organizer?: { id: number; name: string; email: string };
+  organizer?: { 
+    id: number; 
+    name: string; 
+    email: string;
+    rut?: string;
+    phone?: string | null;
+    legalName?: string | null;
+    isActive?: boolean;
+    deletedAt?: string | null;
+  };
   /** Para deshabilitar acciones si el organizador está eliminado/inactivo */
   organizerDeletedOrInactive?: boolean;
 
   /** Portada del evento (opcional) */
   coverImageUrl?: string | null;
+
+  // Campos adicionales del detalle
+  city?: string;
+  commune?: string;
+  price?: number;
+
+  // Estadísticas de ventas
+  stats?: {
+    totalReservations: number;
+    paidReservations: number;
+    pendingReservations: number;
+    ticketsSold: number;
+    availableTickets: number;
+    totalRevenue: number;
+    occupancyRate: number;
+  };
+
+  // Información bancaria legacy del evento
+  eventBankingInfo?: {
+    bankName: string;
+    accountType: string;
+    accountNumber: string;
+    holderName: string;
+    holderRut: string;
+  } | null;
 };
 
 export type AdminListResponse = {

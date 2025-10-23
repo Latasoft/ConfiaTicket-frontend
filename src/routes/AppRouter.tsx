@@ -33,7 +33,9 @@ import RequireSuperadmin from "@/routes/RequireSuperadmin";
 
 // Admin
 import AdminEvents from "@/pages/AdminEvents";
+import AdminEventDetail from "@/pages/AdminEventDetail";
 import AdminUsers from "@/pages/AdminUsers";
+import AdminUserDetail from "@/pages/AdminUserDetail";
 import AdminOrganizerApps from "@/pages/AdminOrganizerApps";
 import AdminTickets from "@/pages/AdminTickets";
 import AdminPayouts from "@/pages/AdminPayouts"; // ← NUEVO
@@ -235,10 +237,26 @@ export const router = createBrowserRouter([
         ),
       },
       {
+        path: "/admin/eventos/:id",
+        element: (
+          <RequireSuperadmin>
+            <AdminEventDetail />
+          </RequireSuperadmin>
+        ),
+      },
+      {
         path: "/admin/usuarios",
         element: (
           <RequireSuperadmin>
             <AdminUsers />
+          </RequireSuperadmin>
+        ),
+      },
+      {
+        path: "/admin/usuarios/:id",
+        element: (
+          <RequireSuperadmin>
+            <AdminUserDetail />
           </RequireSuperadmin>
         ),
       },

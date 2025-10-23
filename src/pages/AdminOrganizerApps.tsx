@@ -9,6 +9,7 @@ import {
   type AdminOrganizerApplication,
   type AppStatus,
 } from "@/services/adminOrganizerAppsService";
+import ProtectedImageModal from "@/components/ProtectedImageModal";
 
 type Toast = { kind: "success" | "info" | "error"; text: string } | null;
 
@@ -39,6 +40,15 @@ export default function AdminOrganizerApps() {
         q: q || undefined,
         status: (status || undefined) as any,
       });
+      
+      // 🔍 DEBUG: Ver qué devuelve el backend
+      console.log("📋 Solicitudes de organizadores:", data.items);
+      if (data.items.length > 0) {
+        console.log("🔍 Primera solicitud:", data.items[0]);
+        console.log("📄 idCardImage:", data.items[0].idCardImage);
+        console.log("🔗 idCardImageUrl:", data.items[0].idCardImageUrl);
+      }
+      
       setRows(data.items);
       setTotal(data.total);
       setPage(data.page);
@@ -276,14 +286,16 @@ export default function AdminOrganizerApps() {
                     <StatusBadge s={app.status} />
                   </td>
                   <td className="p-3">
-                    <a
-                      className="underline"
-                      href={linkToUpload(app.idCardImage)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      Ver archivo
-                    </a>
+                    {app.idCardImageUrl ? (
+                      <ProtectedImageModal
+                        imageUrl={app.idCardImageUrl}
+                        buttonText="Ver documento"
+                        buttonClassName="inline-block px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-xs"
+                        title={`Documento de ${app.legalName}`}
+                      />
+                    ) : (
+                      <span className="text-gray-400 text-xs">Sin archivo</span>
+                    )}
                   </td>
                   <td className="p-3 text-right">
                     {app.status === "PENDING" && (
