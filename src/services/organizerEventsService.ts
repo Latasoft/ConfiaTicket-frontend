@@ -10,6 +10,7 @@ export type OrganizerEvent = {
   // Lugar/fechas
   venue: string;
   city?: string;
+  commune?: string;
   startAt: string;        // ISO
   endAt?: string | null;  // ISO o null
 
@@ -20,6 +21,7 @@ export type OrganizerEvent = {
 
   // 💲 Precio de publicación (CLP, entero)
   price?: number;
+  priceBase?: number | null;
 
   // 👇 metadatos visibles en el form (autocompletados)
   organizerName?: string | null;

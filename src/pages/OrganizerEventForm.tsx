@@ -1,5 +1,5 @@
 // src/pages/OrganizerEventForm.tsx
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -9,9 +9,13 @@ import {
   getMyEvent,
   updateMyEvent,
   type OrganizerEvent,
-  type OrganizerUpdateResponse,
 } from "@/services/organizerEventsService";
 import { useAuth } from "@/context/AuthContext";
+import {
+  organizerUploadTicket,
+  listOrganizerReservations,
+  type OrganizerReservationItem,
+} from "@/services/ticketsService";
 
 /* =================== Límites (alineados con DB) =================== */
 const LIMITS = {
@@ -131,7 +135,11 @@ export default function OrganizerEventForm() {
   const navigate = useNavigate();
   const isEdit = Boolean(id);
 
-  // Datos del usuario para autocompletar “organizador”
+  // estado del indicador de etapa (etapa datos y etapa subir entradas)
+  const [currentStep, setCurrentStep] = useState(1);
+  const [createdEventId, setCreatedEventId] = useState<number | null>(null);
+  const [showPendingModal, setShowPendingModal] = useState(false);
+
   const { user } = useAuth() as {
     user?: { id: number; name?: string; rut?: string; role: string; verifiedOrganizer?: boolean };
   };
@@ -170,6 +178,26 @@ export default function OrganizerEventForm() {
   const capacityWatch = Number(watch("capacity") || 0);
   const [previewError, setPreviewError] = useState<string | null>(null);
 
+  // limpiar formulario para un nuevo evento
+  useEffect(() => {
+    if (!isEdit) {
+      // Resetear todos los campos al crear nuevo evento
+      setValue("title", "");
+      setValue("description", "");
+      setValue("coverImageUrl", "");
+      setValue("venue", "");
+      setValue("city", "");
+      setValue("commune", "");
+      setValue("startAt", "");
+      setValue("endAt", "");
+      setValue("capacity", 1);
+      setValue("priceBase", "");
+      setValue("price", "");
+      setCreatedEventId(null);
+      setCurrentStep(1);
+    }
+  }, [isEdit, setValue]);
+
   // Cargar datos si es edición
   useEffect(() => {
     if (!isEdit) return;
@@ -181,14 +209,20 @@ export default function OrganizerEventForm() {
       setValue("coverImageUrl", (ev as any).coverImageUrl ?? (ev as any).imageUrl ?? "");
       setValue("venue", ev.venue);
       setValue("city", ev.city ?? "");
-      setValue("commune", (ev as any).commune ?? ""); // 👈 NUEVO
+      setValue("commune", ev.commune ?? "");
       setValue("startAt", toLocalInput(ev.startAt));
       setValue("endAt", toLocalInput(ev.endAt ?? undefined));
       setValue("capacity", ev.capacity as unknown as FormValuesInput["capacity"]);
       setCurrentStatus(ev.status);
+      
+      // definir id del evento
+      setCreatedEventId(ev.id);
 
       if ((ev as any).price != null) {
         setValue("price", String((ev as any).price));
+      }
+      if ((ev as any).priceBase != null) {
+        setValue("priceBase", String((ev as any).priceBase));
       }
     })();
   }, [id, isEdit, setValue]);
@@ -220,19 +254,14 @@ export default function OrganizerEventForm() {
 
     try {
       if (isEdit) {
-        const resp: OrganizerUpdateResponse = await updateMyEvent(Number(id), payload as any);
-        navigate("/organizador/eventos", {
-          state: {
-            toast: { kind: "info", text: resp._message || "Tu evento fue actualizado y quedó PENDIENTE de aprobación." },
-          },
-          replace: true,
-        });
+        await updateMyEvent(Number(id), payload as any);
+        // ir a la etapa 2 en modo edicion
+        setCurrentStep(2);
+        setToast(null);
       } else {
-        await createMyEvent(payload as any);
-        navigate("/organizador/eventos", {
-          state: { toast: { kind: "success", text: "Evento creado y quedó PENDIENTE de aprobación." } },
-          replace: true,
-        });
+        const response = await createMyEvent(payload as any);
+        setCreatedEventId(response.id);
+        setCurrentStep(2);
       }
     } catch (e: any) {
       const msg = e?.response?.data?.error || e?.response?.data?.message || e?.message || "No se pudo guardar el evento";
@@ -266,9 +295,52 @@ export default function OrganizerEventForm() {
   const previewTotal =
     typeof priceWatch === "number" && typeof capacityWatch === "number" ? priceWatch * capacityWatch : 0;
 
+  // componente incador de pasos
+  const Stepper = () => {
+    const steps = [
+      { number: 1, label: "Datos del Evento" },
+      { number: 2, label: "Tickets/Entradas" }
+    ];
+
+    return (
+      <div className="mb-8">
+        <div className="flex items-center justify-center">
+          {steps.map((step, index) => (
+            <div key={step.number} className="flex items-center">
+              <div className="flex flex-col items-center">
+                <div
+                  className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${
+                    currentStep === step.number
+                      ? "bg-black text-white"
+                      : currentStep > step.number
+                      ? "bg-green-500 text-white"
+                      : "bg-gray-300 text-gray-600"
+                  }`}
+                >
+                  {currentStep > step.number ? "✓" : step.number}
+                </div>
+                <span className="text-xs mt-2 text-center font-medium">{step.label}</span>
+              </div>
+          
+              {index < steps.length - 1 && (
+                <div
+                  className={`w-24 h-1 mx-2 ${
+                    currentStep > step.number ? "bg-green-500" : "bg-gray-300"
+                  }`}
+                />
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="max-w-3xl mx-auto p-4">
       <h1 className="text-2xl font-bold mb-2">{isEdit ? "Editar evento" : "Crear evento"}</h1>
+
+      <Stepper />
 
       {toast && (
         <div className="mb-4 rounded border px-3 py-2 text-sm border-red-300 bg-red-50 text-red-800">
@@ -287,6 +359,8 @@ export default function OrganizerEventForm() {
         </div>
       )}
 
+      {/* formulario del evento */}
+      {currentStep === 1 && (
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Datos del organizador */}
         <div className="border rounded p-3">
@@ -498,7 +572,7 @@ export default function OrganizerEventForm() {
 
         <div className="flex items-center gap-2 pt-2">
           <button type="submit" disabled={isSubmitting} className="px-4 py-2 rounded bg-black text-white disabled:opacity-50">
-            {isEdit ? "Guardar cambios" : "Crear evento"}
+            Continuar
           </button>
           <button
             type="button"
@@ -509,6 +583,338 @@ export default function OrganizerEventForm() {
           </button>
         </div>
       </form>
+      )}
+
+      {/* creación de entradas */}
+      {currentStep === 2 && <TicketsStep 
+        eventId={createdEventId!}
+        expectedCapacity={capacityWatch}
+        onFinish={() => {
+          setShowPendingModal(true);
+        }}
+        onBack={() => {
+          setCurrentStep(1);
+        }}
+      />}
+
+      {showPendingModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md mx-4">
+            <h3 className="text-lg font-semibold mb-3">
+              Evento {isEdit ? "actualizado" : "creado"} exitosamente
+            </h3>
+            <div className="bg-yellow-50 border border-yellow-200 rounded p-4 mb-4">
+              <p className="text-sm text-yellow-900">
+                <strong>Tu evento está pendiente de validación</strong>
+              </p>
+              <p className="text-sm text-yellow-800 mt-2">
+                Un administrador revisará la información antes de aprobarlo. 
+                Te notificaremos cuando esté disponible para los usuarios.
+              </p>
+            </div>
+            <button
+              onClick={() => {
+                setShowPendingModal(false);
+                navigate("/organizador/eventos", {
+                  state: { 
+                    toast: { 
+                      kind: "info", 
+                      text: `Evento ${isEdit ? "actualizado" : "creado"}. Pendiente de aprobación.` 
+                    } 
+                  },
+                  replace: true,
+                });
+              }}
+              className="w-full px-4 py-2 bg-black text-white rounded hover:bg-black/90"
+            >
+              Aceptar
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* =================== Componente de Tickets =================== */
+function TicketsStep({ eventId, onFinish, onBack, expectedCapacity }: { 
+  eventId: number; 
+  onFinish: () => void; 
+  onBack: () => void;
+  expectedCapacity: number;
+}) {
+  const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+  const ALLOWED = new Set(["application/pdf", "image/png", "image/jpeg"]);
+
+  const [reservationId, setReservationId] = useState<string>("");
+  const [file, setFile] = useState<File | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [okMsg, setOkMsg] = useState<string | null>(null);
+  const [rows, setRows] = useState<OrganizerReservationItem[]>([]);
+  const [loadingList, setLoadingList] = useState(false);
+
+  const hiddenFileRef = useRef<HTMLInputElement | null>(null);
+  const [targetReservationForUpload, setTargetReservationForUpload] = useState<number | null>(null);
+
+  const validReservationId = useMemo(() => {
+    const n = Number(reservationId);
+    return Number.isFinite(n) && n > 0 ? n : null;
+  }, [reservationId]);
+
+  const fileError = useMemo(() => {
+    if (!file) return null;
+    if (!ALLOWED.has(file.type)) return "Solo se permiten PDF, PNG o JPG.";
+    if (file.size > MAX_SIZE) return `El archivo supera el máximo.`;
+    return null;
+  }, [file]);
+
+  const canUpload = !!validReservationId && !!file && !fileError && !loading;
+
+  const onFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0] || null;
+    setFile(f);
+    setOkMsg(null);
+    setError(null);
+  }, []);
+
+  async function handleUpload() {
+    if (!canUpload || !file || !validReservationId) return;
+    setLoading(true);
+    setError(null);
+    setOkMsg(null);
+    try {
+      await organizerUploadTicket(validReservationId, file);
+      setOkMsg("Ticket subido correctamente.");
+      setReservationId("");
+      setFile(null);
+      fetchReservations();
+    } catch (err: any) {
+      setError(err?.response?.data?.error || err.message || "Error al subir ticket.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function fetchReservations() {
+    setLoadingList(true);
+    try {
+      const response = await listOrganizerReservations({ 
+        page: 1, 
+        pageSize: 100,
+        eventId 
+      });
+      setRows(response.items || []);
+    } catch (err) {
+      console.error("Error al cargar reservas:", err);
+    } finally {
+      setLoadingList(false);
+    }
+  }
+
+  useEffect(() => {
+    fetchReservations();
+  }, [eventId]);
+
+  async function handleUploadFromRow(resId: number, uploadedFile: File) {
+    try {
+      await organizerUploadTicket(resId, uploadedFile);
+      setOkMsg(`Ticket subido para reserva #${resId}`);
+      fetchReservations();
+    } catch (err: any) {
+      setError(err?.response?.data?.error || err.message || "Error al subir ticket.");
+    }
+  }
+
+  function openFilePickerForRow(resId: number) {
+    setTargetReservationForUpload(resId);
+    hiddenFileRef.current?.click();
+  }
+
+  const onHiddenFileChange = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const f = e.target.files?.[0];
+      if (!f || targetReservationForUpload === null) return;
+      await handleUploadFromRow(targetReservationForUpload, f);
+      setTargetReservationForUpload(null);
+      if (hiddenFileRef.current) hiddenFileRef.current.value = "";
+    },
+    [targetReservationForUpload]
+  );
+
+  // calcular tickets subidos
+  const ticketsUploaded = rows.filter(r => r.hasTicket).length;
+  const allTicketsUploaded = ticketsUploaded >= expectedCapacity;
+
+  return (
+    <div className="space-y-6">
+      <h2 className="text-xl font-semibold">Subir Tickets/Entradas</h2>
+      <p className="text-sm text-gray-600">
+        Ahora puedes subir los tickets para las reservas de este evento.
+      </p>
+
+      {/* indicador de progreso de tickets subidos */}
+      <div className={`p-4 rounded-lg border ${
+        allTicketsUploaded 
+          ? "bg-green-50 border-green-200" 
+          : "bg-blue-50 border-blue-200"
+      }`}>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="font-semibold text-sm">
+              Tickets subidos: {ticketsUploaded} / {expectedCapacity}
+            </p>
+            <p className="text-xs text-gray-600 mt-1">
+              {allTicketsUploaded 
+                ? "✓ Todas las entradas han sido subidas"
+                : `Faltan ${expectedCapacity - ticketsUploaded} entrada(s) por subir`
+              }
+            </p>
+          </div>
+          {allTicketsUploaded && (
+            <span className="text-2xl">✓</span>
+          )}
+        </div>
+      </div>
+
+      {/* Mensajes */}
+      {error && (
+        <div className="p-3 rounded border border-red-300 bg-red-50 text-red-800 text-sm">
+          {error}
+        </div>
+      )}
+      {okMsg && (
+        <div className="p-3 rounded border border-green-300 bg-green-50 text-green-800 text-sm">
+          {okMsg}
+        </div>
+      )}
+
+      {/* Formulario de subida manual */}
+      <div className="border rounded p-4 bg-gray-50">
+        <h3 className="font-semibold mb-3">Subir ticket por ID de reserva</h3>
+        <div className="grid md:grid-cols-2 gap-3">
+          <div>
+            <label className="block text-sm font-medium mb-1">ID de Reserva</label>
+            <input
+              type="number"
+              value={reservationId}
+              onChange={(e) => setReservationId(e.target.value)}
+              className="w-full border rounded px-3 py-2"
+              placeholder="Ej: 123"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Archivo (PDF/PNG/JPG)</label>
+            <input
+              type="file"
+              accept=".pdf,.png,.jpg,.jpeg"
+              onChange={onFileChange}
+              className="w-full border rounded px-3 py-2 text-sm"
+            />
+            {fileError && <p className="text-xs text-red-600 mt-1">{fileError}</p>}
+          </div>
+        </div>
+        <button
+          onClick={handleUpload}
+          disabled={!canUpload}
+          className="mt-3 px-4 py-2 bg-black text-white rounded disabled:opacity-50"
+        >
+          {loading ? "Subiendo..." : "Subir Ticket"}
+        </button>
+      </div>
+
+      {/* Tabla de reservas */}
+      <div className="border rounded">
+        <h3 className="font-semibold p-4 border-b">Reservas del Evento</h3>
+        {loadingList ? (
+          <div className="p-4 text-center text-gray-500">Cargando...</div>
+        ) : rows.length === 0 ? (
+          <div className="p-4 text-center text-gray-500">
+            No hay reservas aún para este evento.
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="p-3 text-left">ID</th>
+                  <th className="p-3 text-left">Usuario</th>
+                  <th className="p-3 text-left">Estado Pago</th>
+                  <th className="p-3 text-left">Ticket</th>
+                  <th className="p-3 text-left">Acción</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((r) => (
+                  <tr key={r.reservationId} className="border-t hover:bg-gray-50">
+                    <td className="p-3">{r.reservationId}</td>
+                    <td className="p-3">{r.buyer?.name || "—"}</td>
+                    <td className="p-3">
+                      <span
+                        className={`px-2 py-1 rounded text-xs ${
+                          r.status === "PAID"
+                            ? "bg-green-100 text-green-800"
+                            : r.status === "PENDING_PAYMENT"
+                            ? "bg-yellow-100 text-yellow-800"
+                            : "bg-gray-100 text-gray-800"
+                        }`}
+                      >
+                        {r.status}
+                      </span>
+                    </td>
+                    <td className="p-3">
+                      {r.fulfillmentStatus === "DELIVERED" || r.hasTicket ? (
+                        <span className="text-green-600">✓ Subido</span>
+                      ) : (
+                        <span className="text-gray-500">Pendiente</span>
+                      )}
+                    </td>
+                    <td className="p-3">
+                      {r.status === "PAID" && !r.hasTicket && (
+                        <button
+                          onClick={() => openFilePickerForRow(r.reservationId)}
+                          className="px-3 py-1 text-xs border rounded hover:bg-black/5"
+                        >
+                          Subir
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      <input
+        ref={hiddenFileRef}
+        type="file"
+        accept=".pdf,.png,.jpg,.jpeg"
+        className="hidden"
+        onChange={onHiddenFileChange}
+      />
+
+      {/* botones de navegacion */}
+      <div className="flex items-center justify-between pt-4 border-t">
+        <div className="flex gap-2">
+          <button
+            onClick={onBack}
+            className="px-4 py-2 border rounded hover:bg-black/5"
+          >
+            ← Volver
+          </button>
+          <button
+            onClick={onFinish}
+            className="px-4 py-2 bg-black text-white rounded hover:bg-black/90"
+          >
+            Finalizar
+          </button>
+        </div>
+        <p className="text-sm text-gray-600">
+          Puedes gestionar tickets más tarde desde el panel de organizador.
+        </p>
+      </div>
     </div>
   );
 }
