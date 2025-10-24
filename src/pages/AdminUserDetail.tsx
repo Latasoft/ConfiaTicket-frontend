@@ -2,6 +2,10 @@
 import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { adminGetUser, type AdminUserDetail } from "@/services/adminUsersService";
+import { 
+  adminApproveOrganizerApplication, 
+  adminRejectOrganizerApplication 
+} from "@/services/adminOrganizerAppsService";
 import ProtectedImageModal from "@/components/ProtectedImageModal";
 
 function formatDateTime(iso?: string | null) {
@@ -28,31 +32,82 @@ export default function AdminUserDetail() {
   const [user, setUser] = useState<AdminUserDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [actionMessage, setActionMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
+  async function loadUser() {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await adminGetUser(userId);
+      setUser(data);
+    } catch (e: any) {
+      setError(
+        e?.response?.data?.error || 
+        e?.message || 
+        "No se pudo cargar la información del usuario"
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
 
   useEffect(() => {
-    async function loadUser() {
-      try {
-        setLoading(true);
-        setError(null);
-        const data = await adminGetUser(userId);
-
-        setUser(data);
-      } catch (e: any) {
-        setError(
-          e?.response?.data?.error || 
-          e?.message || 
-          "No se pudo cargar la información del usuario"
-        );
-      } finally {
-        setLoading(false);
-      }
-    }
-
     if (userId) {
       loadUser();
     }
   }, [userId]);
+
+  async function handleApprove() {
+    if (!user?.application) return;
+    
+    if (!confirm("¿Aprobar esta solicitud de organizador? El usuario podrá crear eventos.")) {
+      return;
+    }
+
+    try {
+      setActionLoading(true);
+      setActionMessage(null);
+      await adminApproveOrganizerApplication(user.application.id);
+      setActionMessage({ type: "success", text: "Solicitud aprobada exitosamente" });
+      // Recargar datos del usuario
+      await loadUser();
+    } catch (e: any) {
+      setActionMessage({ 
+        type: "error", 
+        text: e?.response?.data?.error || "Error al aprobar la solicitud" 
+      });
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
+  async function handleReject() {
+    if (!user?.application) return;
+    
+    const notes = prompt("¿Motivo del rechazo? (opcional)");
+    if (notes === null) return; // Usuario canceló
+    
+    if (!confirm("¿Rechazar esta solicitud de organizador?")) {
+      return;
+    }
+
+    try {
+      setActionLoading(true);
+      setActionMessage(null);
+      await adminRejectOrganizerApplication(user.application.id, notes || undefined);
+      setActionMessage({ type: "success", text: "Solicitud rechazada" });
+      // Recargar datos del usuario
+      await loadUser();
+    } catch (e: any) {
+      setActionMessage({ 
+        type: "error", 
+        text: e?.response?.data?.error || "Error al rechazar la solicitud" 
+      });
+    } finally {
+      setActionLoading(false);
+    }
+  }
 
   if (loading) {
     return (
@@ -94,6 +149,19 @@ export default function AdminUserDetail() {
           <h1 className="text-3xl font-bold">Perfil de Usuario</h1>
         </div>
       </div>
+
+      {/* Mensaje de acción */}
+      {actionMessage && (
+        <div
+          className={`mb-4 rounded-md p-4 ${
+            actionMessage.type === "success"
+              ? "bg-green-50 border border-green-200 text-green-800"
+              : "bg-red-50 border border-red-200 text-red-800"
+          }`}
+        >
+          {actionMessage.text}
+        </div>
+      )}
 
       {/* Grid de secciones */}
       <div className="grid gap-6 md:grid-cols-2">
@@ -215,11 +283,11 @@ export default function AdminUserDetail() {
           </dl>
         </section>
 
-        {/* Información del Organizador */}
-        {user.role === "organizer" && user.application && (
+        {/* Información del Organizador / Solicitud */}
+        {user.application && (
           <section className="bg-white border rounded-lg p-6">
             <h2 className="text-xl font-semibold mb-4 border-b pb-2">
-              Información del Organizador
+              {user.role === "organizer" ? "Información del Organizador" : "Solicitud de Organizador"}
             </h2>
             <dl className="space-y-3">
               <div>
@@ -270,15 +338,57 @@ export default function AdminUserDetail() {
                   </dd>
                 </div>
               )}
+              
+              {/* Estado de la solicitud */}
+              <div>
+                <dt className="text-sm text-gray-600">Estado de la solicitud</dt>
+                <dd>
+                  {user.application.status === "APPROVED" && (
+                    <span className="inline-block px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                    Aprobado
+                    </span>
+                  )}
+                  {user.application.status === "PENDING" && (
+                    <span className="inline-block px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-900">
+                    Pendiente
+                    </span>
+                  )}
+                  {user.application.status === "REJECTED" && (
+                    <span className="inline-block px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
+                    Rechazado
+                    </span>
+                  )}
+                </dd>
+              </div>
             </dl>
+
+            {/* Botones de acción para solicitudes pendientes */}
+            {user.application.status === "PENDING" && (
+              <div className="mt-6 pt-4 border-t flex gap-3">
+                <button
+                  onClick={handleApprove}
+                  disabled={actionLoading}
+                  className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                >
+                  {actionLoading ? "Procesando..." : "✓ Aprobar Solicitud"}
+                </button>
+                <button
+                  onClick={handleReject}
+                  disabled={actionLoading}
+                  className="flex-1 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                >
+                  {actionLoading ? "Procesando..." : "✗ Rechazar Solicitud"}
+                </button>
+              </div>
+            )}
           </section>
         )}
 
         {/* Datos bancarios */}
-        {user.role === "organizer" && user.bankingInfo && (
+        {user.bankingInfo && (
           <section className="bg-white border rounded-lg p-6">
             <h2 className="text-xl font-semibold mb-4 border-b pb-2">
-              Datos Bancarios
+              Datos Bancarios {user.role !== "organizer" && "(Solicitud Pendiente)"}
             </h2>
             
             {/* Estado de la cuenta bancaria */}

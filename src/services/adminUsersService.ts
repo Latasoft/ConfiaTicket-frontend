@@ -15,6 +15,7 @@ export type AdminUser = {
   createdAt: string;              // 👈 NUEVO: fecha de creación
   updatedAt?: string;             // opcional (lo devuelve el backend en varias rutas)
   latestOrganizerAppStatus: OrganizerAppStatus; // estado de la última solicitud
+  applicationId: number | null;   // ID de la solicitud de organizador si existe
 };
 
 /** Información detallada de un usuario */
