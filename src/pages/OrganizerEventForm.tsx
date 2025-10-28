@@ -11,10 +11,6 @@ import {
   type OrganizerEvent,
 } from "@/services/organizerEventsService";
 import { useAuth } from "@/context/AuthContext";
-import {
-  listOrganizerReservations,
-  type OrganizerReservationItem,
-} from "@/services/ticketsService";
 import EventTypeModal, { type EventType } from "@/components/EventTypeModal";
 
 /* =================== Límites (alineados con DB) =================== */
@@ -308,7 +304,11 @@ export default function OrganizerEventForm() {
         setCurrentStep(2);
         setToast(null);
       } else {
-        const response = await createMyEvent(payload as any);
+        const normalizedPayload = {
+          ...payload,
+          eventType: eventType === 'resale' ? 'RESALE' : eventType === 'own' ? 'OWN' : undefined,
+        };
+        const response = await createMyEvent(normalizedPayload as any);
         setCreatedEventId(response.id);
         setCurrentStep(2);
       }
@@ -782,67 +782,152 @@ function OwnEventTicketsStep({
   onFinish: () => void;
   onBack: () => void;
 }) {
-  const [rows, setRows] = useState<OrganizerReservationItem[]>([]);
-  const [loadingList, setLoadingList] = useState(false);
+  type Section = {
+    id: number;
+    name: string;
+    rowStart: string | null;
+    rowEnd: string | null;
+    seatsPerRow: number | null;
+    seatStart: number | null;
+    seatEnd: number | null;
+    totalCapacity: number;
+  };
 
-  async function fetchReservations() {
-    setLoadingList(true);
+  const [sections, setSections] = useState<Section[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [showForm, setShowForm] = useState(false);
+
+  // formulario para nueva seccion
+  const [sectionForm, setSectionForm] = useState({
+    name: "",
+    rowStart: "",
+    rowEnd: "",
+    seatsPerRow: "",
+    seatStart: "",
+    seatEnd: "",
+    useRangeMode: true, // true = rango de filas, false = rango de asientos
+  });
+
+  // cargar secciones existentes
+  async function fetchSections() {
+    setLoading(true);
     try {
-      const response = await listOrganizerReservations({ 
-        page: 1, 
-        pageSize: 100,
-        eventId 
-      });
-      setRows(response.items || []);
-    } catch (err) {
-      console.error("Error al cargar reservas:", err);
+      const { listEventSections } = await import("@/services/organizerEventsService");
+      const data = await listEventSections(eventId);
+      setSections(Array.isArray(data) ? data : []);
+    } catch (err: any) {
+      console.error("Error al cargar secciones:", err);
+      setError(err.response?.data?.error || "Error al cargar secciones");
+      setSections([]); // Asegurar que sea un array vacío en caso de error
     } finally {
-      setLoadingList(false);
+      setLoading(false);
     }
   }
 
   useEffect(() => {
-    fetchReservations();
+    fetchSections();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [eventId]);
 
-  const ticketsWithReservations = rows.length;
+  async function handleCreateSection() {
+    const { name, rowStart, rowEnd, seatsPerRow, seatStart, seatEnd, useRangeMode } = sectionForm;
+
+    if (!name.trim()) {
+      setError("El nombre de la sección es requerido");
+      return;
+    }
+
+    const payload: any = { name: name.trim() };
+
+    if (useRangeMode) {
+      // modo rango de filas
+      if (!rowStart || !rowEnd || !seatsPerRow) {
+        setError("Debes completar fila inicio, fila fin y asientos por fila");
+        return;
+      }
+      payload.rowStart = rowStart.trim();
+      payload.rowEnd = rowEnd.trim();
+      payload.seatsPerRow = Number(seatsPerRow);
+    } else {
+      // modo rango de asientos
+      if (!seatStart || !seatEnd) {
+        setError("Debes completar asiento inicio y asiento fin");
+        return;
+      }
+      payload.seatStart = Number(seatStart);
+      payload.seatEnd = Number(seatEnd);
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const { createEventSection } = await import("@/services/organizerEventsService");
+      const newSection = await createEventSection(eventId, payload);
+      setSections([...sections, newSection]);
+      setSuccess(`Sección "${newSection.name}" creada exitosamente (Capacidad: ${newSection.totalCapacity})`);
+      setSectionForm({
+        name: "",
+        rowStart: "",
+        rowEnd: "",
+        seatsPerRow: "",
+        seatStart: "",
+        seatEnd: "",
+        useRangeMode: true,
+      });
+      setShowForm(false);
+      setTimeout(() => setSuccess(null), 3000);
+    } catch (err: any) {
+      setError(err.response?.data?.error || "Error al crear sección");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleDeleteSection(sectionId: number) {
+    if (!confirm("¿Estás seguro de eliminar esta sección?")) return;
+
+    setLoading(true);
+    try {
+      const { deleteEventSection } = await import("@/services/organizerEventsService");
+      await deleteEventSection(eventId, sectionId);
+      setSections(sections.filter(s => s.id !== sectionId));
+      setSuccess("Sección eliminada");
+      setTimeout(() => setSuccess(null), 3000);
+    } catch (err: any) {
+      setError(err.response?.data?.error || "Error al eliminar sección");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const totalSectionCapacity = Array.isArray(sections) 
+    ? sections.reduce((sum, s) => sum + s.totalCapacity, 0)
+    : 0;
 
   return (
     <div className="space-y-6">
       <div className="border-l-4 border-green-500 bg-green-50 p-4 rounded">
-        <div className="flex items-start gap-3">
-          <div>
-            <h2 className="text-lg font-semibold text-green-900">Evento Propio - Gestión de Tickets</h2>
-            <p className="text-sm text-green-800 mt-1">
-              Para eventos propios, los tickets se gestionan cuando los usuarios realicen compras.
-            </p>
-          </div>
+        <h2 className="text-lg font-semibold text-green-900">Evento Propio - Definir Secciones</h2>
+        <p className="text-sm text-green-800 mt-1">
+          Define las secciones de tu evento. Los tickets se generarán automáticamente cuando los usuarios compren.
+        </p>
+      </div>
+
+      {error && (
+        <div className="p-3 rounded border border-red-300 bg-red-50 text-red-800 text-sm">
+          {error}
         </div>
-      </div>
+      )}
+      {success && (
+        <div className="p-3 rounded border border-green-300 bg-green-50 text-green-800 text-sm">
+          {success}
+        </div>
+      )}
 
-      <div className="bg-white border rounded-lg p-6">
-        <h3 className="font-semibold mb-3">¿Cómo funciona?</h3>
-        <ol className="space-y-2 text-sm text-gray-700">
-          <li className="flex gap-2">
-            <span className="font-semibold text-green-600">1.</span>
-            <span>Los usuarios comprarán entradas de tu evento desde la plataforma</span>
-          </li>
-          <li className="flex gap-2">
-            <span className="font-semibold text-green-600">2.</span>
-            <span>Cuando confirmen el pago, se crearán reservas que verás en tu panel</span>
-          </li>
-          <li className="flex gap-2">
-            <span className="font-semibold text-green-600">3.</span>
-            <span>Deberás subir los tickets físicos/digitales para cada reserva</span>
-          </li>
-          <li className="flex gap-2">
-            <span className="font-semibold text-green-600">4.</span>
-            <span>Los administradores aprobarán los tickets y se entregarán a los compradores</span>
-          </li>
-        </ol>
-      </div>
-
+      {/* Resumen de capacidad */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
         <h4 className="font-semibold text-blue-900 mb-2">Estado actual</h4>
         <div className="grid md:grid-cols-2 gap-4 text-sm">
@@ -851,74 +936,210 @@ function OwnEventTicketsStep({
             <p className="text-2xl font-bold text-blue-900">{expectedCapacity.toLocaleString()}</p>
           </div>
           <div>
-            <p className="text-blue-800">Reservas actuales:</p>
-            <p className="text-2xl font-bold text-blue-900">{ticketsWithReservations}</p>
+            <p className="text-blue-800">Capacidad en secciones:</p>
+            <p className="text-2xl font-bold text-blue-900">{totalSectionCapacity.toLocaleString()}</p>
           </div>
         </div>
+        {totalSectionCapacity > 0 && totalSectionCapacity !== expectedCapacity && (
+          <div className={`text-xs mt-2 ${
+            totalSectionCapacity < expectedCapacity 
+              ? 'text-blue-700' 
+              : 'text-amber-700'
+          }`}>
+            {totalSectionCapacity < expectedCapacity ? (
+              <p>ℹ️ Faltan {(expectedCapacity - totalSectionCapacity).toLocaleString()} asientos por definir en secciones</p>
+            ) : (
+              <p>⚠️ La capacidad en secciones ({totalSectionCapacity.toLocaleString()}) excede la capacidad del evento ({expectedCapacity.toLocaleString()})</p>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* tabla de reservas */}
-      {loadingList ? (
-        <div className="p-8 text-center text-gray-500">Cargando reservas...</div>
-      ) : rows.length > 0 ? (
-        <div className="border rounded-lg">
-          <h3 className="font-semibold p-4 border-b bg-gray-50">Reservas del Evento</h3>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50 border-b">
-                <tr>
-                  <th className="p-3 text-left">ID</th>
-                  <th className="p-3 text-left">Comprador</th>
-                  <th className="p-3 text-left">Cantidad</th>
-                  <th className="p-3 text-left">Estado</th>
-                  <th className="p-3 text-left">Ticket</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((r) => (
-                  <tr key={r.reservationId} className="border-b hover:bg-gray-50">
-                    <td className="p-3 font-mono text-xs">#{r.reservationId}</td>
-                    <td className="p-3">{r.buyer?.name || "—"}</td>
-                    <td className="p-3">{r.quantity || 1}</td>
-                    <td className="p-3">
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${
-                        r.status === "PAID" 
-                          ? "bg-green-100 text-green-800"
-                          : r.status === "PENDING_PAYMENT"
-                          ? "bg-yellow-100 text-yellow-800"
-                          : "bg-gray-100 text-gray-800"
-                      }`}>
-                        {r.status}
-                      </span>
-                    </td>
-                    <td className="p-3">
-                      {r.hasTicket ? (
-                        <span className="text-green-600 text-sm">✓ Subido</span>
-                      ) : (
-                        <span className="text-gray-400 text-sm">Pendiente</span>
+      {/* Lista de secciones */}
+      {loading && sections.length === 0 ? (
+        <div className="p-8 text-center text-gray-500">Cargando secciones...</div>
+      ) : sections.length > 0 ? (
+        <div className="border rounded-lg overflow-hidden">
+          <h3 className="font-semibold p-4 border-b bg-gray-50">Secciones Creadas</h3>
+          <div className="divide-y">
+            {sections.map((section) => (
+              <div key={section.id} className="p-4 hover:bg-gray-50">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <h4 className="font-semibold">{section.name}</h4>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm text-gray-600 mt-2">
+                      {section.rowStart && (
+                        <>
+                          <div>
+                            <span className="text-xs text-gray-500">Filas:</span>{" "}
+                            <span className="font-medium">{section.rowStart} - {section.rowEnd}</span>
+                          </div>
+                          <div>
+                            <span className="text-xs text-gray-500">Asientos/fila:</span>{" "}
+                            <span className="font-medium">{section.seatsPerRow}</span>
+                          </div>
+                        </>
                       )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                      {section.seatStart && (
+                        <div>
+                          <span className="text-xs text-gray-500">Asientos:</span>{" "}
+                          <span className="font-medium">{section.seatStart} - {section.seatEnd}</span>
+                        </div>
+                      )}
+                      <div>
+                        <span className="text-xs text-gray-500">Capacidad:</span>{" "}
+                        <span className="font-bold text-green-600">{section.totalCapacity}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => handleDeleteSection(section.id)}
+                    disabled={loading}
+                    className="text-red-600 hover:text-red-800 text-sm ml-4"
+                  >
+                    Eliminar
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       ) : (
         <div className="border rounded-lg p-8 text-center">
-          <p className="text-gray-600 mb-2">Aún no hay reservas para este evento</p>
+          <p className="text-gray-600 mb-2">Aún no hay secciones definidas</p>
           <p className="text-sm text-gray-500">
-            Las reservas aparecerán aquí cuando los usuarios compren entradas
+            Crea al menos una sección para tu evento
           </p>
         </div>
       )}
 
-      <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-        <h4 className="font-semibold text-amber-900 mb-2">Recordatorio</h4>
-        <p className="text-sm text-amber-800">
-          Podrás gestionar y subir tickets desde el <strong>Panel de Organizador → Gestión de Tickets</strong> una vez que tu evento sea aprobado y los usuarios comiencen a comprar.
-        </p>
-      </div>
+      {/* Boton para mostrar formulario */}
+      {!showForm && (
+        <button
+          onClick={() => setShowForm(true)}
+          className="w-full md:w-auto px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+        >
+          + Agregar Sección
+        </button>
+      )}
+
+      {/* Formulario de nueva seccion */}
+      {showForm && (
+        <div className="border rounded-lg p-6 bg-gray-50">
+          <h3 className="font-semibold mb-4">Nueva Sección</h3>
+
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                Nombre de la Sección *
+              </label>
+              <input
+                type="text"
+                value={sectionForm.name}
+                onChange={(e) => setSectionForm({ ...sectionForm, name: e.target.value })}
+                className="w-full border rounded px-3 py-2"
+                placeholder="Ej: Platea A, Tribuna Norte, VIP"
+                maxLength={100}
+              />
+            </div>
+
+            <div className="border-t pt-4">
+              <label className="flex items-center gap-2 mb-3">
+                <input
+                  type="checkbox"
+                  checked={sectionForm.useRangeMode}
+                  onChange={(e) => setSectionForm({ ...sectionForm, useRangeMode: e.target.checked })}
+                  className="w-4 h-4"
+                />
+                <span className="text-sm font-medium">Usar rango de filas</span>
+              </label>
+
+              {sectionForm.useRangeMode ? (
+                <div className="grid md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Fila Inicio *</label>
+                    <input
+                      type="text"
+                      value={sectionForm.rowStart}
+                      onChange={(e) => setSectionForm({ ...sectionForm, rowStart: e.target.value })}
+                      className="w-full border rounded px-3 py-2"
+                      placeholder="A"
+                      maxLength={10}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Fila Fin *</label>
+                    <input
+                      type="text"
+                      value={sectionForm.rowEnd}
+                      onChange={(e) => setSectionForm({ ...sectionForm, rowEnd: e.target.value })}
+                      className="w-full border rounded px-3 py-2"
+                      placeholder="Z"
+                      maxLength={10}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Asientos por Fila *</label>
+                    <input
+                      type="number"
+                      value={sectionForm.seatsPerRow}
+                      onChange={(e) => setSectionForm({ ...sectionForm, seatsPerRow: e.target.value })}
+                      className="w-full border rounded px-3 py-2"
+                      placeholder="20"
+                      min="1"
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Asiento Inicio *</label>
+                    <input
+                      type="number"
+                      value={sectionForm.seatStart}
+                      onChange={(e) => setSectionForm({ ...sectionForm, seatStart: e.target.value })}
+                      className="w-full border rounded px-3 py-2"
+                      placeholder="1"
+                      min="1"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Asiento Fin *</label>
+                    <input
+                      type="number"
+                      value={sectionForm.seatEnd}
+                      onChange={(e) => setSectionForm({ ...sectionForm, seatEnd: e.target.value })}
+                      className="w-full border rounded px-3 py-2"
+                      placeholder="100"
+                      min="1"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                onClick={handleCreateSection}
+                disabled={loading}
+                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50"
+              >
+                {loading ? "Creando..." : "Crear Sección"}
+              </button>
+              <button
+                onClick={() => {
+                  setShowForm(false);
+                  setError(null);
+                }}
+                disabled={loading}
+                className="px-4 py-2 border rounded hover:bg-gray-100"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* botones de navegacion */}
       <div className="flex items-center justify-between pt-4 border-t">
@@ -930,9 +1151,10 @@ function OwnEventTicketsStep({
         </button>
         <button
           onClick={onFinish}
-          className="px-4 py-2 bg-black text-white rounded hover:bg-black/90"
+          disabled={sections.length === 0}
+          className="px-4 py-2 bg-black text-white rounded hover:bg-black/90 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Finalizar y Enviar a Aprobación
+          {sections.length > 0 ? "Finalizar y Enviar a Aprobación" : "Debes crear al menos una sección"}
         </button>
       </div>
     </div>
@@ -941,6 +1163,7 @@ function OwnEventTicketsStep({
 
 /* =================== Tickets para Reventa =================== */
 function ResaleTicketsStep({
+  eventId,
   expectedCapacity,
   onFinish,
   onBack
@@ -950,19 +1173,8 @@ function ResaleTicketsStep({
   onFinish: () => void;
   onBack: () => void;
 }) {
-  type TicketInfo = {
-    id: number;
-    row: string;
-    seat: string;
-    zone?: string;
-    level?: string;
-    description?: string;
-    imageFile: File | null;
-    imagePreview?: string;
-    uploaded: boolean;
-  };
-
-  const [tickets, setTickets] = useState<TicketInfo[]>([]);
+  // Importar el tipo ResaleTicket del servicio
+  const [tickets, setTickets] = useState<any[]>([]);
   const [currentTicket, setCurrentTicket] = useState({
     row: "",
     seat: "",
@@ -975,30 +1187,37 @@ function ResaleTicketsStep({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  // Cargar tickets existentes
+  async function fetchTickets() {
+    setLoading(true);
+    try {
+      const { listResaleTickets } = await import("@/services/organizerEventsService");
+      const data = await listResaleTickets(eventId);
+      setTickets(Array.isArray(data) ? data : []);
+    } catch (err: any) {
+      console.error("Error al cargar tickets:", err);
+      setError(err.response?.data?.error || "Error al cargar tickets");
+      setTickets([]); // Asegurar que sea un array vacío en caso de error
+    } finally {
+      setLoading(false);
+    }
+  }
 
   useEffect(() => {
-    // inicializar tickets vacíos
-    const initialTickets: TicketInfo[] = Array.from({ length: expectedCapacity }, (_, i) => ({
-      id: i + 1,
-      row: "",
-      seat: "",
-      zone: "",
-      level: "",
-      description: "",
-      imageFile: null,
-      uploaded: false,
-    }));
-    setTickets(initialTickets);
-  }, [expectedCapacity]);
+    fetchTickets();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [eventId]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     // validar tipo
-    const allowed = ["image/jpeg", "image/png", "image/jpg", "application/pdf"];
+    const allowed = ["image/jpeg", "image/png", "image/jpg"];
     if (!allowed.includes(file.type)) {
-      setError("Solo se permiten imágenes JPG, PNG o PDF");
+      setError("Solo se permiten imágenes JPG o PNG");
       return;
     }
 
@@ -1012,18 +1231,14 @@ function ResaleTicketsStep({
     setError(null);
 
     // preview
-    if (file.type.startsWith("image/")) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setCurrentPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    } else {
-      setCurrentPreview("");
-    }
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setCurrentPreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
   };
 
-  const handleAddTicket = async (ticketIndex: number) => {
+  const handleAddTicket = async () => {
     // validar campos requeridos
     if (!currentTicket.row.trim()) {
       setError("La fila es requerida");
@@ -1042,21 +1257,20 @@ function ResaleTicketsStep({
     setError(null);
 
     try {
-      // TODO: aqui iria la llamada al backend
+      const { createResaleTicket } = await import("@/services/organizerEventsService");
       
-      const updatedTickets = [...tickets];
-      updatedTickets[ticketIndex] = {
-        ...updatedTickets[ticketIndex],
-        row: currentTicket.row,
-        seat: currentTicket.seat,
-        zone: currentTicket.zone,
-        level: currentTicket.level,
-        description: currentTicket.description,
-        imageFile: currentFile,
-        imagePreview: currentPreview,
-        uploaded: true,
+      const payload = {
+        row: currentTicket.row.trim(),
+        seat: currentTicket.seat.trim(),
+        ticketCode: `${currentTicket.row.trim()}-${currentTicket.seat.trim()}`,
+        zone: currentTicket.zone.trim() || undefined,
+        level: currentTicket.level.trim() || undefined,
+        description: currentTicket.description.trim() || undefined,
+        ticketFile: currentFile,
       };
-      setTickets(updatedTickets);
+
+      const newTicket = await createResaleTicket(eventId, payload);
+      setTickets([...tickets, newTicket]);
 
       // limpiar formulario
       setCurrentTicket({
@@ -1068,34 +1282,36 @@ function ResaleTicketsStep({
       });
       setCurrentFile(null);
       setCurrentPreview("");
-      setSuccess(`Ticket #${ticketIndex + 1} guardado correctamente`);
+      setSuccess(`Ticket guardado correctamente`);
       
       setTimeout(() => setSuccess(null), 3000);
     } catch (err: any) {
-      setError(err.message || "Error al guardar el ticket");
+      setError(err.response?.data?.error || err.message || "Error al guardar el ticket");
     } finally {
       setUploading(false);
     }
   };
 
-  const handleRemoveTicket = (ticketIndex: number) => {
-    const updatedTickets = [...tickets];
-    updatedTickets[ticketIndex] = {
-      ...updatedTickets[ticketIndex],
-      row: "",
-      seat: "",
-      zone: "",
-      level: "",
-      description: "",
-      imageFile: null,
-      imagePreview: undefined,
-      uploaded: false,
-    };
-    setTickets(updatedTickets);
+  const handleRemoveTicket = async (ticketId: number) => {
+    if (!confirm("¿Estás seguro de eliminar este ticket?")) return;
+
+    setLoading(true);
+    try {
+      const { deleteResaleTicket } = await import("@/services/organizerEventsService");
+      await deleteResaleTicket(eventId, ticketId);
+      setTickets(tickets.filter(t => t.id !== ticketId));
+      setSuccess("Ticket eliminado");
+      setTimeout(() => setSuccess(null), 3000);
+    } catch (err: any) {
+      setError(err.response?.data?.error || "Error al eliminar el ticket");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const uploadedCount = tickets.filter(t => t.uploaded).length;
+  const uploadedCount = tickets.length;
   const allUploaded = uploadedCount === expectedCapacity;
+  const canAddMore = uploadedCount < expectedCapacity;
 
   return (
     <div className="space-y-6">
@@ -1104,7 +1320,7 @@ function ResaleTicketsStep({
           <div>
             <h2 className="text-lg font-semibold text-blue-900">Reventa - Información de Tickets</h2>
             <p className="text-sm text-blue-800 mt-1">
-              Completa la información de cada entrada que vas a revender
+              Sube las imágenes de las entradas que vas a revender (máximo {expectedCapacity})
             </p>
           </div>
         </div>
@@ -1124,7 +1340,7 @@ function ResaleTicketsStep({
             <p className="text-xs text-gray-600 mt-1">
               {allUploaded 
                 ? "✓ Todas las entradas han sido configuradas"
-                : `Faltan ${expectedCapacity - uploadedCount} entrada(s) por configurar`
+                : `Puedes agregar ${expectedCapacity - uploadedCount} entrada(s) más`
               }
             </p>
           </div>
@@ -1147,32 +1363,24 @@ function ResaleTicketsStep({
       )}
 
       {/* lista de tickets */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {tickets.map((ticket, index) => (
-          <div key={ticket.id} className={`border rounded-lg p-4 ${
-            ticket.uploaded ? "bg-green-50 border-green-300" : "bg-white border-gray-300"
-          }`}>
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="font-semibold text-sm">Ticket #{index + 1}</h3>
-              {ticket.uploaded && (
+      {loading && tickets.length === 0 ? (
+        <div className="p-8 text-center text-gray-500">Cargando tickets...</div>
+      ) : tickets.length > 0 ? (
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {tickets.map((ticket) => (
+            <div key={ticket.id} className="border rounded-lg p-4 bg-green-50 border-green-300">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-semibold text-sm">Ticket #{ticket.id}</h3>
                 <button
-                  onClick={() => handleRemoveTicket(index)}
-                  className="text-xs text-red-600 hover:underline"
+                  onClick={() => handleRemoveTicket(ticket.id)}
+                  disabled={loading}
+                  className="text-xs text-red-600 hover:underline disabled:opacity-50"
                 >
                   Eliminar
                 </button>
-              )}
-            </div>
+              </div>
 
-            {ticket.uploaded ? (
               <div className="space-y-2 text-sm">
-                {ticket.imagePreview && (
-                  <img 
-                    src={ticket.imagePreview} 
-                    alt={`Ticket ${index + 1}`}
-                    className="w-full h-32 object-cover rounded mb-2"
-                  />
-                )}
                 <div className="grid grid-cols-2 gap-1 text-xs">
                   <span className="text-gray-600">Fila:</span>
                   <span className="font-medium">{ticket.row}</span>
@@ -1196,25 +1404,22 @@ function ResaleTicketsStep({
                 )}
                 <span className="text-green-600 text-xs font-medium">✓ Configurado</span>
               </div>
-            ) : (
-              <button
-                onClick={() => {
-                  // scroll al formulario
-                  document.getElementById('ticket-form')?.scrollIntoView({ behavior: 'smooth' });
-                }}
-                className="w-full py-2 border border-dashed border-gray-400 rounded text-sm text-gray-600 hover:bg-gray-50"
-              >
-                + Agregar información
-              </button>
-            )}
-          </div>
-        ))}
-      </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="border rounded-lg p-8 text-center">
+          <p className="text-gray-600 mb-2">Aún no has subido tickets</p>
+          <p className="text-sm text-gray-500">
+            Completa el formulario abajo para agregar tus entradas
+          </p>
+        </div>
+      )}
 
       {/* formulario para agregar ticket */}
-      {!allUploaded && (
+      {canAddMore && (
         <div id="ticket-form" className="border rounded-lg p-6 bg-gray-50">
-          <h3 className="font-semibold mb-4">Agregar información del próximo ticket</h3>
+          <h3 className="font-semibold mb-4">Agregar nuevo ticket</h3>
           
           <div className="grid md:grid-cols-2 gap-4 mb-4">
             <div>
@@ -1289,11 +1494,11 @@ function ResaleTicketsStep({
 
           <div className="mb-4">
             <label className="block text-sm font-medium mb-1">
-              Imagen del Ticket * <span className="text-xs text-gray-500">(JPG, PNG o PDF - máx 10MB)</span>
+              Imagen del Ticket * <span className="text-xs text-gray-500">(JPG o PNG - máx 10MB)</span>
             </label>
             <input
               type="file"
-              accept="image/jpeg,image/png,image/jpg,application/pdf"
+              accept="image/jpeg,image/png,image/jpg"
               onChange={handleFileChange}
               className="w-full border rounded px-3 py-2 text-sm"
             />
@@ -1309,11 +1514,11 @@ function ResaleTicketsStep({
           </div>
 
           <button
-            onClick={() => handleAddTicket(uploadedCount)}
+            onClick={handleAddTicket}
             disabled={uploading || !currentTicket.row || !currentTicket.seat || !currentFile}
             className="w-full md:w-auto px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {uploading ? "Guardando..." : `Guardar Ticket #${uploadedCount + 1}`}
+            {uploading ? "Guardando..." : "Guardar Ticket"}
           </button>
         </div>
       )}
@@ -1328,10 +1533,10 @@ function ResaleTicketsStep({
         </button>
         <button
           onClick={onFinish}
-          disabled={!allUploaded}
+          disabled={tickets.length === 0}
           className="px-4 py-2 bg-black text-white rounded hover:bg-black/90 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {allUploaded ? "Finalizar y Enviar a Aprobación" : `Completa los ${expectedCapacity - uploadedCount} tickets restantes`}
+          {tickets.length > 0 ? "Finalizar y Enviar a Aprobación" : "Debes subir al menos un ticket"}
         </button>
       </div>
     </div>
