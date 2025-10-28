@@ -1,6 +1,6 @@
 // src/pages/AdminOrganizerApps.tsx
 import { useEffect, useMemo, useState } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, Link } from "react-router-dom";
 import {
   adminListOrganizerApplications,
   adminApproveOrganizerApplication,
@@ -40,14 +40,6 @@ export default function AdminOrganizerApps() {
         q: q || undefined,
         status: (status || undefined) as any,
       });
-      
-      // 🔍 DEBUG: Ver qué devuelve el backend
-      console.log("📋 Solicitudes de organizadores:", data.items);
-      if (data.items.length > 0) {
-        console.log("🔍 Primera solicitud:", data.items[0]);
-        console.log("📄 idCardImage:", data.items[0].idCardImage);
-        console.log("🔗 idCardImageUrl:", data.items[0].idCardImageUrl);
-      }
       
       setRows(data.items);
       setTotal(data.total);
@@ -131,20 +123,21 @@ export default function AdminOrganizerApps() {
     }
   }
 
-  function linkToUpload(raw: string) {
-    if (!raw) return "#";
-    if (/^https?:\/\//i.test(raw)) return raw;
-    let p = raw.replace(/\\/g, "/");
-    const lower = p.toLowerCase();
-    const idx = lower.indexOf("/uploads");
-    const idx2 = idx === -1 ? lower.indexOf("uploads") : idx;
-    if (idx2 > -1) p = p.slice(idx2);
-    if (!p.startsWith("/")) p = "/" + p;
-    const apiBase = (import.meta.env.VITE_API_URL || "")
-      .replace(/\/api$/, "")
-      .replace(/\/$/, "");
-    return `${apiBase}${p}`;
-  }
+  // Helper function to convert upload paths to URLs (currently unused)
+  // function linkToUpload(raw: string) {
+  //   if (!raw) return "#";
+  //   if (/^https?:\/\//i.test(raw)) return raw;
+  //   let p = raw.replace(/\\/g, "/");
+  //   const lower = p.toLowerCase();
+  //   const idx = lower.indexOf("/uploads");
+  //   const idx2 = idx === -1 ? lower.indexOf("uploads") : idx;
+  //   if (idx2 > -1) p = p.slice(idx2);
+  //   if (!p.startsWith("/")) p = "/" + p;
+  //   const apiBase = (import.meta.env.VITE_API_URL || "")
+  //     .replace(/\/api$/, "")
+  //     .replace(/\/$/, "");
+  //   return `${apiBase}${p}`;
+  // }
 
   function StatusBadge({ s }: { s: AppStatus }) {
     const base = "text-xs px-2 py-1 rounded";
@@ -276,7 +269,16 @@ export default function AdminOrganizerApps() {
               rows.map((app) => (
                 <tr key={app.id} className="border-t">
                   <td className="p-3">
-                    {app.user?.name}{" "}
+                    {app.user?.id ? (
+                      <Link 
+                        to={`/admin/usuarios/${app.user.id}`}
+                        className="text-blue-600 hover:text-blue-800 hover:underline font-medium"
+                      >
+                        {app.user.name}
+                      </Link>
+                    ) : (
+                      <span>{app.user?.name}</span>
+                    )}{" "}
                     <span className="text-gray-500">({app.user?.email})</span>
                   </td>
                   <td className="p-3">{fmt(app.createdAt)}</td>

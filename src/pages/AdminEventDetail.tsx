@@ -1,13 +1,12 @@
 // src/pages/AdminEventDetail.tsx
 import { useEffect, useState } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { adminGetEvent, adminSetEventStatus, type AdminEvent } from "@/services/adminEventsService";
 
 type Toast = { kind: "success" | "info" | "error"; text: string } | null;
 
 export default function AdminEventDetail() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
   const [event, setEvent] = useState<AdminEvent | null>(null);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState<Toast>(null);
