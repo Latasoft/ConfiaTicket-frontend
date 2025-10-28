@@ -48,6 +48,9 @@ export interface EventItem {
   organizerId?: number | null;
   approved?: boolean | null;
   createdAt?: string | null;
+  
+  /** Tipo de evento: OWN (propio) o RESALE (reventa) */
+  eventType?: 'OWN' | 'RESALE' | null;
 
   /** Si el backend lo incluye en /events/:id */
   organizer?: { id: number; name: string; email: string } | null;
