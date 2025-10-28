@@ -4,6 +4,7 @@ import { useParams } from "react-router-dom";
 import api from "@/services/api";
 import type { EventItem } from "@/types/event";
 import BuyBox from "@/components/BuyBox";
+import TicketPurchaseFlow from "@/components/TicketPurchaseFlow";
 import { useAuth } from "@/context/AuthContext";
 
 /* ================= Helpers para HOLD ================= */
@@ -222,9 +223,9 @@ export default function EventoDetalle() {
       </div>
 
       {/* CONTENIDO */}
-      <section className="max-w-6xl mx-auto p-6 grid gap-6 md:grid-cols-[1fr,360px]">
+      <section className="max-w-6xl mx-auto p-6 grid gap-6 lg:grid-cols-[1fr,400px]">
         {/* Principal */}
-        <article className="space-y-6">
+        <article className="space-y-6 min-w-0">{/* min-w-0 previene overflow */}
           <div>
             <h2 className="text-xl font-semibold mb-3">Acerca del evento</h2>
 
@@ -315,8 +316,8 @@ export default function EventoDetalle() {
         </article>
 
         {/* Lateral / CTA */}
-        <aside>
-          <div className="rounded-2xl border p-5 sticky top-20 space-y-4">
+        <aside className="lg:sticky lg:top-20 lg:self-start">
+          <div className="rounded-2xl border p-5 space-y-4 max-h-[calc(100vh-6rem)] overflow-y-auto">
             <div className="space-y-2">
               {typeof unitPrice === "number" && (
                 <div>
@@ -376,7 +377,23 @@ export default function EventoDetalle() {
               </div>
             )}
 
-            {eventIdNum > 0 ? <BuyBox eventId={eventIdNum} /> : null}
+            {/* Nuevo flujo de compra según tipo de evento */}
+            {ev && ev.eventType && (
+              <div className="mt-6">
+                <TicketPurchaseFlow
+                  eventId={eventIdNum}
+                  eventType={ev.eventType as 'RESALE' | 'OWN'}
+                  eventPrice={ev.price || 0}
+                  onPurchaseComplete={(reservationId) => {
+                    console.log('Compra completada:', reservationId);
+                    // Aquí podrías redirigir o mostrar un mensaje de éxito
+                  }}
+                />
+              </div>
+            )}
+
+            {/* Fallback: BuyBox legacy para eventos sin tipo definido */}
+            {(!ev || !ev.eventType) && eventIdNum > 0 && <BuyBox eventId={eventIdNum} />}
 
             {venue && (
               <div className="pt-2 text-sm text-gray-600">
