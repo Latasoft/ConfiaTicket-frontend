@@ -21,6 +21,7 @@ import OrganizerEventForm from "@/pages/OrganizerEventForm";
 import OrganizerTickets from "@/pages/OrganizerTickets";
 import OrganizerPayoutSettings from "@/pages/OrganizerPayoutSettings";
 import OrganizerPayouts from "@/pages/OrganizerPayouts";
+import OrganizerTicketValidator from "@/pages/OrganizerTicketValidator";
 
 // Mis entradas (comprador)
 import MyTickets from "@/pages/MyTickets";
@@ -223,6 +224,18 @@ export const router = createBrowserRouter([
           <RequireAuth>
             <RequireVerifiedOrganizer>
               <OrganizerPayoutSettings />
+            </RequireVerifiedOrganizer>
+          </RequireAuth>
+        ),
+      },
+
+      // Validar tickets (organizador)
+      {
+        path: "/organizador/validar-tickets",
+        element: (
+          <RequireAuth>
+            <RequireVerifiedOrganizer>
+              <OrganizerTicketValidator />
             </RequireVerifiedOrganizer>
           </RequireAuth>
         ),

@@ -345,6 +345,19 @@ export default function Navbar() {
                     >
                       Cuenta de cobro
                     </NavLink>
+
+                    <div className="border-t my-1"></div>
+
+                    <NavLink
+                      to="/organizador/validar-tickets"
+                      className={({ isActive }) =>
+                        `block px-3 py-2 hover:bg-black/5 ${isActive ? "font-semibold underline underline-offset-4" : ""}`
+                      }
+                      onClick={() => setOrgOpen(false)}
+                      role="menuitem"
+                    >
+                      Validar tickets
+                    </NavLink>
                   </div>
                 </div>
               )}
