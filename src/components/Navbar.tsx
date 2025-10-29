@@ -238,6 +238,17 @@ export default function Navbar() {
                     >
                       Mis Pagos
                     </NavLink>
+                    <div className="border-t my-1"></div>
+                    <NavLink
+                      to="/admin/configuracion"
+                      className={({ isActive }) =>
+                        `block px-3 py-2 hover:bg-black/5 ${isActive ? 'font-semibold underline underline-offset-4' : ''}`
+                      }
+                      onClick={() => setAdminOpen(false)}
+                      role="menuitem"
+                    >
+                      Configuración
+                    </NavLink>
                   </div>
                 </div>
               )}

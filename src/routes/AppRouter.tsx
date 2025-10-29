@@ -39,6 +39,7 @@ import AdminUserDetail from "@/pages/AdminUserDetail";
 import AdminOrganizerApps from "@/pages/AdminOrganizerApps";
 import AdminTickets from "@/pages/AdminTickets";
 import AdminPayouts from "@/pages/AdminPayouts"; // ← NUEVO
+import AdminConfig from "@/pages/AdminConfig"; // ← NUEVO
 
 // Seguridad de cuenta
 import ChangePassword from "@/pages/ChangePassword";
@@ -281,6 +282,14 @@ export const router = createBrowserRouter([
         element: (
           <RequireSuperadmin>
             <AdminPayouts />
+          </RequireSuperadmin>
+        ),
+      },
+      {
+        path: "/admin/configuracion",
+        element: (
+          <RequireSuperadmin>
+            <AdminConfig />
           </RequireSuperadmin>
         ),
       },
