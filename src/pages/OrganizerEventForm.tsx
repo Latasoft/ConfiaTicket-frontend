@@ -12,19 +12,25 @@ import {
 } from "@/services/organizerEventsService";
 import { useAuth } from "@/context/AuthContext";
 import EventTypeModal, { type EventType } from "@/components/EventTypeModal";
+import { getSystemConfig, type SystemConfig } from "@/services/configService";
 
-/* =================== Límites (alineados con DB) =================== */
-const LIMITS = {
+/* =================== Límites por defecto (fallback) =================== */
+const DEFAULT_LIMITS = {
   TITLE: 120,
   DESCRIPTION: 4000,
   VENUE: 120,
   CITY: 120,
-  COMMUNE: 120, // 👈 NUEVO
+  COMMUNE: 120,
   COVER_URL: 1024,
-  // Capacidad
-  CAPACITY_MIN: 1,
-  CAPACITY_MAX_RESALE: 4,      // reventa 4 entradas maximo
-  CAPACITY_MAX_OWN: 999999,    // evento propio ilimitado
+  // Capacidad (serán sobrescritos por la configuración del admin)
+  CAPACITY_MIN_OWN: 1,
+  CAPACITY_MAX_OWN: 999999,
+  CAPACITY_MIN_RESALE: 1,
+  CAPACITY_MAX_RESALE: 4,
+  // Precios (serán sobrescritos)
+  PRICE_MIN: 0,
+  PRICE_MAX: 10000000,
+  RESALE_MARKUP_PERCENT: 30,
 };
 
 /* =================== Utilidades =================== */
@@ -56,55 +62,75 @@ function sanitizeGoogleImgUrl(raw?: string) {
 }
 
 /* =================== Schema (con límites dinámicos) =================== */
-// Función para crear schema dinámico según tipo de evento
-function createSchema(eventType: EventType | null) {
-  const capacityMax = eventType === "resale" ? LIMITS.CAPACITY_MAX_RESALE : LIMITS.CAPACITY_MAX_OWN;
+// Función para crear schema dinámico según tipo de evento y configuración del sistema
+function createSchema(eventType: EventType | null, config: SystemConfig | null) {
+  // Usar límites de configuración o valores por defecto
+  const fieldLimits = config?.fieldLimits || DEFAULT_LIMITS;
+  const ticketLimits = config?.ticketLimits || {
+    OWN: { MIN: DEFAULT_LIMITS.CAPACITY_MIN_OWN, MAX: DEFAULT_LIMITS.CAPACITY_MAX_OWN },
+    RESALE: { MIN: DEFAULT_LIMITS.CAPACITY_MIN_RESALE, MAX: DEFAULT_LIMITS.CAPACITY_MAX_RESALE },
+  };
+  const priceLimits = config?.priceLimits || {
+    MIN: DEFAULT_LIMITS.PRICE_MIN,
+    MAX: DEFAULT_LIMITS.PRICE_MAX,
+    RESALE_MARKUP_PERCENT: DEFAULT_LIMITS.RESALE_MARKUP_PERCENT,
+  };
+
+  const capacityLimits = eventType === "resale" ? ticketLimits.RESALE : ticketLimits.OWN;
   
   return z
     .object({
       // Evento
-      title: z.string().trim().min(3, "Mínimo 3 caracteres").max(LIMITS.TITLE, `Máximo ${LIMITS.TITLE} caracteres`),
+      title: z.string().trim().min(3, "Mínimo 3 caracteres").max(fieldLimits.TITLE, `Máximo ${fieldLimits.TITLE} caracteres`),
       description: z
         .string()
         .trim()
-        .max(LIMITS.DESCRIPTION, `Máximo ${LIMITS.DESCRIPTION} caracteres`)
+        .max(fieldLimits.DESCRIPTION, `Máximo ${fieldLimits.DESCRIPTION} caracteres`)
         .optional()
         .or(z.literal("")),
       coverImageUrl: z
         .string()
         .trim()
-        .max(LIMITS.COVER_URL, `URL demasiado larga (máx. ${LIMITS.COVER_URL})`)
+        .max(fieldLimits.COVER_URL, `URL demasiado larga (máx. ${fieldLimits.COVER_URL})`)
         .url("URL inválida")
         .optional()
         .or(z.literal("")),
-      venue: z.string().trim().min(2, "Requerido").max(LIMITS.VENUE, `Máximo ${LIMITS.VENUE} caracteres`),
-      city: z.string().trim().max(LIMITS.CITY, `Máximo ${LIMITS.CITY} caracteres`).optional(),
-      commune: z.string().trim().min(2, "Requerido").max(LIMITS.COMMUNE, `Máximo ${LIMITS.COMMUNE} caracteres`),
+      venue: z.string().trim().min(2, "Requerido").max(fieldLimits.VENUE, `Máximo ${fieldLimits.VENUE} caracteres`),
+      city: z.string().trim().max(fieldLimits.CITY, `Máximo ${fieldLimits.CITY} caracteres`).optional(),
+      commune: z.string().trim().min(2, "Requerido").max(fieldLimits.COMMUNE, `Máximo ${fieldLimits.COMMUNE} caracteres`),
       startAt: z.string().min(1, "Fecha/hora requerida"),
       endAt: z.string().optional(),
 
-      // Capacidad dinámica según tipo
+      // Capacidad dinámica según tipo y configuración
       capacity: z.preprocess(
         (v) => Number(v),
-        z
-          .number()
-          .int("Debe ser entero")
-          .min(LIMITS.CAPACITY_MIN, `Mínimo ${LIMITS.CAPACITY_MIN}`)
-          .max(capacityMax, `Máximo ${capacityMax}`)
+        capacityLimits.MAX !== null
+          ? z
+              .number()
+              .int("Debe ser entero")
+              .min(capacityLimits.MIN, `Mínimo ${capacityLimits.MIN}`)
+              .max(capacityLimits.MAX, `Máximo ${capacityLimits.MAX.toLocaleString()}`)
+          : z
+              .number()
+              .int("Debe ser entero")
+              .min(capacityLimits.MIN, `Mínimo ${capacityLimits.MIN}`)
       ),
 
-      // Precios
+      // Precios con límites dinámicos
       priceBase: z
         .preprocess(
           (v) => (v === "" || v === undefined || v === null ? undefined : Number(v)), 
           eventType === "resale" 
-            ? z.number().int("Debe ser entero").min(0, "Precio base es requerido para reventa")
+            ? z.number().int("Debe ser entero").min(priceLimits.MIN, `Mínimo ${formatMoneyCLP(priceLimits.MIN)}`)
             : z.number().int().min(0).optional()
         )
         .optional(),
-      price: z.preprocess((v) => Number(v), z.number().int("Debe ser entero").min(0, "Debe ser ≥ 0")),
+      price: z.preprocess(
+        (v) => Number(v), 
+        z.number().int("Debe ser entero").min(priceLimits.MIN, `Mínimo ${formatMoneyCLP(priceLimits.MIN)}`).max(priceLimits.MAX, `Máximo ${formatMoneyCLP(priceLimits.MAX)}`)
+      ),
     })
-    // Validación cruzada solo para reventa
+    // Validación cruzada solo para reventa (usa límites dinámicos)
     .superRefine((vals, ctx) => {
       if (eventType === "resale") {
         // Validar que priceBase existe
@@ -117,12 +143,15 @@ function createSchema(eventType: EventType | null) {
           return;
         }
         
-        const maxAllowed = Math.floor(vals.priceBase * 1.3);
+        // Usar el porcentaje de markup configurado por el admin
+        const markupPercent = priceLimits.RESALE_MARKUP_PERCENT;
+        const maxAllowed = Math.floor(vals.priceBase * (1 + markupPercent / 100));
+        
         if (vals.price > maxAllowed) {
           ctx.addIssue({
             path: ["price"],
             code: z.ZodIssueCode.custom,
-            message: `Con reventa, el precio no puede superar ${formatMoneyCLP(maxAllowed)} (+30%).`,
+            message: `Con reventa, el precio no puede superar ${formatMoneyCLP(maxAllowed)} (+${markupPercent}%).`,
           });
         }
         if (vals.price < vals.priceBase) {
@@ -152,6 +181,29 @@ export default function OrganizerEventForm() {
   const navigate = useNavigate();
   const isEdit = Boolean(id);
 
+  const [systemConfig, setSystemConfig] = useState<SystemConfig | null>(null);
+
+  // Helper para obtener límites con fallback
+  const limits = useMemo(() => ({
+    field: systemConfig?.fieldLimits || {
+      TITLE: DEFAULT_LIMITS.TITLE,
+      DESCRIPTION: DEFAULT_LIMITS.DESCRIPTION,
+      VENUE: DEFAULT_LIMITS.VENUE,
+      CITY: DEFAULT_LIMITS.CITY,
+      COMMUNE: DEFAULT_LIMITS.COMMUNE,
+      COVER_URL: DEFAULT_LIMITS.COVER_URL,
+    },
+    ticket: systemConfig?.ticketLimits || {
+      OWN: { MIN: DEFAULT_LIMITS.CAPACITY_MIN_OWN, MAX: DEFAULT_LIMITS.CAPACITY_MAX_OWN },
+      RESALE: { MIN: DEFAULT_LIMITS.CAPACITY_MIN_RESALE, MAX: DEFAULT_LIMITS.CAPACITY_MAX_RESALE },
+    },
+    price: systemConfig?.priceLimits || {
+      MIN: DEFAULT_LIMITS.PRICE_MIN,
+      MAX: DEFAULT_LIMITS.PRICE_MAX,
+      RESALE_MARKUP_PERCENT: DEFAULT_LIMITS.RESALE_MARKUP_PERCENT,
+    },
+  }), [systemConfig]);
+
   // Estado del tipo de evento (reventa o propio)
   const [eventType, setEventType] = useState<EventType | null>(null);
   const [showTypeModal, setShowTypeModal] = useState(!isEdit); // Mostrar modal solo en creación
@@ -170,8 +222,21 @@ export default function OrganizerEventForm() {
   const [currentStatus, setCurrentStatus] = useState<OrganizerEvent["status"] | null>(null);
   const [toast, setToast] = useState<ErrorToast>(null);
 
-  // Crear schema dinámico basado en el tipo de evento
-  const schema = useMemo(() => createSchema(eventType), [eventType]);
+  // Cargar configuración del sistema al montar el componente
+  useEffect(() => {
+    (async () => {
+      try {
+        const config = await getSystemConfig();
+        setSystemConfig(config);
+      } catch (error) {
+        console.error("Error al cargar configuración del sistema:", error);
+        // Continuar con valores por defecto
+      }
+    })();
+  }, []);
+
+  // Crear schema dinámico basado en el tipo de evento y configuración del sistema
+  const schema = useMemo(() => createSchema(eventType, systemConfig), [eventType, systemConfig]);
 
   const {
     register,
@@ -206,13 +271,15 @@ export default function OrganizerEventForm() {
   const handleEventTypeSelect = useCallback((type: EventType) => {
     setEventType(type);
     setShowTypeModal(false);
+    
     // Si es evento propio, permitir más capacidad
     if (type === "own") {
       setValue("capacity", 100); // Valor inicial sugerido para eventos propios
     } else {
-      setValue("capacity", 1); // Valor inicial para reventa
+      // Para reventa, usar el mínimo del límite configurado
+      setValue("capacity", limits.ticket.RESALE.MIN || 1);
     }
-  }, [setValue]);
+  }, [setValue, limits]);
 
   // limpiar formulario para un nuevo evento
   useEffect(() => {
@@ -253,9 +320,9 @@ export default function OrganizerEventForm() {
       setValue("capacity", ev.capacity as unknown as FormValuesInput["capacity"]);
       setCurrentStatus(ev.status);
       
-      // Detectar tipo de evento basado en capacidad o priceBase
-      // Si tiene priceBase o capacidad <= 4, es reventa
-      const isResale = (ev as any).priceBase != null || ev.capacity <= LIMITS.CAPACITY_MAX_RESALE;
+      // Detectar tipo de evento basado en priceBase o capacidad
+      // Si tiene priceBase o capacidad <= límite de reventa configurado, es reventa
+      const isResale = (ev as any).priceBase != null || ev.capacity <= limits.ticket.RESALE.MAX;
       setEventType(isResale ? "resale" : "own");
       setShowTypeModal(false);
       
@@ -269,7 +336,7 @@ export default function OrganizerEventForm() {
         setValue("priceBase", String((ev as any).priceBase));
       }
     })();
-  }, [id, isEdit, setValue]);
+  }, [id, isEdit, setValue, limits]);
 
   async function onSubmit(raw: FormValuesInput) {
     const values: FormValues = schema.parse({
@@ -340,7 +407,10 @@ export default function OrganizerEventForm() {
     return sanitizeGoogleImgUrl(v);
   })();
 
-  const maxAllowedResale = priceBaseWatch > 0 ? Math.floor(priceBaseWatch * 1.3) : null;
+  // Calcular precio máximo de reventa usando la configuración del sistema
+  const maxAllowedResale = priceBaseWatch > 0 
+    ? Math.floor(priceBaseWatch * (1 + limits.price.RESALE_MARKUP_PERCENT / 100)) 
+    : null;
   const previewTotal =
     typeof priceWatch === "number" && typeof capacityWatch === "number" ? priceWatch * capacityWatch : 0;
 
@@ -474,7 +544,7 @@ export default function OrganizerEventForm() {
               {...register("title")}
               className="w-full border rounded px-3 py-2"
               placeholder="Ej: Concierto de Rock"
-              maxLength={LIMITS.TITLE}
+              maxLength={limits.field.TITLE}
             />
             {errors.title && <p className="text-sm text-red-600">{errors.title.message as string}</p>}
           </div>
@@ -485,7 +555,7 @@ export default function OrganizerEventForm() {
               {...register("description")}
               className="w-full border rounded px-3 py-2 min-h-[100px]"
               placeholder="Detalles del evento…"
-              maxLength={LIMITS.DESCRIPTION}
+              maxLength={limits.field.DESCRIPTION}
             />
           </div>
 
@@ -501,13 +571,13 @@ export default function OrganizerEventForm() {
             <input
               {...register("coverImageUrl")}
               onBlur={(e) => {
-                const cleaned = (sanitizeGoogleImgUrl(e.target.value.trim()) || "").slice(0, LIMITS.COVER_URL);
+                const cleaned = (sanitizeGoogleImgUrl(e.target.value.trim()) || "").slice(0, limits.field.COVER_URL);
                 setValue("coverImageUrl", cleaned, { shouldDirty: true });
                 setPreviewError(null);
               }}
               className="w-full border rounded px-3 py-2"
               placeholder="https://…/archivo.jpg (evita enlaces de búsqueda; usa la URL directa)"
-              maxLength={LIMITS.COVER_URL}
+              maxLength={limits.field.COVER_URL}
             />
             {errors.coverImageUrl && <p className="text-sm text-red-600">{errors.coverImageUrl.message as string}</p>}
 
@@ -550,7 +620,7 @@ export default function OrganizerEventForm() {
                 {...register("venue")}
                 className="w-full border rounded px-3 py-2"
                 placeholder="Estadio Nacional"
-                maxLength={LIMITS.VENUE}
+                maxLength={limits.field.VENUE}
               />
               {errors.venue && <p className="text-sm text-red-600">{errors.venue.message as string}</p>}
             </div>
@@ -560,7 +630,7 @@ export default function OrganizerEventForm() {
                 {...register("city")}
                 className="w-full border rounded px-3 py-2"
                 placeholder="Santiago"
-                maxLength={LIMITS.CITY}
+                maxLength={limits.field.CITY}
               />
             </div>
             <div>
@@ -569,7 +639,7 @@ export default function OrganizerEventForm() {
                 {...register("commune")}
                 className="w-full border rounded px-3 py-2"
                 placeholder="Providencia"
-                maxLength={LIMITS.COMMUNE}
+                maxLength={limits.field.COMMUNE}
               />
               {errors.commune && <p className="text-sm text-red-600">{errors.commune.message as string}</p>}
             </div>
@@ -592,15 +662,17 @@ export default function OrganizerEventForm() {
               Número de entradas * 
               <span className="text-xs text-gray-500 ml-1">
                 {eventType === "resale" 
-                  ? `(máx. ${LIMITS.CAPACITY_MAX_RESALE})` 
-                  : `(hasta ${LIMITS.CAPACITY_MAX_OWN.toLocaleString()})`
+                  ? `(máx. ${limits.ticket.RESALE.MAX})` 
+                  : limits.ticket.OWN.MAX !== null
+                    ? `(hasta ${limits.ticket.OWN.MAX.toLocaleString()})`
+                    : '(sin límite)'
                 }
               </span>
             </label>
             <input
               type="number"
-              min={LIMITS.CAPACITY_MIN}
-              max={eventType === "resale" ? LIMITS.CAPACITY_MAX_RESALE : LIMITS.CAPACITY_MAX_OWN}
+              min={limits.ticket[eventType === "resale" ? "RESALE" : "OWN"].MIN}
+              max={limits.ticket[eventType === "resale" ? "RESALE" : "OWN"].MAX ?? undefined}
               step={1}
               {...register("capacity")}
               className="w-full border rounded px-3 py-2"
@@ -609,12 +681,15 @@ export default function OrganizerEventForm() {
             {errors.capacity && <p className="text-sm text-red-600">{errors.capacity.message as string}</p>}
             {eventType === "resale" && (
               <p className="text-xs text-blue-600 mt-1">
-                Reventa: Máximo {LIMITS.CAPACITY_MAX_RESALE} entradas permitidas
+                Reventa: Máximo {limits.ticket.RESALE.MAX.toLocaleString()} entradas permitidas
               </p>
             )}
             {eventType === "own" && (
               <p className="text-xs text-green-600 mt-1">
-                Evento propio: Sin límite de capacidad
+                Evento propio: {limits.ticket.OWN.MAX !== null 
+                  ? `Hasta ${limits.ticket.OWN.MAX.toLocaleString()} entradas` 
+                  : 'Sin límite de capacidad'
+                }
               </p>
             )}
           </div>
@@ -655,7 +730,7 @@ export default function OrganizerEventForm() {
               />
               {eventType === "resale" && maxAllowedResale !== null && (
                 <p className="text-xs text-gray-500 mt-1">
-                  Máximo permitido: <strong>{formatMoneyCLP(maxAllowedResale)}</strong> (+30% del precio base).
+                  Máximo permitido: <strong>{formatMoneyCLP(maxAllowedResale)}</strong> (+{limits.price.RESALE_MARKUP_PERCENT}% del precio base).
                 </p>
               )}
               {errors.price && <p className="text-sm text-red-600">{errors.price.message as string}</p>}
