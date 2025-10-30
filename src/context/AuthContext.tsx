@@ -5,6 +5,7 @@ import api from "@/services/api";
 
 // Alinear con backend
 type Role = "buyer" | "organizer" | "superadmin";
+type ApplicationStatus = "PENDING" | "APPROVED" | "REJECTED" | null;
 
 export interface AuthUser {
   id: number;
@@ -13,6 +14,7 @@ export interface AuthUser {
   role: Role;
   rut?: string | null;            // 👈 NUEVO: para auto-rellenar el formulario
   verifiedOrganizer?: boolean;    // viene de /auth/me
+  applicationStatus?: ApplicationStatus; // 👈 NUEVO: estado de la solicitud
 }
 
 interface AuthContextType {
