@@ -368,9 +368,15 @@ export default function Navbar() {
                 </NavLink>
               )}
 
-              {user.role === "buyer" && (
+              {user.role === "buyer" && !user.applicationStatus && (
                 <NavLink to="/solicitar-organizador" className={active}>
                   Ser organizador
+                </NavLink>
+              )}
+
+              {user.role === "buyer" && (user.applicationStatus === "PENDING" || user.applicationStatus === "REJECTED") && (
+                <NavLink to="/solicitar-organizador" className={active}>
+                  Estado de Solicitud
                 </NavLink>
               )}
 

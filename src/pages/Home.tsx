@@ -594,7 +594,7 @@ export default function Home() {
             <div className="text-sm text-gray-600">Cambiar contraseña o correo</div>
           </Link>
 
-          {user.role === "buyer" && (
+          {user.role === "buyer" && !user.applicationStatus && (
             <Link
               to="/solicitar-organizador"
               className="rounded-xl border p-4 hover:bg-black/5 hover:shadow-sm transition"
@@ -603,6 +603,19 @@ export default function Home() {
               <div className="text-sm text-gray-600">Envía tu solicitud</div>
             </Link>
           )}
+
+          {user.role === "buyer" && (user.applicationStatus === "PENDING" || user.applicationStatus === "REJECTED") && (
+            <Link
+              to="/solicitar-organizador"
+              className="rounded-xl border p-4 hover:bg-black/5 hover:shadow-sm transition"
+            >
+              <div className="font-medium">Estado de Solicitud de Organizador</div>
+              <div className="text-sm text-gray-600">
+                {user.applicationStatus === "PENDING" ? "Solicitud pendiente de revisión" : "Solicitud rechazada - Reenviar"}
+              </div>
+            </Link>
+          )}
+
           {user.role === "superadmin" && (
             <>
               <Link

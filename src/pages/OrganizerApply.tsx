@@ -51,8 +51,10 @@ const ACCOUNT_TYPES: { value: AccountType; label: string }[] = [
 
 export default function OrganizerApply() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, reloadProfile } = useAuth();
 
+  const [application, setApplication] = useState<any>(null);
+  const [loadingApp, setLoadingApp] = useState(true);
   const [form, setForm] = useState({
     legalName: "",
     phone: "",
@@ -68,6 +70,40 @@ export default function OrganizerApply() {
   // Ref para limpiar el input file sin usar document.getElementById
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Cargar la solicitud si existe
+  useEffect(() => {
+    async function loadApplication() {
+      if (!user) return;
+      
+      try {
+        setLoadingApp(true);
+        const { data } = await api.get("/organizer-applications/my-application");
+        setApplication(data);
+        
+        // Si tiene solicitud rechazada, prellenar el formulario
+        if (data.status === "REJECTED") {
+          setForm({
+            legalName: data.legalName || "",
+            phone: data.phone || "",
+            notes: "",
+            payoutBankName: data.payoutBankName || "",
+            payoutAccountType: data.payoutAccountType || "",
+            payoutAccountNumber: data.payoutAccountNumber || "",
+          });
+        }
+      } catch (err: any) {
+        // Si no tiene solicitud (404), está bien
+        if (err?.response?.status !== 404) {
+          console.error("Error cargando solicitud:", err);
+        }
+      } finally {
+        setLoadingApp(false);
+      }
+    }
+    
+    loadApplication();
+  }, [user]);
+
   // Verificar que el usuario tenga RUT registrado
   useEffect(() => {
     if (user && !user.rut) {
@@ -77,6 +113,20 @@ export default function OrganizerApply() {
       });
     }
   }, [user]);
+
+  // Redirigir si la solicitud fue APROBADA
+  useEffect(() => {
+    if (!user) return;
+    
+    if (user.applicationStatus === "APPROVED") {
+      setMsg({
+        type: "err",
+        text: "Tu solicitud ya fue aprobada. Ya eres organizador."
+      });
+      // Redirigir después de 2 segundos
+      setTimeout(() => navigate("/"), 2000);
+    }
+  }, [user, navigate]);
 
   function onChange(e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
     const { name, value } = e.target;
@@ -165,6 +215,10 @@ export default function OrganizerApply() {
       });
       setFile(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
+      
+      // Recargar perfil para actualizar applicationStatus
+      await reloadProfile();
+      
       navigate("/organizador/pendiente", { replace: true });
     } catch (err: any) {
       const text =
@@ -177,13 +231,113 @@ export default function OrganizerApply() {
     }
   }
 
+  // Vista de carga
+  if (loadingApp) {
+    return (
+      <div className="max-w-2xl mx-auto p-6">
+        <div className="text-center py-12">
+          <p className="text-gray-500">Cargando...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Vista para solicitud PENDING
+  if (user?.applicationStatus === "PENDING" && application) {
+    return (
+      <div className="max-w-2xl mx-auto p-6">
+        <h1 className="text-2xl font-semibold mb-4">Estado de Solicitud de Organizador</h1>
+        
+        <div className="rounded-lg border-2 border-blue-200 bg-blue-50 p-6 mb-6">
+          <div className="flex items-start gap-3">
+            <div className="text-3xl">⏳</div>
+            <div className="flex-1">
+              <h2 className="text-lg font-semibold text-blue-900 mb-2">Solicitud Pendiente de Revisión</h2>
+              <p className="text-blue-800 mb-4">
+                Tu solicitud está siendo revisada por nuestro equipo. Te notificaremos por correo electrónico cuando sea procesada.
+              </p>
+              <div className="text-sm text-blue-700">
+                <p><strong>Enviada el:</strong> {new Date(application.createdAt).toLocaleDateString('es-CL')}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-gray-50 rounded-lg p-6">
+          <h3 className="font-semibold mb-4">Datos enviados:</h3>
+          <div className="space-y-3 text-sm">
+            <div>
+              <span className="text-gray-600">Nombre legal:</span>{" "}
+              <span className="font-medium">{application.legalName}</span>
+            </div>
+            <div>
+              <span className="text-gray-600">Teléfono:</span>{" "}
+              <span className="font-medium">{application.phone}</span>
+            </div>
+            <div>
+              <span className="text-gray-600">Banco:</span>{" "}
+              <span className="font-medium">{application.payoutBankName}</span>
+            </div>
+            <div>
+              <span className="text-gray-600">Tipo de cuenta:</span>{" "}
+              <span className="font-medium">{application.payoutAccountType}</span>
+            </div>
+            <div>
+              <span className="text-gray-600">Número de cuenta:</span>{" "}
+              <span className="font-medium">{application.payoutAccountNumber}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-6">
+          <button
+            onClick={() => navigate("/")}
+            className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-md transition"
+          >
+            Volver al inicio
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Vista para formulario (sin solicitud o REJECTED)
   return (
     <div className="max-w-2xl mx-auto p-6">
-      <h1 className="text-2xl font-semibold mb-4">Solicitar ser Organizador</h1>
+      <h1 className="text-2xl font-semibold mb-4">
+        {user?.applicationStatus === "REJECTED" ? "Estado de Solicitud de Organizador" : "Solicitar ser Organizador"}
+      </h1>
       <p className="text-sm text-gray-600 mb-6">
         Completa tus datos personales, adjunta una foto clara de tu carnet por ambos lados
         y agrega los datos bancarios donde recibirás tus pagos.
       </p>
+
+      {user?.applicationStatus === "REJECTED" && application?.notes && (
+        <div className="mb-6 rounded-lg border-2 border-red-200 bg-red-50 p-6">
+          <div className="flex items-start gap-3">
+            <div className="text-3xl">❌</div>
+            <div className="flex-1">
+              <h2 className="text-lg font-semibold text-red-900 mb-2">Solicitud Rechazada</h2>
+              <p className="text-red-800 mb-3">
+                Tu solicitud fue rechazada por el siguiente motivo:
+              </p>
+              <div className="bg-white rounded border border-red-200 p-3 text-sm text-gray-800">
+                {application.notes}
+              </div>
+              <p className="text-red-800 mt-3 text-sm">
+                Por favor, corrige los datos según las observaciones y vuelve a enviar tu solicitud.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {user?.applicationStatus === "REJECTED" && !application?.notes && (
+        <div className="mb-4 rounded-md bg-yellow-50 border border-yellow-200 p-3 text-sm text-yellow-800">
+          <p className="font-medium">⚠️ Tu solicitud anterior fue rechazada</p>
+          <p className="mt-1">Por favor, corrige los datos solicitados y vuelve a enviar tu solicitud.</p>
+        </div>
+      )}
       
       {user?.rut && (
         <div className="mb-4 rounded-md bg-blue-50 border border-blue-200 p-3 text-sm text-blue-800">
