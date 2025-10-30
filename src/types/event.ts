@@ -17,7 +17,7 @@ export interface EventItem {
   /* ==================== Precio ==================== */
   /**
    * Precio unitario en CLP (sin decimales), provisto por el backend.
-   * Es el que mostramos/ocupamos en BuyBox.
+   * Es el que mostramos en el flujo de compra.
    */
   price?: number | null;
 

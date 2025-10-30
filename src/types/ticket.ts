@@ -30,6 +30,9 @@ export interface EventSection {
   description: string | null;
   createdAt: Date;
   updatedAt: Date;
+  // Información de disponibilidad (desde backend)
+  reserved?: number;
+  available?: number;
 }
 
 export interface TicketPurchaseRequest {

@@ -6,6 +6,7 @@ import TicketsList from './TicketsList';
 import api from '../services/api';
 import { createReservation, initiatePayment } from '../services/ticketService';
 import { confirmPaymentTest } from '../services/eventsService';
+import { getSystemConfig } from '../services/configService';
 import type { ResaleTicket, EventSection } from '../types/ticket';
 
 interface SectionSelection {
@@ -28,9 +29,26 @@ export default function TicketPurchaseFlow({ eventId, eventType, eventPrice, onP
   const [selections, setSelections] = useState<SectionSelection[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [currentReservationId, setCurrentReservationId] = useState<number | null>(null);
+  const [currentPurchaseGroupId, setCurrentPurchaseGroupId] = useState<string | null>(null);
+  const [platformFeeBps, setPlatformFeeBps] = useState<number>(0);
 
   // Detectar si estamos en modo desarrollo
   const isDevelopment = import.meta.env.DEV || import.meta.env.MODE === 'development';
+
+  // Cargar la configuración de la plataforma para obtener la comisión
+  useEffect(() => {
+    const loadConfig = async () => {
+      try {
+        const config = await getSystemConfig();
+        setPlatformFeeBps(config.platformFee?.feeBps || 0);
+      } catch (err) {
+        console.error('❌ [ERROR] Error loading platform config:', err);
+        // Si falla, usar 0 como default
+        setPlatformFeeBps(0);
+      }
+    };
+    loadConfig();
+  }, []);
 
   // Redirigir a la página de tickets cuando el paso es 'success'
   useEffect(() => {
@@ -74,9 +92,10 @@ export default function TicketPurchaseFlow({ eventId, eventType, eventPrice, onP
         });
 
         // El backend retorna purchaseGroupId y array de reservations
-        const { reservations } = response.data;
+        const { purchaseGroupId, reservations } = response.data;
         
-        // Guardar el ID de la primera reserva para compatibilidad
+        // Guardar purchaseGroupId y el ID de la primera reserva
+        setCurrentPurchaseGroupId(purchaseGroupId);
         setCurrentReservationId(reservations[0].id);
         setStep('confirm');
       }
@@ -163,16 +182,28 @@ export default function TicketPurchaseFlow({ eventId, eventType, eventPrice, onP
 
   const getTotalPrice = () => {
     if (selections.length > 0) {
-      return selections.reduce((sum, s) => sum + (eventPrice * s.quantity), 0);
+      const total = selections.reduce((sum, s) => sum + (eventPrice * s.quantity), 0);
+      return total;
     }
     return 0;
   };
 
+  const getPlatformFee = () => {
+    const subtotal = getTotalPrice();
+    const fee = Math.round(subtotal * platformFeeBps / 10000);
+    return fee;
+  };
+
+  const getGrandTotal = () => {
+    const total = getTotalPrice() + getPlatformFee();
+    return total;
+  };
+
   return (
-    <div className="space-y-6">
-      {/* Mensaje de error global */}
-      {error && step === 'select' && (
-        <div className="bg-red-50 border-l-4 border-red-500 rounded-lg p-4 shadow-md animate-slide-in">
+    <div className="w-full max-w-4xl mx-auto">
+      {/* Mensaje de error */}
+      {error && (
+        <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4 animate-fade-in">
           <div className="flex items-start">
             <div className="flex-shrink-0">
               <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
@@ -222,30 +253,52 @@ export default function TicketPurchaseFlow({ eventId, eventType, eventPrice, onP
           <h2 className="text-2xl font-bold text-gray-900">Confirmar Compra</h2>
 
           {eventType === 'RESALE' && selections[0] && (
-            <div className="bg-gray-50 rounded-lg p-4 space-y-3">
-              <div className="flex justify-between">
-                <span className="text-gray-600">Tipo de ticket:</span>
-                <span className="font-medium">Ticket Físico (Reventa)</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Ubicación:</span>
-                <span className="font-medium">
-                  Fila {(selections[0].section as ResaleTicket).row} - Asiento {(selections[0].section as ResaleTicket).seat}
-                </span>
-              </div>
-              {(selections[0].section as ResaleTicket).zone && (
+            <div className="space-y-4">
+              <div className="bg-gray-50 rounded-lg p-4 space-y-3">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Zona:</span>
-                  <span className="font-medium">{(selections[0].section as ResaleTicket).zone}</span>
+                  <span className="text-gray-600">Tipo de ticket:</span>
+                  <span className="font-medium">Ticket Físico (Reventa)</span>
                 </div>
-              )}
-              <div className="flex justify-between">
-                <span className="text-gray-600">Código:</span>
-                <span className="font-mono text-sm">{(selections[0].section as ResaleTicket).ticketCode}</span>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Ubicación:</span>
+                  <span className="font-medium">
+                    Fila {(selections[0].section as ResaleTicket).row} - Asiento {(selections[0].section as ResaleTicket).seat}
+                  </span>
+                </div>
+                {(selections[0].section as ResaleTicket).zone && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Zona:</span>
+                    <span className="font-medium">{(selections[0].section as ResaleTicket).zone}</span>
+                  </div>
+                )}
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Código:</span>
+                  <span className="font-mono text-sm">{(selections[0].section as ResaleTicket).ticketCode}</span>
+                </div>
               </div>
-              <div className="border-t pt-3 flex justify-between text-lg">
-                <span className="font-semibold">Total:</span>
-                <span className="font-bold text-blue-600">${getTotalPrice().toLocaleString('es-CL')}</span>
+
+              {/* Desglose de costos para RESALE */}
+              <div className="bg-white border-2 border-gray-300 rounded-lg p-4 space-y-3">
+                <h4 className="font-semibold text-gray-700 text-sm uppercase tracking-wide">
+                  Resumen de Compra
+                </h4>
+                
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Precio del ticket:</span>
+                    <span className="font-medium text-gray-900">${getTotalPrice().toLocaleString('es-CL')}</span>
+                  </div>
+                  
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Comisión de servicio ({(platformFeeBps / 100).toFixed(2)}%):</span>
+                    <span className="font-medium text-gray-900">${getPlatformFee().toLocaleString('es-CL')}</span>
+                  </div>
+                  
+                  <div className="border-t-2 border-gray-300 pt-2 flex justify-between">
+                    <span className="font-bold text-gray-900">Total a pagar:</span>
+                    <span className="font-bold text-lg text-green-600">${getGrandTotal().toLocaleString('es-CL')}</span>
+                  </div>
+                </div>
               </div>
             </div>
           )}
@@ -292,19 +345,26 @@ export default function TicketPurchaseFlow({ eventId, eventType, eventPrice, onP
                 </div>
               ))}
 
-              <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-400 rounded-lg p-4">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <p className="text-sm text-green-700">Total de entradas</p>
-                    <p className="text-2xl font-bold text-green-900">
-                      {selections.reduce((sum, s) => sum + s.quantity, 0)} entradas
-                    </p>
+              {/* Desglose de costos */}
+              <div className="bg-white border-2 border-gray-300 rounded-lg p-4 space-y-3">
+                <h4 className="font-semibold text-gray-700 text-sm uppercase tracking-wide">
+                  Resumen de Compra
+                </h4>
+                
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Subtotal ({selections.reduce((sum, s) => sum + s.quantity, 0)} entradas):</span>
+                    <span className="font-medium text-gray-900">${getTotalPrice().toLocaleString('es-CL')}</span>
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm text-green-700">Total a pagar</p>
-                    <p className="text-3xl font-bold text-green-900">
-                      ${getTotalPrice().toLocaleString('es-CL')}
-                    </p>
+                  
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Comisión de servicio ({(platformFeeBps / 100).toFixed(2)}%):</span>
+                    <span className="font-medium text-gray-900">${getPlatformFee().toLocaleString('es-CL')}</span>
+                  </div>
+                  
+                  <div className="border-t-2 border-gray-300 pt-2 flex justify-between">
+                    <span className="font-bold text-gray-900">Total a pagar:</span>
+                    <span className="font-bold text-lg text-green-600">${getGrandTotal().toLocaleString('es-CL')}</span>
                   </div>
                 </div>
               </div>
@@ -338,7 +398,7 @@ export default function TicketPurchaseFlow({ eventId, eventType, eventPrice, onP
                 onClick={handleConfirmPurchase}
                 className="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-lg transition shadow-md hover:shadow-lg"
               >
-                Pagar ${getTotalPrice().toLocaleString('es-CL')}
+                Pagar ${getGrandTotal().toLocaleString('es-CL')}
               </button>
             </div>
 
@@ -420,7 +480,11 @@ export default function TicketPurchaseFlow({ eventId, eventType, eventPrice, onP
                   </svg>
                   Tus Entradas
                 </h3>
-                <TicketsList reservationId={currentReservationId} showFullView={true} />
+                <TicketsList 
+                  reservationId={currentReservationId} 
+                  purchaseGroupId={currentPurchaseGroupId || undefined}
+                  showFullView={true} 
+                />
               </div>
 
               {/* Botones de acción */}

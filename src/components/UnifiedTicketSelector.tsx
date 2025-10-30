@@ -30,6 +30,7 @@ export default function UnifiedTicketSelector({ eventId, eventType, onSelections
   const loadItems = async () => {
     try {
       setLoading(true);
+      
       if (eventType === 'OWN') {
         const response = await api.get(`/events/${eventId}/sections`);
         setSections(response.data);
@@ -38,6 +39,8 @@ export default function UnifiedTicketSelector({ eventId, eventType, onSelections
         setResaleTickets(response.data);
       }
     } catch (err: any) {
+      console.error('❌ [ERROR] Error al cargar opciones:', err);
+      console.error('  - Response:', err.response?.data);
       setError(err.response?.data?.error || 'Error al cargar las opciones');
     } finally {
       setLoading(false);
@@ -132,31 +135,57 @@ export default function UnifiedTicketSelector({ eventId, eventType, onSelections
         {eventType === 'OWN' ? (
           // Render sections for OWN events
           <div className="space-y-3">
-            {sections.map((section) => (
-              <OwnSectionCard
-                key={section.id}
-                section={section}
-                onAdd={handleAddOwnSection}
-                isInCart={cart.some(
-                  (item) => !item.isResale && (item.section as EventSection).id === section.id
-                )}
-                eventId={eventId}
-              />
-            ))}
+            {sections.length === 0 ? (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
+                <svg className="mx-auto h-12 w-12 text-yellow-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <h4 className="text-lg font-semibold text-yellow-900 mb-2">No hay secciones configuradas</h4>
+                <p className="text-yellow-800 text-sm">
+                  El organizador aún no ha configurado las secciones para este evento.
+                </p>
+              </div>
+            ) : (
+              sections.map((section) => {
+                return (
+                  <OwnSectionCard
+                    key={section.id}
+                    section={section}
+                    onAdd={handleAddOwnSection}
+                    isInCart={cart.some(
+                      (item) => !item.isResale && (item.section as EventSection).id === section.id
+                    )}
+                    eventId={eventId}
+                  />
+                );
+              })
+            )}
           </div>
         ) : (
           // Render tickets for RESALE events in unified style  
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
-            {resaleTickets.map((ticket) => (
-              <ResaleTicketCard
-                key={ticket.id}
-                ticket={ticket}
-                onSelect={handleAddResaleTicket}
-                isSelected={cart.some(
-                  (item) => item.isResale && (item.section as ResaleTicket).id === ticket.id
-                )}
-              />
-            ))}
+            {resaleTickets.length === 0 ? (
+              <div className="col-span-full bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
+                <svg className="mx-auto h-12 w-12 text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+                </svg>
+                <h4 className="text-lg font-semibold text-gray-900 mb-2">No hay entradas disponibles</h4>
+                <p className="text-gray-600 text-sm">
+                  Actualmente no hay tickets en reventa para este evento.
+                </p>
+              </div>
+            ) : (
+              resaleTickets.map((ticket) => (
+                <ResaleTicketCard
+                  key={ticket.id}
+                  ticket={ticket}
+                  onSelect={handleAddResaleTicket}
+                  isSelected={cart.some(
+                    (item) => item.isResale && (item.section as ResaleTicket).id === ticket.id
+                  )}
+                />
+              ))
+            )}
           </div>
         )}
       </div>
@@ -278,8 +307,13 @@ function OwnSectionCard({
   const generateRows = () => {
     const rows: string[] = [];
     if (section.rowStart && section.rowEnd) {
+      // Normalizar a mayúsculas para el procesamiento
+      const rowStartUpper = section.rowStart.toUpperCase();
+      const rowEndUpper = section.rowEnd.toUpperCase();
+      
       // Soporta letras y números
-      const isAlpha = /^[A-Z]+$/.test(section.rowStart) && /^[A-Z]+$/.test(section.rowEnd);
+      const isAlpha = /^[A-Z]+$/.test(rowStartUpper) && /^[A-Z]+$/.test(rowEndUpper);
+      
       if (isAlpha) {
         const letterToNumber = (str: string): number => {
           let result = 0;
@@ -296,8 +330,8 @@ function OwnSectionCard({
           }
           return str;
         };
-        const start = letterToNumber(section.rowStart);
-        const end = letterToNumber(section.rowEnd);
+        const start = letterToNumber(rowStartUpper);
+        const end = letterToNumber(rowEndUpper);
         for (let i = start; i <= end; i++) {
           rows.push(numberToLetter(i));
         }
@@ -316,18 +350,32 @@ function OwnSectionCard({
   const seatsPerRow = section.seatsPerRow || 0;
   const hasSeats = rows.length > 0 && seatsPerRow > 0;
   const canConfirm = hasSeats ? selectedSeats.length === quantity : true;
+  const isSoldOut = section.available !== undefined && section.available === 0;
 
   return (
-    <div className="border rounded-lg overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow duration-200">
+    <div className={`border rounded-lg overflow-hidden shadow-sm transition-shadow duration-200 ${
+      isSoldOut ? 'bg-gray-100 opacity-60' : 'bg-white hover:shadow-md'
+    }`}>
       <button
-        onClick={() => setExpanded(!expanded)}
-        className="w-full p-4 text-left hover:bg-gray-50 transition-all duration-200 flex items-center justify-between"
+        onClick={() => !isSoldOut && setExpanded(!expanded)}
+        disabled={isSoldOut}
+        className={`w-full p-4 text-left transition-all duration-200 flex items-center justify-between ${
+          isSoldOut ? 'cursor-not-allowed' : 'hover:bg-gray-50'
+        }`}
       >
         <div className="flex-1">
           <h4 className="font-semibold text-gray-900">{section.name}</h4>
-          <p className="text-sm text-gray-600">
-            Capacidad: {section.totalCapacity} asientos
-          </p>
+          <div className="flex items-center gap-3 text-sm text-gray-600">
+            <span>Capacidad total: {section.totalCapacity}</span>
+            {section.available !== undefined && (
+              <>
+                <span className="text-gray-400">•</span>
+                <span className={section.available > 0 ? 'text-green-600 font-medium' : 'text-red-600 font-medium'}>
+                  {section.available > 0 ? `${section.available} disponibles` : 'Agotado'}
+                </span>
+              </>
+            )}
+          </div>
           {section.description && (
             <p className="text-sm text-gray-500 mt-1">{section.description}</p>
           )}

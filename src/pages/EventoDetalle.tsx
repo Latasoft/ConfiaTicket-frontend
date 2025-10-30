@@ -3,7 +3,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import api from "@/services/api";
 import type { EventItem } from "@/types/event";
-import BuyBox from "@/components/BuyBox";
 import TicketPurchaseFlow from "@/components/TicketPurchaseFlow";
 import { useAuth } from "@/context/AuthContext";
 
@@ -377,23 +376,19 @@ export default function EventoDetalle() {
               </div>
             )}
 
-            {/* Nuevo flujo de compra según tipo de evento */}
-            {ev && ev.eventType && (
+            {/* Flujo de compra unificado */}
+            {ev && eventIdNum > 0 && (
               <div className="mt-6">
                 <TicketPurchaseFlow
                   eventId={eventIdNum}
                   eventType={ev.eventType as 'RESALE' | 'OWN'}
                   eventPrice={ev.price || 0}
                   onPurchaseComplete={(reservationId) => {
-                    console.log('Compra completada:', reservationId);
                     // Aquí podrías redirigir o mostrar un mensaje de éxito
                   }}
                 />
               </div>
             )}
-
-            {/* Fallback: BuyBox legacy para eventos sin tipo definido */}
-            {(!ev || !ev.eventType) && eventIdNum > 0 && <BuyBox eventId={eventIdNum} />}
 
             {venue && (
               <div className="pt-2 text-sm text-gray-600">
