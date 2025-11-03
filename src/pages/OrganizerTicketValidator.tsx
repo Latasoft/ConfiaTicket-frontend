@@ -8,6 +8,10 @@ import {
   type ValidationStats 
 } from '@/services/organizerTicketValidationService';
 import { listMyEvents, type OrganizerEvent } from '@/services/organizerEventsService';
+import { 
+  getResaleEventStats, 
+  type ResaleEventStats 
+} from '@/services/resaleTicketStatsService';
 
 type ScanResult = ValidateTicketResponse & {
   timestamp: string;
@@ -16,7 +20,9 @@ type ScanResult = ValidateTicketResponse & {
 export default function OrganizerTicketValidator() {
   const [events, setEvents] = useState<OrganizerEvent[]>([]);
   const [selectedEventId, setSelectedEventId] = useState<number | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<OrganizerEvent | null>(null);
   const [stats, setStats] = useState<ValidationStats | null>(null);
+  const [resaleStats, setResaleStats] = useState<ResaleEventStats | null>(null);
   
   const [scanMode, setScanMode] = useState<'camera' | 'manual' | 'image'>('manual');
   const [manualCode, setManualCode] = useState('');
@@ -41,9 +47,11 @@ export default function OrganizerTicketValidator() {
   // Cargar estadísticas cuando se selecciona un evento
   useEffect(() => {
     if (selectedEventId) {
+      const event = events.find(e => e.id === selectedEventId);
+      setSelectedEvent(event || null);
       loadStats();
     }
-  }, [selectedEventId]);
+  }, [selectedEventId, events]);
 
   async function loadEvents() {
     try {
@@ -51,6 +59,7 @@ export default function OrganizerTicketValidator() {
       setEvents(response.items);
       if (response.items.length > 0 && !selectedEventId) {
         setSelectedEventId(response.items[0].id);
+        setSelectedEvent(response.items[0]);
       }
     } catch (error) {
       console.error('Error al cargar eventos:', error);
@@ -58,10 +67,19 @@ export default function OrganizerTicketValidator() {
   }
 
   async function loadStats() {
-    if (!selectedEventId) return;
+    if (!selectedEventId || !selectedEvent) return;
+    
     try {
-      const data = await getEventStats(selectedEventId);
-      setStats(data);
+      // Cargar estadísticas según el tipo de evento
+      if (selectedEvent.eventType === 'RESALE') {
+        const data = await getResaleEventStats(selectedEventId);
+        setResaleStats(data);
+        setStats(null); // Limpiar stats de OWN
+      } else {
+        const data = await getEventStats(selectedEventId);
+        setStats(data);
+        setResaleStats(null); // Limpiar stats de RESALE
+      }
     } catch (error) {
       console.error('Error al cargar estadísticas:', error);
     }
@@ -259,8 +277,8 @@ export default function OrganizerTicketValidator() {
         </select>
       </div>
 
-      {/* Estadísticas */}
-      {stats && (
+      {/* Estadísticas para eventos OWN */}
+      {stats && selectedEvent?.eventType !== 'RESALE' && (
         <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-lg p-6 mb-6">
           <h2 className="text-xl font-bold text-gray-900 mb-4">Estadísticas del evento</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -296,7 +314,82 @@ export default function OrganizerTicketValidator() {
         </div>
       )}
 
-      {/* Selector de modo */}
+      {/* Dashboard de estadísticas para eventos RESALE */}
+      {resaleStats && selectedEvent?.eventType === 'RESALE' && (
+        <div className="bg-gradient-to-br from-orange-50 to-amber-50 border-2 border-orange-200 rounded-lg p-6 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold text-gray-900">Dashboard de Reventa</h2>
+            <span className="px-3 py-1 bg-orange-100 text-orange-800 text-sm font-medium rounded-full">
+              Evento de Reventa
+            </span>
+          </div>
+          
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div className="bg-white rounded-lg p-4 text-center">
+              <div className="text-2xl font-bold text-orange-600">{resaleStats.summary.totalTickets}</div>
+              <div className="text-sm text-gray-600">Total Tickets</div>
+            </div>
+            <div className="bg-white rounded-lg p-4 text-center">
+              <div className="text-2xl font-bold text-green-600">{resaleStats.summary.soldTickets}</div>
+              <div className="text-sm text-gray-600">Vendidos</div>
+            </div>
+            <div className="bg-white rounded-lg p-4 text-center">
+              <div className="text-2xl font-bold text-purple-600">{resaleStats.summary.scannedTickets}</div>
+              <div className="text-sm text-gray-600">Escaneados</div>
+            </div>
+            <div className="bg-white rounded-lg p-4 text-center">
+              <div className="text-2xl font-bold text-blue-600">{resaleStats.summary.totalScans}</div>
+              <div className="text-sm text-gray-600">Total Escaneos</div>
+            </div>
+          </div>
+
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
+            <p className="text-sm text-amber-800">
+              <strong>ℹNota:</strong> Los tickets de reventa se validan automáticamente cuando los compradores escanean el QR proxy. 
+              No necesitas validarlos manualmente desde aquí.
+            </p>
+          </div>
+
+          {/* Lista de tickets escaneados */}
+          {resaleStats.tickets.filter(t => t.scannedCount > 0).length > 0 && (
+            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+              <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
+                <h3 className="font-semibold text-gray-900">Tickets Escaneados</h3>
+              </div>
+              <div className="divide-y divide-gray-200 max-h-96 overflow-y-auto">
+                {resaleStats.tickets
+                  .filter(t => t.scannedCount > 0)
+                  .sort((a, b) => new Date(b.lastScannedAt || 0).getTime() - new Date(a.lastScannedAt || 0).getTime())
+                  .map((ticket) => (
+                    <div key={ticket.id} className="px-4 py-3 hover:bg-gray-50">
+                      <div className="flex items-center justify-between mb-2">
+                        <div>
+                          <div className="font-medium text-gray-900">
+                            Asiento: {ticket.seat}
+                            {ticket.zone && <span className="text-gray-500 ml-2">({ticket.zone})</span>}
+                          </div>
+                          <div className="text-sm text-gray-500">Código: {ticket.ticketCode}</div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-lg font-bold text-purple-600">{ticket.scannedCount}</div>
+                          <div className="text-xs text-gray-500">escaneos</div>
+                        </div>
+                      </div>
+                      {ticket.lastScannedAt && (
+                        <div className="text-xs text-gray-500">
+                          Último escaneo: {new Date(ticket.lastScannedAt).toLocaleString('es-CL')}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Selector de modo - Solo para eventos OWN */}
+      {selectedEvent?.eventType !== 'RESALE' && (
       <div className="bg-white border rounded-lg p-4 mb-6">
         <div className="flex gap-2 mb-4">
           <button
@@ -496,9 +589,10 @@ export default function OrganizerTicketValidator() {
           </div>
         )}
       </div>
+      )}
 
-      {/* Resultado del último escaneo */}
-      {lastResult && (
+      {/* Resultado del último escaneo - Solo para eventos OWN */}
+      {selectedEvent?.eventType !== 'RESALE' && lastResult && (
         <div className={`border-2 rounded-lg p-6 mb-6 ${
           lastResult.valid 
             ? 'bg-green-50 border-green-400' 
@@ -567,8 +661,8 @@ export default function OrganizerTicketValidator() {
         </div>
       )}
 
-      {/* Historial de escaneos */}
-      {scanHistory.length > 0 && (
+      {/* Historial de escaneos - Solo para eventos OWN */}
+      {selectedEvent?.eventType !== 'RESALE' && scanHistory.length > 0 && (
         <div className="bg-white border rounded-lg p-6">
           <h2 className="text-xl font-bold text-gray-900 mb-4">Historial de validaciones</h2>
           <div className="space-y-2">

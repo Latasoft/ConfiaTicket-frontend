@@ -23,6 +23,9 @@ export type OrganizerEvent = {
   price?: number;
   priceBase?: number | null;
 
+  // Tipo de evento
+  eventType?: "OWN" | "RESALE";
+
   // 👇 metadatos visibles en el form (autocompletados)
   organizerName?: string | null;
   organizerRut?: string | null;

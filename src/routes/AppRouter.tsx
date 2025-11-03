@@ -13,6 +13,9 @@ import Register from "@/pages/Register";
 // Resultado Webpay
 import PaymentResult from "@/pages/PaymentResult";
 
+// Validación de tickets RESALE
+import ResaleTicketValidation from "@/pages/ResaleTicketValidation";
+
 // Flujo organizador
 import OrganizerApply from "@/pages/OrganizerApply";
 import OrganizerPending from "@/pages/OrganizerPending";
@@ -73,6 +76,10 @@ export const router = createBrowserRouter([
       { path: "/pago/resultado", element: <PaymentResult /> },
       // Alias opcional para compatibilidad con enlaces antiguos
       { path: "/payment-result", element: <PaymentResult /> },
+
+      // Validación pública de tickets RESALE
+      // Esta ruta NO requiere autenticación porque es accedida por personal de seguridad
+      { path: "/resale-tickets/validate/:proxyQrCode", element: <ResaleTicketValidation /> },
 
       // Seguridad / cuenta
       {
