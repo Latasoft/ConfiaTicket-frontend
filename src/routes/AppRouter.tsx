@@ -13,6 +13,9 @@ import Register from "@/pages/Register";
 // Resultado Webpay
 import PaymentResult from "@/pages/PaymentResult";
 
+// Validación de tickets RESALE
+import ResaleTicketValidation from "@/pages/ResaleTicketValidation";
+
 // Flujo organizador
 import OrganizerApply from "@/pages/OrganizerApply";
 import OrganizerPending from "@/pages/OrganizerPending";
@@ -21,10 +24,13 @@ import OrganizerEventForm from "@/pages/OrganizerEventForm";
 import OrganizerTickets from "@/pages/OrganizerTickets";
 import OrganizerPayoutSettings from "@/pages/OrganizerPayoutSettings";
 import OrganizerPayouts from "@/pages/OrganizerPayouts";
+import OrganizerTicketValidator from "@/pages/OrganizerTicketValidator";
 
 // Mis entradas (comprador)
 import MyTickets from "@/pages/MyTickets";
 import ReservationDetail from "@/pages/ReservationDetail"; // ← NUEVO
+import MyClaims from "@/pages/MyClaims"; // ← NUEVO
+import ClaimDetail from "@/pages/ClaimDetail"; // ← NUEVO
 
 // Guards
 import RequireAuth from "@/routes/RequireAuth";
@@ -33,10 +39,15 @@ import RequireSuperadmin from "@/routes/RequireSuperadmin";
 
 // Admin
 import AdminEvents from "@/pages/AdminEvents";
+import AdminEventDetail from "@/pages/AdminEventDetail";
 import AdminUsers from "@/pages/AdminUsers";
+import AdminUserDetail from "@/pages/AdminUserDetail";
 import AdminOrganizerApps from "@/pages/AdminOrganizerApps";
 import AdminTickets from "@/pages/AdminTickets";
 import AdminPayouts from "@/pages/AdminPayouts"; // ← NUEVO
+import AdminConfig from "@/pages/AdminConfig"; // ← NUEVO
+import AdminClaims from "@/pages/AdminClaims"; // ← NUEVO
+import AdminClaimDetail from "@/pages/AdminClaimDetail"; // ← NUEVO
 
 // Seguridad de cuenta
 import ChangePassword from "@/pages/ChangePassword";
@@ -70,6 +81,10 @@ export const router = createBrowserRouter([
       // Alias opcional para compatibilidad con enlaces antiguos
       { path: "/payment-result", element: <PaymentResult /> },
 
+      // Validación pública de tickets RESALE
+      // Esta ruta NO requiere autenticación porque es accedida por personal de seguridad
+      { path: "/resale-tickets/validate/:proxyQrCode", element: <ResaleTicketValidation /> },
+
       // Seguridad / cuenta
       {
         path: "/cuenta/seguridad",
@@ -86,6 +101,33 @@ export const router = createBrowserRouter([
         element: (
           <RequireAuth>
             <MyTickets />
+          </RequireAuth>
+        ),
+      },
+      // Alias en español
+      {
+        path: "/mis-tickets",
+        element: (
+          <RequireAuth>
+            <MyTickets />
+          </RequireAuth>
+        ),
+      },
+
+      // Mis reclamos (solo autenticado)
+      {
+        path: "/mis-reclamos",
+        element: (
+          <RequireAuth>
+            <MyClaims />
+          </RequireAuth>
+        ),
+      },
+      {
+        path: "/mis-reclamos/:id",
+        element: (
+          <RequireAuth>
+            <ClaimDetail />
           </RequireAuth>
         ),
       },
@@ -225,6 +267,18 @@ export const router = createBrowserRouter([
         ),
       },
 
+      // Validar tickets (organizador)
+      {
+        path: "/organizador/validar-tickets",
+        element: (
+          <RequireAuth>
+            <RequireVerifiedOrganizer>
+              <OrganizerTicketValidator />
+            </RequireVerifiedOrganizer>
+          </RequireAuth>
+        ),
+      },
+
       // Zona Admin (superadmin)
       {
         path: "/admin/eventos",
@@ -235,10 +289,26 @@ export const router = createBrowserRouter([
         ),
       },
       {
+        path: "/admin/eventos/:id",
+        element: (
+          <RequireSuperadmin>
+            <AdminEventDetail />
+          </RequireSuperadmin>
+        ),
+      },
+      {
         path: "/admin/usuarios",
         element: (
           <RequireSuperadmin>
             <AdminUsers />
+          </RequireSuperadmin>
+        ),
+      },
+      {
+        path: "/admin/usuarios/:id",
+        element: (
+          <RequireSuperadmin>
+            <AdminUserDetail />
           </RequireSuperadmin>
         ),
       },
@@ -263,6 +333,30 @@ export const router = createBrowserRouter([
         element: (
           <RequireSuperadmin>
             <AdminPayouts />
+          </RequireSuperadmin>
+        ),
+      },
+      {
+        path: "/admin/reclamos", // ← NUEVO
+        element: (
+          <RequireSuperadmin>
+            <AdminClaims />
+          </RequireSuperadmin>
+        ),
+      },
+      {
+        path: "/admin/reclamos/:id", // ← NUEVO
+        element: (
+          <RequireSuperadmin>
+            <AdminClaimDetail />
+          </RequireSuperadmin>
+        ),
+      },
+      {
+        path: "/admin/configuracion",
+        element: (
+          <RequireSuperadmin>
+            <AdminConfig />
           </RequireSuperadmin>
         ),
       },

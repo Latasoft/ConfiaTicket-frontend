@@ -15,6 +15,67 @@ export type AdminUser = {
   createdAt: string;              // 👈 NUEVO: fecha de creación
   updatedAt?: string;             // opcional (lo devuelve el backend en varias rutas)
   latestOrganizerAppStatus: OrganizerAppStatus; // estado de la última solicitud
+  applicationId: number | null;   // ID de la solicitud de organizador si existe
+};
+
+/** Información detallada de un usuario */
+export type AdminUserDetail = AdminUser & {
+  // documentos de identificacion
+  idDocumentUrl?: string | null;
+  idDocumentType?: string | null;
+  idDocumentNumber?: string | null;
+  rut?: string | null;
+  birthDate?: string | null;
+  documentUrl?: string | null;
+  
+  // información de la solicitud para ser organizador
+  application?: {
+    id: number;
+    legalName?: string | null;
+    taxId?: string | null;
+    phone?: string | null;
+    idCardImage?: string | null;          // Nombre del archivo frontal
+    idCardImageUrl?: string | null;       // URL completa del endpoint frontal
+    idCardImageBack?: string | null;      // Nombre del archivo trasero
+    idCardImageBackUrl?: string | null;   // URL completa del endpoint trasero
+    notes?: string | null;
+    status: string;
+    createdAt: string;
+    updatedAt: string;
+  } | null;
+  
+  // informacion bancaria
+  bankingInfo?: {
+    hasBankAccount: boolean;
+    psp?: string | null;
+    pspAccountId?: string | null;
+    onboardingStatus?: string | null;
+    payoutsEnabled?: boolean;
+    bankDetails: {
+      bankName?: string | null;
+      accountType?: string | null;
+      accountNumber?: string | null;
+      holderName?: string | null;
+      holderRut?: string | null;
+    };
+    createdAt?: string;
+    updatedAt?: string;
+  } | null;
+  
+  // Información adicional
+  phone?: string | null;
+  address?: string | null;
+  
+  // estadisticas
+  stats?: {
+    eventsCreated?: number;
+    purchasesMade?: number;
+    activeEvents?: number;
+  };
+  
+  // informacion sobre habilitacion para venta
+  effectiveCanSell?: boolean;
+  
 };
 
 export type AdminUsersList = {
@@ -34,6 +95,12 @@ export async function adminListUsers(params: {
 }) {
   const { data } = await api.get("/admin/users", { params });
   return data as AdminUsersList;
+}
+
+/** Obtener el detalle de un usuario */
+export async function adminGetUser(id: number) {
+  const { data } = await api.get(`/admin/users/${id}`);
+  return data as AdminUserDetail;
 }
 
 export async function adminSetUserVerified(id: number, isVerified: boolean) {

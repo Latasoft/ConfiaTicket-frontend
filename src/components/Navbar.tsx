@@ -182,7 +182,7 @@ export default function Navbar() {
                     ref={adminMenuRef}
                     onMouseEnter={() => setAdminOpen(true)}
                     onMouseLeave={() => setAdminOpen(false)}
-                    className={`absolute right-0 mt-1 min-w-[220px] border rounded-md bg-white shadow transition-opacity ${
+                    className={`absolute right-0 top-full min-w-[220px] border rounded-md bg-white shadow transition-opacity ${
                       adminOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
                     }`}
                     role="menu"
@@ -229,6 +229,16 @@ export default function Navbar() {
                       Tickets (revisión)
                     </NavLink>
                     <NavLink
+                      to="/admin/reclamos"
+                      className={({ isActive }) =>
+                        `block px-3 py-2 hover:bg-black/5 ${isActive ? "font-semibold underline underline-offset-4" : ""}`
+                      }
+                      onClick={() => setAdminOpen(false)}
+                      role="menuitem"
+                    >
+                      Reclamos
+                    </NavLink>
+                    <NavLink
                       to="/admin/payouts"
                       className={({ isActive }) =>
                         `block px-3 py-2 hover:bg-black/5 ${isActive ? "font-semibold underline underline-offset-4" : ""}`
@@ -237,6 +247,17 @@ export default function Navbar() {
                       role="menuitem"
                     >
                       Mis Pagos
+                    </NavLink>
+                    <div className="border-t my-1"></div>
+                    <NavLink
+                      to="/admin/configuracion"
+                      className={({ isActive }) =>
+                        `block px-3 py-2 hover:bg-black/5 ${isActive ? 'font-semibold underline underline-offset-4' : ''}`
+                      }
+                      onClick={() => setAdminOpen(false)}
+                      role="menuitem"
+                    >
+                      Configuración
                     </NavLink>
                   </div>
                 </div>
@@ -274,7 +295,7 @@ export default function Navbar() {
                     ref={orgMenuRef}
                     onMouseEnter={() => setOrgOpen(true)}
                     onMouseLeave={() => setOrgOpen(false)}
-                    className={`absolute right-0 mt-1 min-w-[220px] border rounded-md bg-white shadow transition-opacity ${
+                    className={`absolute right-0 top-full min-w-[220px] border rounded-md bg-white shadow transition-opacity ${
                       orgOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
                     }`}
                     role="menu"
@@ -334,6 +355,19 @@ export default function Navbar() {
                     >
                       Cuenta de cobro
                     </NavLink>
+
+                    <div className="border-t my-1"></div>
+
+                    <NavLink
+                      to="/organizador/validar-tickets"
+                      className={({ isActive }) =>
+                        `block px-3 py-2 hover:bg-black/5 ${isActive ? "font-semibold underline underline-offset-4" : ""}`
+                      }
+                      onClick={() => setOrgOpen(false)}
+                      role="menuitem"
+                    >
+                      Validar tickets
+                    </NavLink>
                   </div>
                 </div>
               )}
@@ -344,9 +378,15 @@ export default function Navbar() {
                 </NavLink>
               )}
 
-              {user.role === "buyer" && (
+              {user.role === "buyer" && !user.applicationStatus && (
                 <NavLink to="/solicitar-organizador" className={active}>
                   Ser organizador
+                </NavLink>
+              )}
+
+              {user.role === "buyer" && (user.applicationStatus === "PENDING" || user.applicationStatus === "REJECTED") && (
+                <NavLink to="/solicitar-organizador" className={active}>
+                  Estado de Solicitud
                 </NavLink>
               )}
 

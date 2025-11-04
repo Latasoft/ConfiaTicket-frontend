@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, Link } from "react-router-dom";
 import {
   adminListUsers,
   adminSetUserCanSell,
@@ -9,6 +9,10 @@ import {
   adminSoftDeleteUser,
   type AdminUser,
 } from "@/services/adminUsersService";
+import {
+  adminApproveOrganizerApplication,
+  adminRejectOrganizerApplication,
+} from "@/services/adminOrganizerAppsService";
 
 function formatDateTime(iso?: string | null) {
   if (!iso) return "—";
@@ -147,6 +151,32 @@ export default function AdminUsers() {
     }
   };
 
+  const approveApplication = async (applicationId: number, userName: string) => {
+    if (!confirm(`¿Aprobar solicitud de organizador de ${userName}?`)) return;
+    try {
+      await adminApproveOrganizerApplication(applicationId);
+      alert("Solicitud aprobada exitosamente");
+      load();
+    } catch (e: any) {
+      alert(e?.response?.data?.error || "No se pudo aprobar la solicitud");
+    }
+  };
+
+  const rejectApplication = async (applicationId: number, userName: string) => {
+    const notes = prompt(`¿Motivo del rechazo para ${userName}? (opcional)`);
+    if (notes === null) return; // Usuario canceló
+    
+    if (!confirm(`¿Rechazar solicitud de organizador de ${userName}?`)) return;
+    
+    try {
+      await adminRejectOrganizerApplication(applicationId, notes || undefined);
+      alert("Solicitud rechazada");
+      load();
+    } catch (e: any) {
+      alert(e?.response?.data?.error || "No se pudo rechazar la solicitud");
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto p-4">
       <div className="flex items-center justify-between mb-2">
@@ -218,6 +248,7 @@ export default function AdminUsers() {
               <th className="text-left p-3">Creado</th>
               <th className="text-left p-3">Rol</th>
               <th className="text-left p-3">Solicitud</th>
+              <th className="text-left p-3">Acción Solicitud</th>
               <th className="text-left p-3">Estado</th>
               <th className="text-left p-3">Puede vender</th>
               <th className="text-right p-3">Acciones</th>
@@ -226,13 +257,13 @@ export default function AdminUsers() {
           <tbody>
             {loading ? (
               <tr>
-                <td className="p-6 text-center" colSpan={8}>
+                <td className="p-6 text-center" colSpan={9}>
                   Cargando…
                 </td>
               </tr>
             ) : rows.length === 0 ? (
               <tr>
-                <td className="p-6 text-center" colSpan={8}>
+                <td className="p-6 text-center" colSpan={9}>
                   Sin resultados.
                 </td>
               </tr>
@@ -243,13 +274,44 @@ export default function AdminUsers() {
 
                 return (
                   <tr key={u.id} className={`border-t ${deleted ? "opacity-60" : ""}`}>
-                    <td className="p-3">{u.name}</td>
+                    <td className="p-3">
+                      <Link 
+                        to={`/admin/usuarios/${u.id}`}
+                        className="text-blue-600 hover:text-blue-800 hover:underline font-medium"
+                      >
+                        {u.name}
+                      </Link>
+                    </td>
                     <td className="p-3">{u.email}</td>
                     <td className="p-3">{formatDateTime(u.createdAt)}</td>
                     <td className="p-3">{u.role}</td>
 
                     <td className="p-3">
                       <SolicitudBadge s={u.latestOrganizerAppStatus} />
+                    </td>
+
+                    {/* Nueva columna: Acción Solicitud */}
+                    <td className="p-3">
+                      {u.latestOrganizerAppStatus === "PENDING" && u.applicationId ? (
+                        <div className="flex gap-1">
+                          <button
+                            onClick={() => approveApplication(u.applicationId!, u.name)}
+                            className="px-2 py-1 rounded text-xs bg-green-600 text-white hover:bg-green-700"
+                            title="Aprobar solicitud"
+                          >
+                            ✓ Aprobar
+                          </button>
+                          <button
+                            onClick={() => rejectApplication(u.applicationId!, u.name)}
+                            className="px-2 py-1 rounded text-xs bg-red-600 text-white hover:bg-red-700"
+                            title="Rechazar solicitud"
+                          >
+                            ✗ Rechazar
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="text-gray-400 text-xs">—</span>
+                      )}
                     </td>
 
                     <td className="p-3">

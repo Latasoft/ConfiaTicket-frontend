@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import api from "@/services/api";
 import type { EventItem } from "@/types/event";
-import BuyBox from "@/components/BuyBox";
+import TicketPurchaseFlow from "@/components/TicketPurchaseFlow";
 import { useAuth } from "@/context/AuthContext";
 
 /* ================= Helpers para HOLD ================= */
@@ -149,7 +149,6 @@ export default function EventoDetalle() {
   const unitPrice = (typeof (ev as any).price === "number"
     ? (ev as any).price
     : (ev as any).priceFrom ?? undefined) as number | undefined;
-  const capacity = (ev as any).capacity ?? undefined;
   const remaining = (ev as any).remaining ?? undefined;
   const dateIso = (ev as any).date ?? (ev as any).startAt ?? undefined;
   const soon = isSoon(dateIso, 7);
@@ -223,9 +222,9 @@ export default function EventoDetalle() {
       </div>
 
       {/* CONTENIDO */}
-      <section className="max-w-6xl mx-auto p-6 grid gap-6 md:grid-cols-[1fr,360px]">
+      <section className="max-w-6xl mx-auto p-6 grid gap-6 lg:grid-cols-[1fr,400px]">
         {/* Principal */}
-        <article className="space-y-6">
+        <article className="space-y-6 min-w-0">{/* min-w-0 previene overflow */}
           <div>
             <h2 className="text-xl font-semibold mb-3">Acerca del evento</h2>
 
@@ -243,16 +242,6 @@ export default function EventoDetalle() {
                 >
                   📍 {venue}
                 </a>
-              )}
-              {typeof capacity === "number" && (
-                <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-800">
-                  🧑‍🤝‍🧑 Aforo: {capacity}
-                </span>
-              )}
-              {typeof unitPrice === "number" && (
-                <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-800">
-                  💸 Desde: {formatMoney(unitPrice)}
-                </span>
               )}
             </div>
 
@@ -315,16 +304,6 @@ export default function EventoDetalle() {
               </div>
             )}
 
-            {/* Notas / políticas */}
-            <div className="mb-6">
-              <h3 className="font-medium mb-2">Notas y políticas</h3>
-              <ul className="list-disc pl-5 text-sm text-gray-700 space-y-1">
-                <li>Entrada digital nominativa: lleva tu cédula para validar el acceso.</li>
-                <li>No se permiten objetos peligrosos ni bebidas alcohólicas externas.</li>
-                <li>Reembolso solo si el evento se cancela o reprograma.</li>
-                <li>Menores de edad: consultar restricciones del recinto.</li>
-              </ul>
-            </div>
           </div>
 
           {city && (
@@ -336,20 +315,14 @@ export default function EventoDetalle() {
         </article>
 
         {/* Lateral / CTA */}
-        <aside>
-          <div className="rounded-2xl border p-5 sticky top-20 space-y-4">
+        <aside className="lg:sticky lg:top-20 lg:self-start">
+          <div className="rounded-2xl border p-5 space-y-4 max-h-[calc(100vh-6rem)] overflow-y-auto">
             <div className="space-y-2">
               {typeof unitPrice === "number" && (
                 <div>
-                  <span className="text-sm text-gray-500">Desde</span>
+                  <span className="text-sm text-gray-500">Valor Unitario</span>
                   <div className="text-2xl font-bold">{formatMoney(unitPrice)}</div>
                 </div>
-              )}
-
-              {typeof capacity === "number" && (
-                <p className="text-sm text-gray-600">
-                  Aforo (máx.): <strong>{capacity}</strong>
-                </p>
               )}
 
               {typeof remaining === "number" && (
@@ -403,7 +376,19 @@ export default function EventoDetalle() {
               </div>
             )}
 
-            {eventIdNum > 0 ? <BuyBox eventId={eventIdNum} /> : null}
+            {/* Flujo de compra unificado */}
+            {ev && eventIdNum > 0 && (
+              <div className="mt-6">
+                <TicketPurchaseFlow
+                  eventId={eventIdNum}
+                  eventType={ev.eventType as 'RESALE' | 'OWN'}
+                  eventPrice={ev.price || 0}
+                  onPurchaseComplete={(reservationId) => {
+                    // Aquí podrías redirigir o mostrar un mensaje de éxito
+                  }}
+                />
+              </div>
+            )}
 
             {venue && (
               <div className="pt-2 text-sm text-gray-600">

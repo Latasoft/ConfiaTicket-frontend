@@ -1,6 +1,6 @@
 // src/pages/AdminOrganizerApps.tsx
 import { useEffect, useMemo, useState } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, Link } from "react-router-dom";
 import {
   adminListOrganizerApplications,
   adminApproveOrganizerApplication,
@@ -9,6 +9,7 @@ import {
   type AdminOrganizerApplication,
   type AppStatus,
 } from "@/services/adminOrganizerAppsService";
+import ProtectedImageModal from "@/components/ProtectedImageModal";
 
 type Toast = { kind: "success" | "info" | "error"; text: string } | null;
 
@@ -39,6 +40,7 @@ export default function AdminOrganizerApps() {
         q: q || undefined,
         status: (status || undefined) as any,
       });
+      
       setRows(data.items);
       setTotal(data.total);
       setPage(data.page);
@@ -121,20 +123,21 @@ export default function AdminOrganizerApps() {
     }
   }
 
-  function linkToUpload(raw: string) {
-    if (!raw) return "#";
-    if (/^https?:\/\//i.test(raw)) return raw;
-    let p = raw.replace(/\\/g, "/");
-    const lower = p.toLowerCase();
-    const idx = lower.indexOf("/uploads");
-    const idx2 = idx === -1 ? lower.indexOf("uploads") : idx;
-    if (idx2 > -1) p = p.slice(idx2);
-    if (!p.startsWith("/")) p = "/" + p;
-    const apiBase = (import.meta.env.VITE_API_URL || "")
-      .replace(/\/api$/, "")
-      .replace(/\/$/, "");
-    return `${apiBase}${p}`;
-  }
+  // Helper function to convert upload paths to URLs (currently unused)
+  // function linkToUpload(raw: string) {
+  //   if (!raw) return "#";
+  //   if (/^https?:\/\//i.test(raw)) return raw;
+  //   let p = raw.replace(/\\/g, "/");
+  //   const lower = p.toLowerCase();
+  //   const idx = lower.indexOf("/uploads");
+  //   const idx2 = idx === -1 ? lower.indexOf("uploads") : idx;
+  //   if (idx2 > -1) p = p.slice(idx2);
+  //   if (!p.startsWith("/")) p = "/" + p;
+  //   const apiBase = (import.meta.env.VITE_API_URL || "")
+  //     .replace(/\/api$/, "")
+  //     .replace(/\/$/, "");
+  //   return `${apiBase}${p}`;
+  // }
 
   function StatusBadge({ s }: { s: AppStatus }) {
     const base = "text-xs px-2 py-1 rounded";
@@ -266,7 +269,16 @@ export default function AdminOrganizerApps() {
               rows.map((app) => (
                 <tr key={app.id} className="border-t">
                   <td className="p-3">
-                    {app.user?.name}{" "}
+                    {app.user?.id ? (
+                      <Link 
+                        to={`/admin/usuarios/${app.user.id}`}
+                        className="text-blue-600 hover:text-blue-800 hover:underline font-medium"
+                      >
+                        {app.user.name}
+                      </Link>
+                    ) : (
+                      <span>{app.user?.name}</span>
+                    )}{" "}
                     <span className="text-gray-500">({app.user?.email})</span>
                   </td>
                   <td className="p-3">{fmt(app.createdAt)}</td>
@@ -276,14 +288,22 @@ export default function AdminOrganizerApps() {
                     <StatusBadge s={app.status} />
                   </td>
                   <td className="p-3">
-                    <a
-                      className="underline"
-                      href={linkToUpload(app.idCardImage)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      Ver archivo
-                    </a>
+                    {app.idCardImageUrl ? (
+                      <ProtectedImageModal
+                        imageUrl={app.idCardImageUrl}
+                        imageUrl2={app.idCardImageBackUrl || undefined}
+                        buttonText="📄 Ver cédula"
+                        buttonClassName="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-md hover:from-blue-700 hover:to-blue-800 transition-all duration-200 text-xs font-medium shadow-sm hover:shadow-md"
+                        title={`Cédula de Identidad - ${app.legalName}`}
+                        label1="Cara Frontal"
+                        label2="Cara Trasera"
+                      />
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-gray-400 text-xs">
+                        <span className="w-1.5 h-1.5 bg-gray-300 rounded-full"></span>
+                        Sin archivo
+                      </span>
+                    )}
                   </td>
                   <td className="p-3 text-right">
                     {app.status === "PENDING" && (

@@ -258,6 +258,7 @@ export default function OrganizerDashboard() {
           <thead className="bg-gray-50">
             <tr>
               <th className="text-left p-3">Título</th>
+              <th className="text-left p-3">Tipo</th>
               <th className="text-left p-3">Inicio</th>
               <th className="text-left p-3">Lugar</th>
               <th className="text-left p-3">Entradas</th>
@@ -268,13 +269,13 @@ export default function OrganizerDashboard() {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={6} className="p-6 text-center">
+                <td colSpan={7} className="p-6 text-center">
                   Cargando…
                 </td>
               </tr>
             ) : rows.length === 0 ? (
               <tr>
-                <td colSpan={6} className="p-6 text-center">
+                <td colSpan={7} className="p-6 text-center">
                   No hay eventos.
                 </td>
               </tr>
@@ -282,6 +283,15 @@ export default function OrganizerDashboard() {
               rows.map((ev) => (
                 <tr key={ev.id} className="border-t">
                   <td className="p-3">{ev.title}</td>
+                  <td className="p-3">
+                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                      ev.eventType === 'RESALE' 
+                        ? 'bg-blue-100 text-blue-800' 
+                        : 'bg-green-100 text-green-800'
+                    }`}>
+                      {ev.eventType === 'RESALE' ? '🎫 Reventa' : '🎉 Propio'}
+                    </span>
+                  </td>
                   <td className="p-3">{formatDate(ev.startAt)}</td>
                   <td className="p-3">{ev.venue}</td>
                   <td className="p-3">{ev.capacity ?? "—"}</td>
