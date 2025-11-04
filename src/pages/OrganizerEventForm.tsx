@@ -1349,10 +1349,22 @@ function OwnEventTicketsStep({
         </button>
         <button
           onClick={onFinish}
-          disabled={sections.length === 0}
+          disabled={sections.length === 0 || totalSectionCapacity !== expectedCapacity}
           className="px-4 py-2 bg-black text-white rounded hover:bg-black/90 disabled:opacity-50 disabled:cursor-not-allowed"
+          title={
+            sections.length === 0 
+              ? "Debes crear al menos una sección" 
+              : totalSectionCapacity !== expectedCapacity
+              ? `Debes completar la capacidad del evento (${totalSectionCapacity}/${expectedCapacity})`
+              : ""
+          }
         >
-          {sections.length > 0 ? "Finalizar y Enviar a Aprobación" : "Debes crear al menos una sección"}
+          {sections.length === 0 
+            ? "Debes crear al menos una sección" 
+            : totalSectionCapacity !== expectedCapacity
+            ? `Falta completar capacidad (${totalSectionCapacity}/${expectedCapacity})`
+            : "Finalizar y Enviar a Aprobación"
+          }
         </button>
       </div>
     </div>
@@ -1759,10 +1771,22 @@ function ResaleTicketsStep({
         </button>
         <button
           onClick={onFinish}
-          disabled={tickets.length === 0}
+          disabled={tickets.length === 0 || tickets.length !== expectedCapacity}
           className="px-4 py-2 bg-black text-white rounded hover:bg-black/90 disabled:opacity-50 disabled:cursor-not-allowed"
+          title={
+            tickets.length === 0 
+              ? "Debes subir al menos un ticket" 
+              : tickets.length !== expectedCapacity
+              ? `Debes subir exactamente ${expectedCapacity} tickets (${tickets.length}/${expectedCapacity})`
+              : ""
+          }
         >
-          {tickets.length > 0 ? "Finalizar y Enviar a Aprobación" : "Debes subir al menos un ticket"}
+          {tickets.length === 0 
+            ? "Debes subir al menos un ticket" 
+            : tickets.length !== expectedCapacity
+            ? `Falta completar capacidad (${tickets.length}/${expectedCapacity})`
+            : "Finalizar y Enviar a Aprobación"
+          }
         </button>
       </div>
     </div>
