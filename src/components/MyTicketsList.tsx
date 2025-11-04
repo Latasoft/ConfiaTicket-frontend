@@ -4,6 +4,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import { getMyReservations, downloadTicketPdf } from '../services/ticketService';
 import api from '../services/api';
 import type { ReservationWithTicket } from '../types/ticket';
+import CreateClaimModal from './CreateClaimModal';
 
 interface GeneratedTicket {
   id: number;
@@ -25,6 +26,8 @@ export default function MyTicketsList() {
   const [error, setError] = useState<string | null>(null);
   const [downloadingId, setDownloadingId] = useState<number | null>(null);
   const [expandedReservation, setExpandedReservation] = useState<number | null>(null);
+  const [claimModalOpen, setClaimModalOpen] = useState(false);
+  const [selectedReservation, setSelectedReservation] = useState<ReservationWithGenerated | null>(null);
 
   useEffect(() => {
     loadTickets();
@@ -94,6 +97,11 @@ export default function MyTicketsList() {
     } finally {
       setDownloadingId(null);
     }
+  };
+
+  const handleOpenClaimModal = (reservation: ReservationWithGenerated) => {
+    setSelectedReservation(reservation);
+    setClaimModalOpen(true);
   };
 
   if (loading) {
@@ -347,12 +355,40 @@ export default function MyTicketsList() {
                       <p>No hay información de entradas disponible</p>
                     </div>
                   )}
+
+                  {/* Botón de Crear Reclamo */}
+                  <div className="mt-6 pt-6 border-t-2 border-gray-100">
+                    <button
+                      onClick={() => handleOpenClaimModal(reservation)}
+                      className="w-full md:w-auto px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-all transform hover:scale-105 flex items-center justify-center gap-2 font-medium shadow-md hover:shadow-lg"
+                    >
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      </svg>
+                      Crear Reclamo
+                    </button>
+                    <p className="text-xs text-gray-500 mt-2 text-center md:text-left">
+                      ¿Tienes algún problema con tu compra? Crea un reclamo y te ayudaremos.
+                    </p>
+                  </div>
                 </div>
               )}
             </div>
           );
         })}
       </div>
+
+      {/* Modal de Crear Reclamo */}
+      {claimModalOpen && selectedReservation && (
+        <CreateClaimModal
+          reservationId={selectedReservation.id}
+          eventTitle={selectedReservation.event?.title || `Evento #${selectedReservation.eventId}`}
+          onClose={() => {
+            setClaimModalOpen(false);
+            setSelectedReservation(null);
+          }}
+        />
+      )}
     </div>
   );
 }
