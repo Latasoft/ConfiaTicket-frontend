@@ -291,12 +291,18 @@ export default function AdminOrganizerApps() {
                     {app.idCardImageUrl ? (
                       <ProtectedImageModal
                         imageUrl={app.idCardImageUrl}
-                        buttonText="Ver documento"
-                        buttonClassName="inline-block px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-xs"
-                        title={`Documento de ${app.legalName}`}
+                        imageUrl2={app.idCardImageBackUrl || undefined}
+                        buttonText="📄 Ver cédula"
+                        buttonClassName="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-md hover:from-blue-700 hover:to-blue-800 transition-all duration-200 text-xs font-medium shadow-sm hover:shadow-md"
+                        title={`Cédula de Identidad - ${app.legalName}`}
+                        label1="Cara Frontal"
+                        label2="Cara Trasera"
                       />
                     ) : (
-                      <span className="text-gray-400 text-xs">Sin archivo</span>
+                      <span className="inline-flex items-center gap-1 text-gray-400 text-xs">
+                        <span className="w-1.5 h-1.5 bg-gray-300 rounded-full"></span>
+                        Sin archivo
+                      </span>
                     )}
                   </td>
                   <td className="p-3 text-right">

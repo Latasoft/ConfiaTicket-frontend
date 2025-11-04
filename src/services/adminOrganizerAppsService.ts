@@ -10,8 +10,10 @@ export type AdminOrganizerApplication = {
   taxId: string;
   phone?: string | null;
   notes?: string | null;
-  idCardImage: string;              // nombre del archivo
-  idCardImageUrl?: string | null;   // URL completa del endpoint
+  idCardImage: string;              // nombre del archivo frontal
+  idCardImageUrl?: string | null;   // URL completa del endpoint para imagen frontal
+  idCardImageBack?: string | null;  // nombre del archivo trasero
+  idCardImageBackUrl?: string | null; // URL completa del endpoint para imagen trasera
   status: AppStatus;
   createdAt: string; // ISO
   updatedAt: string; // ISO

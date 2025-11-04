@@ -303,16 +303,23 @@ export default function AdminUserDetail() {
                 <dd className="font-medium">{user.application.phone || "—"}</dd>
               </div>
               <div>
-                <dt className="text-sm text-gray-600">Imagen de identificación</dt>
+                <dt className="text-sm text-gray-600 mb-2">Cédula de Identidad</dt>
                 <dd>
                   {user.application.idCardImageUrl ? (
                     <ProtectedImageModal
                       imageUrl={user.application.idCardImageUrl}
-                      buttonText="Ver documento"
-                      title="Documento de identidad"
+                      imageUrl2={user.application.idCardImageBackUrl || undefined}
+                      buttonText="📄 Ver cédula completa"
+                      buttonClassName="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 text-sm font-medium shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+                      title={`Cédula de Identidad - ${user.application.legalName || user.name}`}
+                      label1="Cara Frontal"
+                      label2="Cara Trasera"
                     />
                   ) : (
-                    <span className="text-gray-500">No disponible</span>
+                    <div className="inline-flex items-center gap-2 px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-500 text-sm">
+                      <span className="w-2 h-2 bg-gray-400 rounded-full"></span>
+                      No disponible
+                    </div>
                   )}
                 </dd>
               </div>

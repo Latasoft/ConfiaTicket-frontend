@@ -34,8 +34,10 @@ export type AdminUserDetail = AdminUser & {
     legalName?: string | null;
     taxId?: string | null;
     phone?: string | null;
-    idCardImage?: string | null;          // Nombre del archivo
-    idCardImageUrl?: string | null;       // URL completa del endpoint
+    idCardImage?: string | null;          // Nombre del archivo frontal
+    idCardImageUrl?: string | null;       // URL completa del endpoint frontal
+    idCardImageBack?: string | null;      // Nombre del archivo trasero
+    idCardImageBackUrl?: string | null;   // URL completa del endpoint trasero
     notes?: string | null;
     status: string;
     createdAt: string;
