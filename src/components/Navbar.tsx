@@ -229,6 +229,16 @@ export default function Navbar() {
                       Tickets (revisión)
                     </NavLink>
                     <NavLink
+                      to="/admin/reclamos"
+                      className={({ isActive }) =>
+                        `block px-3 py-2 hover:bg-black/5 ${isActive ? "font-semibold underline underline-offset-4" : ""}`
+                      }
+                      onClick={() => setAdminOpen(false)}
+                      role="menuitem"
+                    >
+                      Reclamos
+                    </NavLink>
+                    <NavLink
                       to="/admin/payouts"
                       className={({ isActive }) =>
                         `block px-3 py-2 hover:bg-black/5 ${isActive ? "font-semibold underline underline-offset-4" : ""}`

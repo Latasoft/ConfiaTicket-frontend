@@ -29,6 +29,8 @@ import OrganizerTicketValidator from "@/pages/OrganizerTicketValidator";
 // Mis entradas (comprador)
 import MyTickets from "@/pages/MyTickets";
 import ReservationDetail from "@/pages/ReservationDetail"; // ← NUEVO
+import MyClaims from "@/pages/MyClaims"; // ← NUEVO
+import ClaimDetail from "@/pages/ClaimDetail"; // ← NUEVO
 
 // Guards
 import RequireAuth from "@/routes/RequireAuth";
@@ -44,6 +46,8 @@ import AdminOrganizerApps from "@/pages/AdminOrganizerApps";
 import AdminTickets from "@/pages/AdminTickets";
 import AdminPayouts from "@/pages/AdminPayouts"; // ← NUEVO
 import AdminConfig from "@/pages/AdminConfig"; // ← NUEVO
+import AdminClaims from "@/pages/AdminClaims"; // ← NUEVO
+import AdminClaimDetail from "@/pages/AdminClaimDetail"; // ← NUEVO
 
 // Seguridad de cuenta
 import ChangePassword from "@/pages/ChangePassword";
@@ -97,6 +101,33 @@ export const router = createBrowserRouter([
         element: (
           <RequireAuth>
             <MyTickets />
+          </RequireAuth>
+        ),
+      },
+      // Alias en español
+      {
+        path: "/mis-tickets",
+        element: (
+          <RequireAuth>
+            <MyTickets />
+          </RequireAuth>
+        ),
+      },
+
+      // Mis reclamos (solo autenticado)
+      {
+        path: "/mis-reclamos",
+        element: (
+          <RequireAuth>
+            <MyClaims />
+          </RequireAuth>
+        ),
+      },
+      {
+        path: "/mis-reclamos/:id",
+        element: (
+          <RequireAuth>
+            <ClaimDetail />
           </RequireAuth>
         ),
       },
@@ -302,6 +333,22 @@ export const router = createBrowserRouter([
         element: (
           <RequireSuperadmin>
             <AdminPayouts />
+          </RequireSuperadmin>
+        ),
+      },
+      {
+        path: "/admin/reclamos", // ← NUEVO
+        element: (
+          <RequireSuperadmin>
+            <AdminClaims />
+          </RequireSuperadmin>
+        ),
+      },
+      {
+        path: "/admin/reclamos/:id", // ← NUEVO
+        element: (
+          <RequireSuperadmin>
+            <AdminClaimDetail />
           </RequireSuperadmin>
         ),
       },
