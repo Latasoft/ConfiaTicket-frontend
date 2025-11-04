@@ -1,5 +1,5 @@
 // src/pages/OrganizerEventForm.tsx
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -220,6 +220,11 @@ export default function OrganizerEventForm() {
   const organizerRut = user?.rut || "";
 
   const [currentStatus, setCurrentStatus] = useState<OrganizerEvent["status"] | null>(null);
+  const [hasSoldTickets, setHasSoldTickets] = useState(false);
+  const [soldTicketsCount, setSoldTicketsCount] = useState(0);
+  const [sectionsComplete, setSectionsComplete] = useState(true);
+  const [sectionsCapacity, setSectionsCapacity] = useState(0);
+  const [missingCapacity, setMissingCapacity] = useState(0);
   const [toast, setToast] = useState<ErrorToast>(null);
 
   // Cargar configuración del sistema al montar el componente
@@ -308,6 +313,16 @@ export default function OrganizerEventForm() {
     if (!isEdit) return;
     (async () => {
       const ev = await getMyEvent(Number(id));
+      
+      // Guardar información de tickets vendidos
+      setHasSoldTickets((ev as any).hasSoldTickets || false);
+      setSoldTicketsCount((ev as any).soldTicketsCount || 0);
+      
+      // Guardar información de completitud de secciones/tickets
+      setSectionsComplete((ev as any).sectionsComplete ?? true);
+      setSectionsCapacity((ev as any).sectionsCapacity ?? 0);
+      setMissingCapacity((ev as any).missingCapacity ?? 0);
+      
       const toLocalInput = (iso?: string | null) => (iso ? new Date(iso).toISOString().slice(0, 16) : "");
       setValue("title", ev.title);
       setValue("description", ev.description ?? "");
@@ -538,6 +553,53 @@ export default function OrganizerEventForm() {
             )}
           </div>
 
+          {/* Aviso de tickets vendidos */}
+          {hasSoldTickets && (
+            <div className="mb-4 p-4 rounded-lg bg-amber-50 border border-amber-200">
+              <div className="flex items-start gap-3">
+                <span className="text-2xl">⚠️</span>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-amber-900 mb-1">
+                    Evento con entradas vendidas
+                  </h3>
+                  <p className="text-sm text-amber-800 mb-2">
+                    Este evento ya tiene <strong>{soldTicketsCount} {soldTicketsCount === 1 ? 'entrada vendida' : 'entradas vendidas'}</strong>.
+                    Por lo tanto, no puedes modificar: fecha, ubicación, capacidad ni precios.
+                  </p>
+                  <p className="text-xs text-amber-700">
+                    Solo puedes editar: título, descripción e imagen de portada.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Aviso de capacidad incompleta */}
+          {isEdit && !sectionsComplete && (
+            <div className="mb-4 p-4 rounded-lg bg-blue-50 border border-blue-200">
+              <div className="flex items-start gap-3">
+                <span className="text-2xl">ℹ️</span>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-blue-900 mb-1">
+                    Capacidad incompleta
+                  </h3>
+                  <p className="text-sm text-blue-800 mb-2">
+                    {eventType === 'own' 
+                      ? `Has definido ${sectionsCapacity} de ${watch("capacity")} cupos en las secciones. Faltan ${missingCapacity} cupos por definir.`
+                      : `Has cargado ${sectionsCapacity} de ${watch("capacity")} tickets. Faltan ${missingCapacity} tickets por cargar.`
+                    }
+                  </p>
+                  <p className="text-xs text-blue-700">
+                    {eventType === 'own' 
+                      ? 'Debes agregar o modificar secciones hasta completar la capacidad total del evento.'
+                      : 'Debes cargar más tickets hasta completar la capacidad total del evento.'
+                    }
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="mb-3">
             <label className="block text-sm font-medium mb-1">Título *</label>
             <input
@@ -618,9 +680,11 @@ export default function OrganizerEventForm() {
               <label className="block text-sm font-medium mb-1">Lugar *</label>
               <input
                 {...register("venue")}
-                className="w-full border rounded px-3 py-2"
+                disabled={hasSoldTickets}
+                className={`w-full border rounded px-3 py-2 ${hasSoldTickets ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                 placeholder="Estadio Nacional"
                 maxLength={limits.field.VENUE}
+                title={hasSoldTickets ? 'No se puede modificar la ubicación porque hay entradas vendidas' : ''}
               />
               {errors.venue && <p className="text-sm text-red-600">{errors.venue.message as string}</p>}
             </div>
@@ -628,18 +692,22 @@ export default function OrganizerEventForm() {
               <label className="block text-sm font-medium mb-1">Ciudad</label>
               <input
                 {...register("city")}
-                className="w-full border rounded px-3 py-2"
+                disabled={hasSoldTickets}
+                className={`w-full border rounded px-3 py-2 ${hasSoldTickets ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                 placeholder="Santiago"
                 maxLength={limits.field.CITY}
+                title={hasSoldTickets ? 'No se puede modificar la ciudad porque hay entradas vendidas' : ''}
               />
             </div>
             <div>
               <label className="block text-sm font-medium mb-1">Comuna *</label>
               <input
                 {...register("commune")}
-                className="w-full border rounded px-3 py-2"
+                disabled={hasSoldTickets}
+                className={`w-full border rounded px-3 py-2 ${hasSoldTickets ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                 placeholder="Providencia"
                 maxLength={limits.field.COMMUNE}
+                title={hasSoldTickets ? 'No se puede modificar la comuna porque hay entradas vendidas' : ''}
               />
               {errors.commune && <p className="text-sm text-red-600">{errors.commune.message as string}</p>}
             </div>
@@ -648,12 +716,24 @@ export default function OrganizerEventForm() {
           <div className="grid md:grid-cols-2 gap-3 mb-3">
             <div>
               <label className="block text-sm font-medium mb-1">Inicio (fecha y hora) *</label>
-              <input type="datetime-local" {...register("startAt")} className="w-full border rounded px-3 py-2" />
+              <input 
+                type="datetime-local" 
+                {...register("startAt")} 
+                disabled={hasSoldTickets}
+                className={`w-full border rounded px-3 py-2 ${hasSoldTickets ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                title={hasSoldTickets ? 'No se puede modificar la fecha porque hay entradas vendidas' : ''}
+              />
               {errors.startAt && <p className="text-sm text-red-600">{errors.startAt.message as string}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium mb-1">Fin (opcional)</label>
-              <input type="datetime-local" {...register("endAt")} className="w-full border rounded px-3 py-2" />
+              <input 
+                type="datetime-local" 
+                {...register("endAt")} 
+                disabled={hasSoldTickets}
+                className={`w-full border rounded px-3 py-2 ${hasSoldTickets ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                title={hasSoldTickets ? 'No se puede modificar la fecha porque hay entradas vendidas' : ''}
+              />
             </div>
           </div>
 
@@ -675,8 +755,10 @@ export default function OrganizerEventForm() {
               max={limits.ticket[eventType === "resale" ? "RESALE" : "OWN"].MAX ?? undefined}
               step={1}
               {...register("capacity")}
-              className="w-full border rounded px-3 py-2"
+              disabled={hasSoldTickets}
+              className={`w-full border rounded px-3 py-2 ${hasSoldTickets ? 'bg-gray-100 cursor-not-allowed' : ''}`}
               placeholder={eventType === "resale" ? "1" : "100"}
+              title={hasSoldTickets ? 'No se puede modificar la capacidad porque hay entradas vendidas' : ''}
             />
             {errors.capacity && <p className="text-sm text-red-600">{errors.capacity.message as string}</p>}
             {eventType === "resale" && (
@@ -707,8 +789,10 @@ export default function OrganizerEventForm() {
                   step={1}
                   inputMode="numeric"
                   {...register("priceBase")}
-                  className="w-full border rounded px-3 py-2"
+                  disabled={hasSoldTickets}
+                  className={`w-full border rounded px-3 py-2 ${hasSoldTickets ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                   placeholder="Ej: 10000"
+                  title={hasSoldTickets ? 'No se puede modificar el precio porque hay entradas vendidas' : ''}
                 />
                 <p className="text-xs text-gray-500 mt-1">
                   El precio que pagaste originalmente por la entrada
@@ -725,8 +809,10 @@ export default function OrganizerEventForm() {
                 step={1}
                 inputMode="numeric"
                 {...register("price")}
-                className={`w-full border rounded px-3 py-2 ${errors.price ? "border-red-400" : ""}`}
+                disabled={hasSoldTickets}
+                className={`w-full border rounded px-3 py-2 ${hasSoldTickets ? 'bg-gray-100 cursor-not-allowed' : ''} ${errors.price ? "border-red-400" : ""}`}
                 placeholder="Ej: 12000"
+                title={hasSoldTickets ? 'No se puede modificar el precio porque hay entradas vendidas' : ''}
               />
               {eventType === "resale" && maxAllowedResale !== null && (
                 <p className="text-xs text-gray-500 mt-1">
@@ -916,6 +1002,9 @@ function OwnEventTicketsStep({
 
     const payload: any = { name: name.trim() };
 
+    // Calcular capacidad estimada de la nueva sección
+    let estimatedCapacity = 0;
+
     if (useRangeMode) {
       // modo rango de filas
       if (!rowStart || !rowEnd || !seatsPerRow) {
@@ -925,6 +1014,12 @@ function OwnEventTicketsStep({
       payload.rowStart = rowStart.trim();
       payload.rowEnd = rowEnd.trim();
       payload.seatsPerRow = Number(seatsPerRow);
+      
+      // Estimar capacidad: calcular número de filas y multiplicar por asientos por fila
+      const startChar = rowStart.trim().charCodeAt(0);
+      const endChar = rowEnd.trim().charCodeAt(0);
+      const numRows = Math.abs(endChar - startChar) + 1;
+      estimatedCapacity = numRows * Number(seatsPerRow);
     } else {
       // modo rango de asientos
       if (!seatStart || !seatEnd) {
@@ -933,6 +1028,21 @@ function OwnEventTicketsStep({
       }
       payload.seatStart = Number(seatStart);
       payload.seatEnd = Number(seatEnd);
+      
+      // Estimar capacidad: diferencia entre asientos + 1
+      estimatedCapacity = Math.abs(Number(seatEnd) - Number(seatStart)) + 1;
+    }
+
+    // Validar que no se exceda la capacidad del evento
+    const currentCapacity = totalSectionCapacity;
+    const remainingCapacity = expectedCapacity - currentCapacity;
+
+    if (estimatedCapacity > remainingCapacity) {
+      setError(
+        `La capacidad estimada de esta sección (${estimatedCapacity.toLocaleString()}) excede la capacidad restante del evento (${remainingCapacity.toLocaleString()}). ` +
+        `Ajusta los parámetros de la sección.`
+      );
+      return;
     }
 
     setLoading(true);
@@ -1005,7 +1115,7 @@ function OwnEventTicketsStep({
       {/* Resumen de capacidad */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
         <h4 className="font-semibold text-blue-900 mb-2">Estado actual</h4>
-        <div className="grid md:grid-cols-2 gap-4 text-sm">
+        <div className="grid md:grid-cols-3 gap-4 text-sm">
           <div>
             <p className="text-blue-800">Capacidad del evento:</p>
             <p className="text-2xl font-bold text-blue-900">{expectedCapacity.toLocaleString()}</p>
@@ -1013,6 +1123,14 @@ function OwnEventTicketsStep({
           <div>
             <p className="text-blue-800">Capacidad en secciones:</p>
             <p className="text-2xl font-bold text-blue-900">{totalSectionCapacity.toLocaleString()}</p>
+          </div>
+          <div>
+            <p className="text-blue-800">Capacidad restante:</p>
+            <p className={`text-2xl font-bold ${
+              expectedCapacity - totalSectionCapacity > 0 ? 'text-green-600' : 'text-gray-500'
+            }`}>
+              {(expectedCapacity - totalSectionCapacity).toLocaleString()}
+            </p>
           </div>
         </div>
         {totalSectionCapacity > 0 && totalSectionCapacity !== expectedCapacity && (
@@ -1092,9 +1210,14 @@ function OwnEventTicketsStep({
       {!showForm && (
         <button
           onClick={() => setShowForm(true)}
-          className="w-full md:w-auto px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+          disabled={totalSectionCapacity >= expectedCapacity}
+          className="w-full md:w-auto px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          title={totalSectionCapacity >= expectedCapacity ? "La capacidad del evento está completa" : ""}
         >
-          + Agregar Sección
+          {totalSectionCapacity >= expectedCapacity 
+            ? "Capacidad completa - No se pueden agregar más secciones" 
+            : "+ Agregar Sección"
+          }
         </button>
       )}
 
@@ -1259,10 +1382,13 @@ function ResaleTicketsStep({
   });
   const [currentFile, setCurrentFile] = useState<File | null>(null);
   const [currentPreview, setCurrentPreview] = useState<string>("");
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<React.ReactNode>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(false);
+  
+  // Ref para limpiar el input file después de guardar
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Cargar tickets existentes
   async function fetchTickets() {
@@ -1357,11 +1483,35 @@ function ResaleTicketsStep({
       });
       setCurrentFile(null);
       setCurrentPreview("");
+      
+      // Limpiar el input file usando la ref
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+      
       setSuccess(`Ticket guardado correctamente`);
       
       setTimeout(() => setSuccess(null), 3000);
     } catch (err: any) {
-      setError(err.response?.data?.error || err.message || "Error al guardar el ticket");
+      // Manejar errores de extracción de QR específicamente
+      const errorMsg = err.response?.data?.error || err.message || "Error al guardar el ticket";
+      const errorDetails = err.response?.data?.details;
+      
+      if (errorDetails && Array.isArray(errorDetails)) {
+        // Si el backend devuelve detalles (error de QR), mostrarlos
+        setError(
+          <div>
+            <p className="font-semibold mb-2">{errorMsg}</p>
+            <ul className="list-disc list-inside space-y-1 text-sm">
+              {errorDetails.map((detail: string, idx: number) => (
+                <li key={idx}>{detail}</li>
+              ))}
+            </ul>
+          </div>
+        );
+      } else {
+        setError(errorMsg);
+      }
     } finally {
       setUploading(false);
     }
@@ -1575,6 +1725,7 @@ function ResaleTicketsStep({
               type="file"
               accept="image/jpeg,image/png,image/jpg"
               onChange={handleFileChange}
+              ref={fileInputRef}
               className="w-full border rounded px-3 py-2 text-sm"
             />
             {currentPreview && (
