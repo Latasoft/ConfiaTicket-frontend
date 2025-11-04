@@ -17,7 +17,7 @@ type Toast = { kind: 'success' | 'error' | 'info'; text: string } | null;
 
 export default function AdminConfig() {
   const [ticketLimits, setTicketLimits] = useState<TicketLimitConfig[]>([]);
-  const [priceLimit, setPriceLimit] = useState<PriceLimitConfig | null>(null);
+  const [, setPriceLimit] = useState<PriceLimitConfig | null>(null);
   const [platformFee, setPlatformFee] = useState<PlatformFeeConfig | null>(null);
 
   const [loading, setLoading] = useState(true);

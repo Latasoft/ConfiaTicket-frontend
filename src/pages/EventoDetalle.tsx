@@ -383,7 +383,7 @@ export default function EventoDetalle() {
                   eventId={eventIdNum}
                   eventType={ev.eventType as 'RESALE' | 'OWN'}
                   eventPrice={ev.price || 0}
-                  onPurchaseComplete={(reservationId) => {
+                  onPurchaseComplete={() => {
                     // Aquí podrías redirigir o mostrar un mensaje de éxito
                   }}
                 />
