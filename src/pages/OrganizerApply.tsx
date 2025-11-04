@@ -64,11 +64,13 @@ export default function OrganizerApply() {
     payoutAccountNumber: "",
   });
   const [file, setFile] = useState<File | null>(null);
+  const [fileBack, setFileBack] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
 
-  // Ref para limpiar el input file sin usar document.getElementById
+  // Refs para limpiar los inputs file sin usar document.getElementById
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const fileBackInputRef = useRef<HTMLInputElement>(null);
 
   // Cargar la solicitud si existe
   useEffect(() => {
@@ -138,6 +140,11 @@ export default function OrganizerApply() {
     setFile(f);
   }
 
+  function onFileBack(e: ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0] || null;
+    setFileBack(f);
+  }
+
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setMsg(null);
@@ -161,15 +168,29 @@ export default function OrganizerApply() {
       return;
     }
     if (!file) {
-      setMsg({ type: "err", text: "Debes adjuntar la foto de tu carnet." });
+      setMsg({ type: "err", text: "Debes adjuntar la foto frontal de tu carnet." });
       return;
     }
     if (!["image/jpeg", "image/png"].includes(file.type)) {
-      setMsg({ type: "err", text: "Solo se permiten imágenes JPG o PNG." });
+      setMsg({ type: "err", text: "La imagen frontal debe ser JPG o PNG." });
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
-      setMsg({ type: "err", text: "La imagen no debe superar 5MB." });
+      setMsg({ type: "err", text: "La imagen frontal no debe superar 5MB." });
+      return;
+    }
+
+    // Validar imagen trasera (AHORA ES OBLIGATORIA)
+    if (!fileBack) {
+      setMsg({ type: "err", text: "Debes adjuntar la foto trasera de tu carnet." });
+      return;
+    }
+    if (!["image/jpeg", "image/png"].includes(fileBack.type)) {
+      setMsg({ type: "err", text: "La imagen trasera debe ser JPG o PNG." });
+      return;
+    }
+    if (fileBack.size > 5 * 1024 * 1024) {
+      setMsg({ type: "err", text: "La imagen trasera no debe superar 5MB." });
       return;
     }
 
@@ -194,7 +215,8 @@ export default function OrganizerApply() {
       fd.append("legalName", form.legalName.trim());
       fd.append("phone", form.phone.trim());
       if (form.notes) fd.append("notes", form.notes.trim());
-      fd.append("idCardImage", file); // nombre de campo esperado por el backend
+      fd.append("idCardImage", file); // Imagen frontal (obligatoria)
+      fd.append("idCardImageBack", fileBack); // Imagen trasera (obligatoria)
 
       // Datos bancarios obligatorios
       fd.append("payoutBankName", form.payoutBankName);
@@ -214,7 +236,9 @@ export default function OrganizerApply() {
         payoutAccountNumber: "",
       });
       setFile(null);
+      setFileBack(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
+      if (fileBackInputRef.current) fileBackInputRef.current.value = "";
       
       // Recargar perfil para actualizar applicationStatus
       await reloadProfile();
@@ -421,17 +445,117 @@ export default function OrganizerApply() {
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-1">Foto de carnet (JPG/PNG, máx 5MB) *</label>
-              <input
-                id="idCardImage"
-                ref={fileInputRef}
-                type="file"
-                accept="image/jpeg,image/png"
-                onChange={onFile}
-                className="w-full"
-                required
-              />
+            {/* Componente mejorado para subir cédula (frontal y trasera) */}
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 bg-gray-50">
+              <h3 className="font-medium text-sm mb-3">📸 Fotos de tu Cédula de Identidad *</h3>
+              <p className="text-xs text-gray-600 mb-4">
+                Debes subir <strong>ambas caras</strong> de tu cédula (frontal y trasera). JPG o PNG, máximo 5MB cada una.
+              </p>
+
+              <div className="space-y-3">
+                {/* Imagen Frontal */}
+                <div className="bg-white border rounded-lg p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-sm font-medium text-gray-700">
+                      🪪 Cara Frontal *
+                    </label>
+                    {file && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFile(null);
+                          if (fileInputRef.current) fileInputRef.current.value = "";
+                        }}
+                        className="text-xs text-red-600 hover:text-red-800"
+                      >
+                        ✕ Eliminar
+                      </button>
+                    )}
+                  </div>
+                  
+                  {!file ? (
+                    <label className="block cursor-pointer">
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/jpeg,image/png"
+                        onChange={onFile}
+                        className="hidden"
+                        required
+                      />
+                      <div className="border-2 border-dashed border-blue-300 rounded-lg p-4 text-center hover:bg-blue-50 transition">
+                        <p className="text-sm text-blue-600 font-medium">+ Seleccionar imagen frontal</p>
+                        <p className="text-xs text-gray-500 mt-1">Haz clic para elegir archivo</p>
+                      </div>
+                    </label>
+                  ) : (
+                    <div className="flex items-center gap-2 p-2 bg-green-50 border border-green-200 rounded">
+                      <span className="text-green-600">✓</span>
+                      <span className="text-sm text-green-800 flex-1 truncate">{file.name}</span>
+                      <span className="text-xs text-gray-500">{(file.size / 1024).toFixed(0)} KB</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Imagen Trasera */}
+                <div className="bg-white border rounded-lg p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-sm font-medium text-gray-700">
+                      🪪 Cara Trasera *
+                    </label>
+                    {fileBack && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFileBack(null);
+                          if (fileBackInputRef.current) fileBackInputRef.current.value = "";
+                        }}
+                        className="text-xs text-red-600 hover:text-red-800"
+                      >
+                        ✕ Eliminar
+                      </button>
+                    )}
+                  </div>
+                  
+                  {!fileBack ? (
+                    <label className={`block ${!file ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}>
+                      <input
+                        ref={fileBackInputRef}
+                        type="file"
+                        accept="image/jpeg,image/png"
+                        onChange={onFileBack}
+                        disabled={!file}
+                        className="hidden"
+                        required
+                      />
+                      <div className={`border-2 border-dashed rounded-lg p-4 text-center transition ${
+                        file 
+                          ? 'border-blue-300 hover:bg-blue-50' 
+                          : 'border-gray-300 bg-gray-100'
+                      }`}>
+                        <p className={`text-sm font-medium ${file ? 'text-blue-600' : 'text-gray-400'}`}>
+                          + Seleccionar imagen trasera
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {file ? 'Haz clic para elegir archivo' : 'Primero sube la imagen frontal'}
+                        </p>
+                      </div>
+                    </label>
+                  ) : (
+                    <div className="flex items-center gap-2 p-2 bg-green-50 border border-green-200 rounded">
+                      <span className="text-green-600">✓</span>
+                      <span className="text-sm text-green-800 flex-1 truncate">{fileBack.name}</span>
+                      <span className="text-xs text-gray-500">{(fileBack.size / 1024).toFixed(0)} KB</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {file && fileBack && (
+                <div className="mt-3 p-2 bg-green-50 border border-green-200 rounded text-center">
+                  <p className="text-sm text-green-800 font-medium">✓ Ambas imágenes cargadas correctamente</p>
+                </div>
+              )}
             </div>
           </div>
         </div>
