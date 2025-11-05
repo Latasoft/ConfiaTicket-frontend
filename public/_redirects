@@ -1,0 +1,8 @@
+# SPA routing - serve index.html for all routes
+/login           /index.html   200
+/eventos*        /index.html   200
+/admin*          /index.html   200
+/organizer*      /index.html   200
+/mis-tickets*    /index.html   200
+/mi-cuenta*      /index.html   200
+/*               /index.html   200

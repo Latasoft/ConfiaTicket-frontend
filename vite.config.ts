@@ -9,5 +9,7 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
+  // Asegurar que _redirects se copie al build
+  publicDir: 'public',
 })
 

@@ -117,7 +117,15 @@ export default function Login() {
       const identifier = isEmail ? idRaw.toLowerCase() : idRaw;
       const { token } = await loginUser(identifier, password);
       const u = await login(token);
-      navigate(defaultRouteFor(u), { replace: true });
+      
+      // Redirigir a la página original si viene de un redirect
+      const sp = new URLSearchParams(location.search);
+      const redirectPath = sp.get("redirect");
+      if (redirectPath) {
+        navigate(redirectPath, { replace: true });
+      } else {
+        navigate(defaultRouteFor(u), { replace: true });
+      }
     } catch (error: any) {
       const status = error?.response?.status;
       const baseMsg =
