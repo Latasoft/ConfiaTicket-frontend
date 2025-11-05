@@ -1,10 +1,11 @@
 // src/pages/EventoDetalle.tsx
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import api from "@/services/api";
 import type { EventItem } from "@/types/event";
 import TicketPurchaseFlow from "@/components/TicketPurchaseFlow";
 import { useAuth } from "@/context/AuthContext";
+import TicketsList from "@/components/TicketsList";
 
 /* ================= Helpers para HOLD ================= */
 function calcHoldRemainingSeconds(opts: {
@@ -31,6 +32,7 @@ function formatCountdownMMSS(totalSeconds: number) {
 
 export default function EventoDetalle() {
   const { id } = useParams<{ id: string }>();
+  const [searchParams, setSearchParams] = useSearchParams();
   const eventIdNum = Number(id || 0);
 
   const [ev, setEv] = useState<EventItem | null>(null);
@@ -39,6 +41,31 @@ export default function EventoDetalle() {
   const [broken, setBroken] = useState(false);
 
   const { user } = useAuth() as { user?: { id: number; role: string } };
+
+  // ✅ Detectar si venimos de un pago exitoso
+  const showPurchaseSuccess = searchParams.get('showPurchaseSuccess') === 'true';
+  const successReservationId = searchParams.get('reservationId');
+  const successPurchaseGroupId = searchParams.get('purchaseGroupId');
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [modalReservationId, setModalReservationId] = useState<string | null>(null);
+  const [modalPurchaseGroupId, setModalPurchaseGroupId] = useState<string | null>(null);
+
+  // Mostrar modal cuando detectamos parámetros de éxito
+  useEffect(() => {
+    if (showPurchaseSuccess && successReservationId) {
+      // Guardar los IDs en el estado local antes de limpiar URL
+      setModalReservationId(successReservationId);
+      setModalPurchaseGroupId(successPurchaseGroupId);
+      setShowSuccessModal(true);
+      
+      // Limpiar parámetros de URL inmediatamente para evitar re-renders
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('showPurchaseSuccess');
+      newParams.delete('reservationId');
+      newParams.delete('purchaseGroupId');
+      setSearchParams(newParams, { replace: true });
+    }
+  }, [showPurchaseSuccess, successReservationId, successPurchaseGroupId, searchParams, setSearchParams]);
 
   const [activeHold, setActiveHold] = useState<null | {
     id: number;
@@ -409,6 +436,85 @@ export default function EventoDetalle() {
           </div>
         </aside>
       </section>
+
+      {/* ✅ Modal de Compra Exitosa */}
+      {showSuccessModal && modalReservationId && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 animate-fade-in"
+          onClick={() => setShowSuccessModal(false)}
+        >
+          <div 
+            className="bg-white rounded-2xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-y-auto animate-slide-in"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header del modal */}
+            <div className="sticky top-0 bg-gradient-to-r from-green-500 to-emerald-500 text-white p-6 rounded-t-2xl z-10">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="bg-white bg-opacity-20 rounded-full p-3">
+                    <svg className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold">¡Compra exitosa!</h2>
+                    <p className="text-green-100 text-sm">Tu pago ha sido procesado correctamente</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowSuccessModal(false)}
+                  className="text-white hover:bg-white hover:bg-opacity-20 rounded-lg p-2 transition-colors"
+                  title="Cerrar"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            {/* Contenido del modal */}
+            <div className="p-6">
+              {/* Lista de entradas */}
+              <div className="bg-gray-50 rounded-xl p-6 mb-6">
+                <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                  <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+                  </svg>
+                  Tus Entradas
+                </h3>
+                <TicketsList 
+                  reservationId={Number(modalReservationId)} 
+                  purchaseGroupId={modalPurchaseGroupId || undefined}
+                  showFullView={true} 
+                />
+              </div>
+
+              {/* Botones de acción */}
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <button
+                  onClick={() => window.location.href = '/mis-entradas'}
+                  className="px-8 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+                  </svg>
+                  Ver Todas Mis Entradas
+                </button>
+                <button
+                  onClick={() => setShowSuccessModal(false)}
+                  className="px-8 py-3 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-700 transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                  Cerrar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
