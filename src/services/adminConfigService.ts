@@ -29,6 +29,14 @@ export interface PlatformFeeConfig {
   updatedAt: string;
 }
 
+export interface ReservationHoldConfig {
+  id: number;
+  holdMinutes: number;
+  description?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface FieldLimitConfig {
   id: number;
   fieldName: string;
@@ -93,6 +101,21 @@ export async function updatePlatformFee(data: {
   description?: string;
 }): Promise<PlatformFeeConfig> {
   const response = await api.put('/admin/config/platform-fee', data);
+  return response.data;
+}
+
+/* ============= RESERVATION HOLD ============= */
+
+export async function getReservationHold(): Promise<ReservationHoldConfig> {
+  const response = await api.get('/admin/config/reservation-hold');
+  return response.data;
+}
+
+export async function updateReservationHold(data: {
+  holdMinutes: number;
+  description?: string;
+}): Promise<ReservationHoldConfig> {
+  const response = await api.put('/admin/config/reservation-hold', data);
   return response.data;
 }
 

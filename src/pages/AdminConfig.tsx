@@ -8,9 +8,12 @@ import {
   updatePriceLimit,
   getPlatformFee,
   updatePlatformFee,
+  getReservationHold,
+  updateReservationHold,
   type TicketLimitConfig,
   type PriceLimitConfig,
   type PlatformFeeConfig,
+  type ReservationHoldConfig,
 } from '@/services/adminConfigService';
 
 type Toast = { kind: 'success' | 'error' | 'info'; text: string } | null;
@@ -19,6 +22,7 @@ export default function AdminConfig() {
   const [ticketLimits, setTicketLimits] = useState<TicketLimitConfig[]>([]);
   const [priceLimit, setPriceLimit] = useState<PriceLimitConfig | null>(null);
   const [platformFee, setPlatformFee] = useState<PlatformFeeConfig | null>(null);
+  const [reservationHold, setReservationHold] = useState<ReservationHoldConfig | null>(null);
 
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState<Toast>(null);
@@ -29,11 +33,13 @@ export default function AdminConfig() {
   const [originalTicketForms, setOriginalTicketForms] = useState<Record<string, { min: number; max: number | null; unlimited: boolean }>>({});
   const [originalPriceForm, setOriginalPriceForm] = useState({ minPrice: 0, maxPrice: 0, resaleMarkup: 0 });
   const [originalFeeForm, setOriginalFeeForm] = useState({ feePercent: 0, description: '' });
+  const [originalHoldForm, setOriginalHoldForm] = useState({ holdMinutes: 0, description: '' });
 
   // Form states
   const [ticketForms, setTicketForms] = useState<Record<string, { min: number; max: number | null; unlimited: boolean }>>({});
   const [priceForm, setPriceForm] = useState({ minPrice: 0, maxPrice: 0, resaleMarkup: 0 });
   const [feeForm, setFeeForm] = useState({ feePercent: 0, description: '' });
+  const [holdForm, setHoldForm] = useState({ holdMinutes: 0, description: '' });
 
   useEffect(() => {
     loadAllConfig();
@@ -48,15 +54,17 @@ export default function AdminConfig() {
   async function loadAllConfig() {
     try {
       setLoading(true);
-      const [ticketData, priceData, feeData] = await Promise.all([
+      const [ticketData, priceData, feeData, holdData] = await Promise.all([
         getTicketLimits(),
         getPriceLimit(),
         getPlatformFee(),
+        getReservationHold(),
       ]);
 
       setTicketLimits(ticketData);
       setPriceLimit(priceData);
       setPlatformFee(feeData);
+      setReservationHold(holdData);
 
             // Initialize forms
       const ticketFormsInit: Record<string, { min: number; max: number | null; unlimited: boolean }> = {};
@@ -84,6 +92,13 @@ export default function AdminConfig() {
       };
       setFeeForm(feeFormData);
       setOriginalFeeForm(feeFormData); // Guardar valores originales
+
+      const holdFormData = {
+        holdMinutes: holdData.holdMinutes,
+        description: holdData.description || '',
+      };
+      setHoldForm(holdFormData);
+      setOriginalHoldForm(holdFormData); // Guardar valores originales
     } catch (error: any) {
       console.error('Error al cargar configuración:', error);
       setToast({
@@ -246,6 +261,46 @@ export default function AdminConfig() {
       
       // Mostrar feedback visual en el botón (permanece hasta que se cambie el valor)
       setJustSaved(prev => new Set(prev).add('fee'));
+    } catch (error: any) {
+      setToast({
+        kind: 'error',
+        text: error?.response?.data?.error || 'Error al guardar',
+      });
+    } finally {
+      setSaving(null);
+    }
+  }
+
+  async function handleSaveReservationHold() {
+    try {
+      setSaving('hold');
+      
+      if (holdForm.holdMinutes < 1 || holdForm.holdMinutes > 60) {
+        setToast({
+          kind: 'error',
+          text: 'Los minutos deben estar entre 1 y 60',
+        });
+        return;
+      }
+
+      const updated = await updateReservationHold({
+        holdMinutes: holdForm.holdMinutes,
+        description: holdForm.description || undefined,
+      });
+
+      // Actualizar estado local sin recargar
+      setReservationHold(updated);
+
+      // Actualizar valores originales después de guardar
+      setOriginalHoldForm({
+        holdMinutes: holdForm.holdMinutes,
+        description: holdForm.description,
+      });
+
+      setToast({ kind: 'success', text: '✓ Tiempo de reserva actualizado correctamente' });
+      
+      // Mostrar feedback visual en el botón (permanece hasta que se cambie el valor)
+      setJustSaved(prev => new Set(prev).add('hold'));
     } catch (error: any) {
       setToast({
         kind: 'error',
@@ -435,6 +490,117 @@ export default function AdminConfig() {
                 </>
               ) : (
                 'Guardar comisión'
+              )}
+            </button>
+          </div>
+        </section>
+
+        {/* Reservation Hold Time */}
+        <section className="bg-white border rounded-lg p-6 shadow-sm">
+          <div className="mb-4">
+            <h2 className="text-xl font-semibold flex items-center gap-2">
+              <svg className="h-6 w-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Tiempo de Reserva
+            </h2>
+            <p className="text-sm text-gray-600 mt-1">
+              Cuánto tiempo se bloquean las entradas seleccionadas antes de expirar si no se completa el pago
+            </p>
+          </div>
+
+          <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-4">
+            <div className="text-sm text-gray-700">
+              <p className="font-semibold mb-2">Flujo de compra:</p>
+              <ul className="space-y-1">
+                <li>• <strong>Paso 1:</strong> Usuario selecciona entradas y crea reserva</li>
+                <li>• <strong>Paso 2:</strong> Entradas quedan bloqueadas durante {holdForm.holdMinutes} minutos</li>
+                <li>• <strong>Paso 3:</strong> Usuario debe completar el pago antes que expire</li>
+                <li>• <strong>Expira:</strong> Si no paga, las entradas vuelven a estar disponibles</li>
+              </ul>
+              <p className="text-purple-700 mt-3 font-medium">
+                ⏱️ Recomendado: 10-15 minutos para compras normales
+              </p>
+            </div>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-4 mb-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Minutos de retención
+              </label>
+              <div className="relative">
+                <input
+                  type="number"
+                  value={holdForm.holdMinutes}
+                  onChange={(e) => {
+                    const newValue = parseInt(e.target.value) || 0;
+                    setHoldForm({ ...holdForm, holdMinutes: newValue });
+                    handleFormChange('hold', newValue !== originalHoldForm.holdMinutes);
+                  }}
+                  className="w-full border-2 border-purple-300 rounded-lg px-3 py-2 pr-16 focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+                  min="1"
+                  max="60"
+                  placeholder="Ej: 15"
+                />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium">minutos</span>
+              </div>
+              <p className="text-xs text-gray-600 mt-1">
+                Rango: 1-60 minutos (máximo 1 hora)
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Notas internas (opcional)
+              </label>
+              <input
+                type="text"
+                value={holdForm.description}
+                onChange={(e) => {
+                  const newValue = e.target.value;
+                  setHoldForm({ ...holdForm, description: newValue });
+                  handleFormChange('hold', 
+                    newValue !== originalHoldForm.description ||
+                    holdForm.holdMinutes !== originalHoldForm.holdMinutes
+                  );
+                }}
+                className="w-full border rounded-lg px-3 py-2"
+                placeholder="Ej: Tiempo estándar para Transbank"
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-gray-600">
+              <p><strong>Valor actual:</strong> {reservationHold ? reservationHold.holdMinutes : '0'} minutos</p>
+            </div>
+            <button
+              onClick={handleSaveReservationHold}
+              disabled={saving === 'hold'}
+              className={`px-6 py-3 font-semibold rounded-lg shadow-md transition-all flex items-center gap-2 ${
+                justSaved.has('hold')
+                  ? 'bg-green-600 text-white'
+                  : 'bg-purple-600 text-white hover:bg-purple-700'
+              } disabled:opacity-50 disabled:cursor-not-allowed`}
+            >
+              {saving === 'hold' ? (
+                <>
+                  <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Guardando...
+                </>
+              ) : justSaved.has('hold') ? (
+                <>
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Guardado
+                </>
+              ) : (
+                'Guardar tiempo de reserva'
               )}
             </button>
           </div>
