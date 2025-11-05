@@ -1,6 +1,7 @@
 // src/components/TicketPurchaseFlow.tsx
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/context/AuthContext';
 import UnifiedTicketSelector from './UnifiedTicketSelector';
 import TicketsList from './TicketsList';
 import api from '../services/api';
@@ -25,6 +26,7 @@ interface Props {
 
 export default function TicketPurchaseFlow({ eventId, eventType, eventPrice, onPurchaseComplete }: Props) {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [step, setStep] = useState<'select' | 'confirm' | 'processing' | 'success' | 'error'>('select');
   const [selections, setSelections] = useState<SectionSelection[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -63,6 +65,13 @@ export default function TicketPurchaseFlow({ eventId, eventType, eventPrice, onP
   };
 
   const handleProceedToCheckout = async () => {
+    // Validar autenticación ANTES de proceder
+    if (!user) {
+      setError('Debes iniciar sesión para comprar entradas');
+      setStep('error'); // Cambiar a error en lugar de redirigir inmediatamente
+      return;
+    }
+
     if (selections.length === 0) {
       setError('Debes seleccionar al menos una entrada');
       return;
@@ -122,6 +131,14 @@ export default function TicketPurchaseFlow({ eventId, eventType, eventPrice, onP
   };
 
   const handleConfirmPurchase = async () => {
+    // Validar autenticación ANTES de proceder al pago
+    if (!user) {
+      setError('Debes iniciar sesión para completar el pago');
+      const currentPath = window.location.pathname;
+      navigate(`/login?redirect=${encodeURIComponent(currentPath)}`);
+      return;
+    }
+
     if (!currentReservationId) {
       setError('No hay reserva activa');
       setStep('error');
@@ -143,7 +160,18 @@ export default function TicketPurchaseFlow({ eventId, eventType, eventPrice, onP
         onPurchaseComplete?.(currentReservationId);
       }
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Error al procesar el pago');
+      const status = err?.response?.status;
+      const errorMsg = err?.response?.data?.error || err?.response?.data?.userMessage || 'Error al procesar el pago';
+      
+      // Si es 401, redirigir a login
+      if (status === 401) {
+        setError('Tu sesión expiró. Por favor, inicia sesión nuevamente.');
+        const currentPath = window.location.pathname;
+        navigate(`/login?redirect=${encodeURIComponent(currentPath)}`);
+        return;
+      }
+      
+      setError(errorMsg);
       setStep('error');
     }
   };
@@ -522,17 +550,39 @@ export default function TicketPurchaseFlow({ eventId, eventType, eventPrice, onP
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <div className="ml-3">
+            <div className="ml-3 flex-1">
               <h3 className="text-xl font-semibold text-red-800 mb-2">Error en la compra</h3>
               <p className="text-red-700">{error}</p>
             </div>
           </div>
-          <button
-            onClick={() => setStep('select')}
-            className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 hover:scale-105 transform shadow-md hover:shadow-lg"
-          >
-            Intentar nuevamente
-          </button>
+          
+          {/* Si el error es por falta de autenticación, mostrar botón de login */}
+          {!user && error.toLowerCase().includes('iniciar sesión') ? (
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  const currentPath = window.location.pathname;
+                  navigate(`/login?redirect=${encodeURIComponent(currentPath)}`);
+                }}
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 hover:scale-105 transform shadow-md hover:shadow-lg"
+              >
+                Iniciar Sesión
+              </button>
+              <button
+                onClick={() => setStep('select')}
+                className="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 hover:scale-105 transform shadow-md hover:shadow-lg"
+              >
+                Volver
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setStep('select')}
+              className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 hover:scale-105 transform shadow-md hover:shadow-lg"
+            >
+              Intentar nuevamente
+            </button>
+          )}
         </div>
       )}
     </div>
