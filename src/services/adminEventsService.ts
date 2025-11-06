@@ -98,3 +98,8 @@ export async function adminSetEventStatus(
   return data;
 }
 
+export async function adminDeleteEvent(id: number): Promise<{ success: boolean; message: string }> {
+  const { data } = await api.delete<{ success: boolean; message: string }>(`/admin/events/${id}`);
+  return data;
+}
+

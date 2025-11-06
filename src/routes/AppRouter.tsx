@@ -48,6 +48,8 @@ import AdminPayouts from "@/pages/AdminPayouts"; // ← NUEVO
 import AdminConfig from "@/pages/AdminConfig"; // ← NUEVO
 import AdminClaims from "@/pages/AdminClaims"; // ← NUEVO
 import AdminClaimDetail from "@/pages/AdminClaimDetail"; // ← NUEVO
+import AdminPurchases from "@/pages/AdminPurchases"; // ← NUEVO
+import AdminPurchaseDetail from "@/pages/AdminPurchaseDetail"; // ← NUEVO
 
 // Seguridad de cuenta
 import ChangePassword from "@/pages/ChangePassword";
@@ -357,6 +359,22 @@ export const router = createBrowserRouter([
         element: (
           <RequireSuperadmin>
             <AdminConfig />
+          </RequireSuperadmin>
+        ),
+      },
+      {
+        path: "/admin/compras",
+        element: (
+          <RequireSuperadmin>
+            <AdminPurchases />
+          </RequireSuperadmin>
+        ),
+      },
+      {
+        path: "/admin/compras/:id",
+        element: (
+          <RequireSuperadmin>
+            <AdminPurchaseDetail />
           </RequireSuperadmin>
         ),
       },

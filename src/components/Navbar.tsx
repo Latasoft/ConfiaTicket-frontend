@@ -219,14 +219,14 @@ export default function Navbar() {
                       Solicitudes de organizador
                     </NavLink>
                     <NavLink
-                      to="/admin/tickets"
+                      to="/admin/compras"
                       className={({ isActive }) =>
                         `block px-3 py-2 hover:bg-black/5 ${isActive ? "font-semibold underline underline-offset-4" : ""}`
                       }
                       onClick={() => setAdminOpen(false)}
                       role="menuitem"
                     >
-                      Tickets (revisión)
+                      Compras
                     </NavLink>
                     <NavLink
                       to="/admin/reclamos"
