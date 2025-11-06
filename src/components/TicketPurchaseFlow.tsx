@@ -8,6 +8,7 @@ import api from '../services/api';
 import { createReservation, initiatePayment } from '../services/ticketService';
 import { confirmPaymentTest } from '../services/eventsService';
 import { getSystemConfig } from '../services/configService';
+import { getFriendlyErrorMessage } from '../utils/errorMessages';
 import type { ResaleTicket, EventSection } from '../types/ticket';
 
 interface SectionSelection {
@@ -109,23 +110,8 @@ export default function TicketPurchaseFlow({ eventId, eventType, eventPrice, onP
         setStep('confirm');
       }
     } catch (err: any) {
-      const errorMsg = err.response?.data?.error || 'Error al crear la reserva';
-      
-      // Mensajes de error más amigables
-      let friendlyError = errorMsg;
-      if (errorMsg.includes('SECTION_INSUFFICIENT_STOCK')) {
-        const data = err.response?.data;
-        friendlyError = `La sección "${data.sectionName}" no tiene suficientes entradas disponibles. Disponibles: ${data.available}, solicitadas: ${data.requested}`;
-      } else if (errorMsg.includes('SEATS_ALREADY_RESERVED')) {
-        const conflicts = err.response?.data?.conflictingSeats?.join(', ');
-        friendlyError = `Los siguientes asientos ya están reservados: ${conflicts}`;
-      } else if (errorMsg.includes('INSUFFICIENT_STOCK')) {
-        friendlyError = `No hay suficientes entradas disponibles para este evento`;
-      } else if (errorMsg.includes('EVENT_HAS_STARTED')) {
-        friendlyError = 'Este evento ya ha comenzado';
-      }
-      
-      setError(friendlyError);
+      const message = getFriendlyErrorMessage(err, 'No se pudo crear la reserva. Por favor intenta nuevamente');
+      setError(message);
       setStep('select');
     }
   };
@@ -161,17 +147,17 @@ export default function TicketPurchaseFlow({ eventId, eventType, eventPrice, onP
       }
     } catch (err: any) {
       const status = err?.response?.status;
-      const errorMsg = err?.response?.data?.error || err?.response?.data?.userMessage || 'Error al procesar el pago';
       
       // Si es 401, redirigir a login
       if (status === 401) {
-        setError('Tu sesión expiró. Por favor, inicia sesión nuevamente.');
+        setError('Tu sesión ha expirado. Por favor inicia sesión nuevamente');
         const currentPath = window.location.pathname;
         navigate(`/login?redirect=${encodeURIComponent(currentPath)}`);
         return;
       }
       
-      setError(errorMsg);
+      const message = getFriendlyErrorMessage(err, 'No se pudo procesar el pago. Por favor intenta nuevamente');
+      setError(message);
       setStep('error');
     }
   };
@@ -196,14 +182,8 @@ export default function TicketPurchaseFlow({ eventId, eventType, eventPrice, onP
         setStep('error');
       }
     } catch (err: any) {
-      const errorMsg = err.response?.data?.error || err.message || 'Error al confirmar pago de prueba';
-      
-      if (errorMsg === 'TEST_PAYMENT_DISABLED') {
-        setError('Los pagos de prueba están deshabilitados. Configura ALLOW_TEST_PAYMENTS en el backend.');
-      } else {
-        setError(errorMsg);
-      }
-      
+      const message = getFriendlyErrorMessage(err, 'No se pudo confirmar el pago de prueba. Por favor intenta nuevamente');
+      setError(message);
       setStep('confirm'); // Volver a confirmación en caso de error
     }
   };

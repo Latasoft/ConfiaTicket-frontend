@@ -410,8 +410,8 @@ export default function EventoDetalle() {
                   eventId={eventIdNum}
                   eventType={ev.eventType as 'RESALE' | 'OWN'}
                   eventPrice={ev.price || 0}
-                  onPurchaseComplete={() => {
-                    // Aquí podrías redirigir o mostrar un mensaje de éxito
+                  onPurchaseComplete={(_reservationId) => {
+                    // Compra completada - el componente maneja la UI internamente
                   }}
                 />
               </div>

@@ -11,16 +11,16 @@ import {
   getReservationHold,
   updateReservationHold,
   type TicketLimitConfig,
-  type PriceLimitConfig,
   type PlatformFeeConfig,
   type ReservationHoldConfig,
 } from '@/services/adminConfigService';
+import { getFriendlyErrorMessage } from '@/utils/errorMessages';
 
 type Toast = { kind: 'success' | 'error' | 'info'; text: string } | null;
 
 export default function AdminConfig() {
   const [ticketLimits, setTicketLimits] = useState<TicketLimitConfig[]>([]);
-  const [, setPriceLimit] = useState<PriceLimitConfig | null>(null);
+  // priceLimit state removed - data is stored in priceForm only
   const [platformFee, setPlatformFee] = useState<PlatformFeeConfig | null>(null);
   const [reservationHold, setReservationHold] = useState<ReservationHoldConfig | null>(null);
 
@@ -62,7 +62,7 @@ export default function AdminConfig() {
       ]);
 
       setTicketLimits(ticketData);
-      setPriceLimit(priceData);
+      // priceData stored directly in priceForm, no need for separate state
       setPlatformFee(feeData);
       setReservationHold(holdData);
 
@@ -101,9 +101,10 @@ export default function AdminConfig() {
       setOriginalHoldForm(holdFormData); // Guardar valores originales
     } catch (error: any) {
       console.error('Error al cargar configuración:', error);
+      const message = getFriendlyErrorMessage(error, 'No se pudo cargar la configuración');
       setToast({
         kind: 'error',
-        text: error?.response?.data?.error || 'Error al cargar la configuración',
+        text: message,
       });
     } finally {
       setLoading(false);
@@ -171,9 +172,10 @@ export default function AdminConfig() {
       const saveKey = `ticket-${eventType}`;
       setJustSaved(prev => new Set(prev).add(saveKey));
     } catch (error: any) {
+      const message = getFriendlyErrorMessage(error, 'No se pudieron guardar los límites de tickets');
       setToast({
         kind: 'error',
-        text: error?.response?.data?.error || 'Error al guardar',
+        text: message,
       });
     } finally {
       setSaving(null);
@@ -198,14 +200,14 @@ export default function AdminConfig() {
         return;
       }
 
-      const updated = await updatePriceLimit({
+      await updatePriceLimit({
         minPrice: priceForm.minPrice,
         maxPrice: priceForm.maxPrice,
         resaleMarkupPercent: priceForm.resaleMarkup,
       });
 
-      // Actualizar estado local sin recargar
-      setPriceLimit(updated);
+      // No need to update separate state - data is in priceForm
+      // setPriceLimit removed
 
       // Actualizar valores originales después de guardar
       setOriginalPriceForm({
@@ -219,9 +221,10 @@ export default function AdminConfig() {
       // Mostrar feedback visual en el botón (permanece hasta que se cambie el valor)
       setJustSaved(prev => new Set(prev).add('price'));
     } catch (error: any) {
+      const message = getFriendlyErrorMessage(error, 'No se pudieron guardar los límites de precio');
       setToast({
         kind: 'error',
-        text: error?.response?.data?.error || 'Error al guardar',
+        text: message,
       });
     } finally {
       setSaving(null);
@@ -262,9 +265,10 @@ export default function AdminConfig() {
       // Mostrar feedback visual en el botón (permanece hasta que se cambie el valor)
       setJustSaved(prev => new Set(prev).add('fee'));
     } catch (error: any) {
+      const message = getFriendlyErrorMessage(error, 'No se pudo guardar la comisión de plataforma');
       setToast({
         kind: 'error',
-        text: error?.response?.data?.error || 'Error al guardar',
+        text: message,
       });
     } finally {
       setSaving(null);
@@ -302,9 +306,10 @@ export default function AdminConfig() {
       // Mostrar feedback visual en el botón (permanece hasta que se cambie el valor)
       setJustSaved(prev => new Set(prev).add('hold'));
     } catch (error: any) {
+      const message = getFriendlyErrorMessage(error, 'No se pudo guardar el tiempo de reserva');
       setToast({
         kind: 'error',
-        text: error?.response?.data?.error || 'Error al guardar',
+        text: message,
       });
     } finally {
       setSaving(null);

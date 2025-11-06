@@ -8,6 +8,7 @@ import {
   type ValidationStats 
 } from '@/services/organizerTicketValidationService';
 import { listMyEvents, type OrganizerEvent } from '@/services/organizerEventsService';
+import { getFriendlyErrorMessage } from '@/utils/errorMessages';
 import { 
   getResaleEventStats, 
   type ResaleEventStats 
@@ -110,9 +111,10 @@ export default function OrganizerTicketValidator() {
       setManualCode('');
       
     } catch (error: any) {
+      const message = getFriendlyErrorMessage(error, 'No se pudo validar el ticket');
       const errorResult: ScanResult = {
         valid: false,
-        error: error?.response?.data?.error || 'Error al validar ticket',
+        error: message,
         reason: error?.response?.data?.reason,
         timestamp: new Date().toISOString(),
       };
@@ -148,7 +150,8 @@ export default function OrganizerTicketValidator() {
       setScanning(true);
     } catch (error: any) {
       console.error('Error al iniciar cámara:', error);
-      setCameraError('No se pudo acceder a la cámara. Verifica los permisos o usa el modo manual.');
+      const message = getFriendlyErrorMessage(error, 'No se pudo acceder a la cámara. Verifica los permisos o usa el modo manual');
+      setCameraError(message);
       setScanning(false);
     }
   }

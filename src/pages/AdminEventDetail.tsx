@@ -1,16 +1,19 @@
 // src/pages/AdminEventDetail.tsx
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
-import { adminGetEvent, adminSetEventStatus, type AdminEvent } from "@/services/adminEventsService";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import { adminGetEvent, adminSetEventStatus, adminDeleteEvent, type AdminEvent } from "@/services/adminEventsService";
+import { getFriendlyErrorMessage } from "@/utils/errorMessages";
 
 type Toast = { kind: "success" | "info" | "error"; text: string } | null;
 
 export default function AdminEventDetail() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [event, setEvent] = useState<AdminEvent | null>(null);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState<Toast>(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -22,9 +25,10 @@ export default function AdminEventDetail() {
         setEvent(data);
       } catch (error: any) {
         console.error("Error al cargar evento:", error);
+        const message = getFriendlyErrorMessage(error, "No se pudo cargar el evento");
         setToast({
           kind: "error",
-          text: error?.response?.data?.message || "Error al cargar el evento",
+          text: message,
         });
       } finally {
         setLoading(false);
@@ -52,10 +56,45 @@ export default function AdminEventDetail() {
         text: `Evento ${newStatus === "approved" ? "aprobado" : "marcado como pendiente"}`,
       });
     } catch (error: any) {
+      const message = getFriendlyErrorMessage(error, "No se pudo cambiar el estado del evento");
       setToast({
         kind: "error",
-        text: error?.response?.data?.message || "Error al cambiar el estado",
+        text: message,
       });
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
+  async function handleDeleteEvent() {
+    if (!event) return;
+    
+    try {
+      setActionLoading(true);
+      await adminDeleteEvent(event.id);
+      setToast({
+        kind: "success",
+        text: "Evento eliminado correctamente",
+      });
+      
+      // Redirigir a la lista de eventos después de 1.5 segundos
+      setTimeout(() => {
+        navigate("/admin/eventos");
+      }, 1500);
+    } catch (error: any) {
+      const baseMessage = getFriendlyErrorMessage(error, "No se pudo eliminar el evento");
+      const details = error?.response?.data?.details;
+      
+      let detailsText = "";
+      if (details) {
+        detailsText = ` (${details.reservations} reservas, ${details.tickets} tickets)`;
+      }
+      
+      setToast({
+        kind: "error",
+        text: baseMessage + detailsText,
+      });
+      setShowDeleteModal(false);
     } finally {
       setActionLoading(false);
     }
@@ -343,7 +382,8 @@ export default function AdminEventDetail() {
       {/* Acciones */}
       <div className="bg-white border rounded-lg p-6 shadow-sm">
         <h2 className="text-lg font-semibold mb-4">Acciones</h2>
-        <div className="flex gap-3">{event.status === "pending" ? (
+        <div className="flex gap-3 flex-wrap">
+          {event.status === "pending" ? (
             <button
               onClick={() => handleStatusChange("approved")}
               disabled={actionLoading || event.organizerDeletedOrInactive}
@@ -361,13 +401,64 @@ export default function AdminEventDetail() {
             </button>
           )}
           
+          {/* Botón de eliminación */}
+          <button
+            onClick={() => setShowDeleteModal(true)}
+            disabled={actionLoading}
+            className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            🗑️ Eliminar evento
+          </button>
+          
           {event.organizerDeletedOrInactive && (
-            <p className="text-sm text-red-600 flex items-center">
+            <p className="text-sm text-red-600 flex items-center w-full mt-2">
               ⚠️ El organizador está inactivo o eliminado
             </p>
           )}
         </div>
+        
+        <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded text-sm text-blue-800">
+          <strong>Nota:</strong> Solo se pueden eliminar eventos sin reservas ni tickets asociados. 
+          Esta función es útil para limpiar eventos antiguos del sistema LEGACY.
+        </div>
       </div>
+
+      {/* Modal de confirmación de eliminación */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <h3 className="text-xl font-bold text-gray-900 mb-4">
+              ⚠️ Confirmar eliminación
+            </h3>
+            
+            <p className="text-gray-700 mb-6">
+              ¿Estás seguro de que quieres eliminar el evento <strong>"{event.title}"</strong>?
+            </p>
+            
+            <div className="bg-yellow-50 border border-yellow-200 rounded p-3 mb-6 text-sm text-yellow-800">
+              <strong>Advertencia:</strong> Esta acción no se puede deshacer. El evento solo se eliminará 
+              si no tiene reservas ni tickets asociados.
+            </div>
+            
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                disabled={actionLoading}
+                className="px-4 py-2 border border-gray-300 text-gray-700 rounded hover:bg-gray-50 disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleDeleteEvent}
+                disabled={actionLoading}
+                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50"
+              >
+                {actionLoading ? "Eliminando..." : "Eliminar evento"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

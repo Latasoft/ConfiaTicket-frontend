@@ -48,9 +48,10 @@ export async function initiatePayment(reservationId: number): Promise<{ url: str
 
 /**
  * Descargar el PDF del ticket (para eventos OWN)
+ * UPDATED: Usa /bookings/:id/ticket en lugar de /tickets/:id/download
  */
 export async function downloadTicketPdf(reservationId: number): Promise<Blob> {
-  const response = await api.get(`/tickets/${reservationId}/download`, {
+  const response = await api.get(`/bookings/${reservationId}/ticket`, {
     responseType: 'blob',
   });
   return response.data;
@@ -65,9 +66,10 @@ export function getResaleTicketImageUrl(ticketId: number): string {
 
 /**
  * Obtener mis reservas (tickets comprados)
+ * UPDATED: Usa /bookings/my-tickets en lugar de /tickets/my
  */
 export async function getMyReservations(): Promise<ReservationWithTicket[]> {
-  const response = await api.get('/tickets/my');
+  const response = await api.get('/bookings/my-tickets');
   return response.data.items;
 }
 

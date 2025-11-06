@@ -9,86 +9,125 @@ export type ReservationStatus =
   | "CANCELED"
   | "EXPIRED";
 
-export type FulfillmentStatus =
-  | "WAITING_TICKET"
-  | "TICKET_UPLOADED"
-  | "TICKET_APPROVED"
-  | "TICKET_REJECTED"
-  | "DELIVERED";
-
 export type RefundStatus = "NONE" | "REQUESTED" | "SUCCEEDED" | "FAILED";
 
-export interface TicketFlowStatus {
-  id: number; // reservationId
+/**
+ * FulfillmentStatus - Para eventos RESALE donde el organizador sube tickets manualmente
+ */
+export type FulfillmentStatus = 
+  | "WAITING_TICKET"
+  | "TICKET_UPLOADED" 
+  | "TICKET_APPROVED"
+  | "TICKET_REJECTED"
+  | "DELIVERED"
+  | null;
+
+/**
+ * NUEVO FLUJO (OWN events): Ya no hay fulfillmentStatus LEGACY
+ * El flujo ahora es:
+ * 1. HOLD → reserva temporal
+ * 2. PAID → pago confirmado
+ * 3. GENERATED → tickets generados automáticamente (con retry 3x)
+ * 
+ * El frontend solo necesita verificar: status === "PAID" && hasTicket
+ */
+export interface BookingStatus {
+  id: number;
+  status: ReservationStatus;
+  paidAt?: string | null;
+  expiresAt?: string | null;
+  hasTicket: boolean;
+  ticketReady: boolean; // true si PAID + hasTicket
+}
+
+/**
+ * ResaleBookingStatus - Para eventos RESALE con flujo manual de tickets
+ */
+export interface ResaleBookingStatus {
+  id: number;
   status: ReservationStatus;
   fulfillmentStatus: FulfillmentStatus;
   ticketUploadedAt?: string | null;
   approvedAt?: string | null;
   deliveredAt?: string | null;
   rejectionReason?: string | null;
-  // NUEVOS (deadline/reembolso)
   ticketUploadDeadlineAt?: string | null;
   refundStatus?: RefundStatus;
   refundedAt?: string | null;
+  paidAt?: string | null;
+  expiresAt?: string | null;
 }
 
 /* ========= Tipos para detalle de reserva (seguimiento) ========= */
 
-export type ReservationDetail = TicketFlowStatus & {
-  reservationId: number;
-  createdAt: string;
-  quantity: number;
-  amount: number;
-  event: {
+export type ReservationDetail = {
+  ok: boolean;
+  reservation: {
     id: number;
-    title: string;
-    date: string | null;
-    venue?: string | null;
-    city?: string | null;
-    coverImageUrl?: string | null;
+    status: ReservationStatus;
+    createdAt: string;
+    quantity: number;
+    amount: number;
+    paidAt?: string | null;
+    expiresAt?: string | null;
+    generatedPdfPath?: string | null;
+    qrCode?: string | null;
+    event?: {
+      id: number;
+      title: string;
+      date: string | null;
+      location?: string | null;
+      coverImageUrl?: string | null;
+    } | null;
+    payment?: {
+      id: number;
+      status: string;
+      amount: number;
+      updatedAt: string | null;
+    } | null;
   };
-  // Archivo de ticket (si hay)
-  ticketFileName?: string | null;
-  ticketMime?: string | null;
-  ticketSize?: number | null;
-
-  // Pago asociado
-  payment?: {
-    id: number;
-    status: string;
-    isDeferredCapture?: boolean;
-    capturePolicy?: "IMMEDIATE" | "MANUAL_ON_APPROVAL";
-    escrowStatus?: string | null;
-    token?: string | null;
-    buyOrder?: string | null;
-    authorizedAmount?: number | null;
-    capturedAmount?: number | null;
-    updatedAt?: string | null;
-  } | null;
 };
 
 /* ========= Tipos para listado (Mis entradas - comprador) ========= */
 
 export type TicketListItem = {
   reservationId: number;
+  id: number;
+  eventId: number;
+  code: string | null;
+  status: ReservationStatus;
+  paidAt: string | null;
   createdAt: string;
-  event?: { title: string; date: string };
+  expiresAt: string | null;
+  event?: {
+    id: number;
+    title: string;
+    date: string | null;
+    eventType: "OWN" | "RESALE";
+    location?: string | null;
+    coverImageUrl?: string | null;
+  };
   quantity: number;
   amount: number;
-  /** WAITING_TICKET | UNDER_REVIEW | TICKET_APPROVED | DELIVERED | TICKET_REJECTED */
-  flowStatus: string;
-  ticketUploadedAt?: string | null;
-  deliveredAt?: string | null;
-  // NUEVOS (deadline/reembolso)
-  ticketUploadDeadlineAt?: string | null;
-  refundStatus?: RefundStatus;
-  // Acciones/archivos
+  // OWN events
+  generatedPdfPath?: string | null;
+  qrCode?: string | null;
+  seatAssignment?: string | null;
+  scanned?: boolean | null;
+  scannedAt?: string | null;
+  // RESALE ticket
+  ticket?: {
+    id: number;
+    ticketCode: string | null;
+    row?: string | null;
+    seat?: string | null;
+    zone?: string | null;
+    level?: string | null;
+  } | null;
+  // Download
   canDownload: boolean;
-  canPreview?: boolean;
-  previewUrl?: string; // /api/tickets/:id/file
-  downloadUrl: string; // /api/tickets/:id/download
-  mime?: string | null;
-  size?: number | null; // bytes
+  downloadUrl: string;
+  previewUrl: string;
 };
 
 export type TicketListResponse = {
@@ -183,15 +222,23 @@ export function formatBytes(n?: number) {
 
 /* ========= Comprador ========= */
 
-export async function getTicketStatus(reservationId: number): Promise<TicketFlowStatus> {
-  const { data } = await api.get(`/tickets/${reservationId}/status`);
-  return data as TicketFlowStatus;
+/**
+ * GET /api/bookings/:id/status
+ * Reemplaza getTicketStatus de LEGACY
+ */
+export async function getBookingStatus(reservationId: number): Promise<BookingStatus> {
+  const { data } = await api.get(`/bookings/${reservationId}/status`);
+  return data as BookingStatus;
 }
 
+/**
+ * GET /api/bookings/:id/ticket
+ * Reemplaza downloadTicket de LEGACY
+ */
 export async function downloadTicket(
   reservationId: number
 ): Promise<{ blob: Blob; filename: string }> {
-  const resp = await api.get(`/tickets/${reservationId}/download`, { responseType: "blob" });
+  const resp = await api.get(`/bookings/${reservationId}/ticket`, { responseType: "blob" });
   const ct = (resp.headers?.["content-type"] as string | undefined) || "application/octet-stream";
   const blob = new Blob([resp.data], { type: ct });
   const cd = (resp.headers?.["content-disposition"] as string | undefined) ?? null;
@@ -199,11 +246,14 @@ export async function downloadTicket(
   return { blob, filename };
 }
 
+/**
+ * GET /api/bookings/:id/ticket (modo inline para preview)
+ */
 export async function buyerGetTicketFile(
   reservationId: number,
   mode: "inline" | "attachment" = "inline"
 ): Promise<{ blob: Blob; filename?: string; contentType?: string }> {
-  const resp = await api.get(`/tickets/${reservationId}/file`, {
+  const resp = await api.get(`/bookings/${reservationId}/ticket`, {
     params: { mode },
     responseType: "blob",
   });
@@ -214,27 +264,40 @@ export async function buyerGetTicketFile(
   return { blob, filename, contentType: ct };
 }
 
+/**
+ * GET /api/bookings/my-tickets
+ * Reemplaza /tickets/my de LEGACY
+ */
 export async function getMyTickets(params: { q?: string; page?: number; pageSize?: number }) {
-  const { data } = await api.get<TicketListResponse>("/tickets/my", { params });
+  const { data } = await api.get<TicketListResponse>("/bookings/my-tickets", { params });
   return data;
 }
 
-/** ✅ NUEVO: detalle completo de una reserva (seguimiento) */
+/**
+ * GET /api/bookings/:id
+ * Reemplaza getReservationDetail de LEGACY
+ */
 export async function getReservationDetail(reservationId: number): Promise<ReservationDetail> {
-  const { data } = await api.get(`/tickets/reservations/${reservationId}`);
+  const { data } = await api.get(`/bookings/${reservationId}`);
   return data as ReservationDetail;
 }
 
-/** ✅ NUEVO: refrescar estado del pago asociado a la reserva */
+/**
+ * POST /api/bookings/:id/refresh-payment
+ * Reemplaza refreshPaymentStatus de LEGACY
+ */
 export async function refreshPaymentStatus(reservationId: number): Promise<ReservationDetail> {
-  const { data } = await api.post(`/tickets/reservations/${reservationId}/refresh-payment`);
+  const { data } = await api.post(`/bookings/${reservationId}/refresh-payment`);
   return data as ReservationDetail;
 }
 
-/** ✅ NUEVO: refrescar estado del flujo de ticket */
-export async function refreshTicketStatus(reservationId: number): Promise<TicketFlowStatus> {
-  const { data } = await api.post(`/tickets/reservations/${reservationId}/refresh-ticket`);
-  return data as TicketFlowStatus;
+/**
+ * POST /api/bookings/:id/refresh-ticket
+ * Reemplaza refreshTicketStatus de LEGACY
+ */
+export async function refreshTicketStatus(reservationId: number): Promise<BookingStatus> {
+  const { data } = await api.post(`/bookings/${reservationId}/refresh-ticket`);
+  return data as BookingStatus;
 }
 
 /* ========= Organizador ========= */
@@ -331,13 +394,13 @@ export async function adminSweepOverdue(limit?: number): Promise<{
 /* ========= Export por defecto ========= */
 const ticketsService = {
   // Comprador
-  getTicketStatus,
+  getBookingStatus,      // reemplaza getTicketStatus
   downloadTicket,
   buyerGetTicketFile,
   getMyTickets,
-  getReservationDetail,     // nuevo
-  refreshPaymentStatus,     // nuevo
-  refreshTicketStatus,      // nuevo
+  getReservationDetail,
+  refreshPaymentStatus,
+  refreshTicketStatus,
   // Organizador
   listOrganizerReservations,
   organizerUploadTicket,
@@ -345,8 +408,8 @@ const ticketsService = {
   adminListPendingTickets,
   adminApproveTicket,
   adminRejectTicket,
-  adminApproveAndCapture,  // nuevo
-  adminCapturePayment,     // fallback
+  adminApproveAndCapture,
+  adminCapturePayment,
   adminGetTicketFile,
   adminSweepOverdue,
   // Utils

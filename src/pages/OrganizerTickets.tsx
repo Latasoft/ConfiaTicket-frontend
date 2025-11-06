@@ -2,8 +2,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   organizerUploadTicket,
-  getTicketStatus,
-  type TicketFlowStatus,
+  type ResaleBookingStatus,
+  type ReservationStatus,
+  type FulfillmentStatus,
   listOrganizerReservations,
   type OrganizerReservationItem,
   type OrganizerReservationsResponse,
@@ -37,7 +38,7 @@ export default function OrganizerTickets() {
   const [downloading, setDownloading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [okMsg, setOkMsg] = useState<string | null>(null);
-  const [status, setStatus] = useState<TicketFlowStatus | null>(null);
+  const [status, setStatus] = useState<ResaleBookingStatus | null>(null);
 
   // -------- Tabla de reservas del organizador --------
   const [rows, setRows] = useState<OrganizerReservationItem[]>([]);
@@ -101,10 +102,8 @@ export default function OrganizerTickets() {
       setOkMsg(
         "Archivo subido correctamente. Queda en revisión — esperando aprobación de superadmin."
       );
-      try {
-        const st = await getTicketStatus(validReservationId);
-        setStatus(st);
-      } catch {}
+      // Recargar la tabla para obtener el estado actualizado
+      await fetchReservations();
       // limpiar input
       setFile(null);
       const el = document.getElementById("ticket-file") as HTMLInputElement | null;
@@ -130,8 +129,28 @@ export default function OrganizerTickets() {
     setError(null);
     setOkMsg(null);
     try {
-      const st = await getTicketStatus(id);
-      setStatus(st);
+      // Buscar la reserva en la tabla actual
+      const foundInTable = rows.find(r => r.reservationId === id);
+      if (foundInTable) {
+        // Convertir OrganizerReservationItem a ResaleBookingStatus
+        setStatus({
+          id: foundInTable.reservationId,
+          status: foundInTable.status as ReservationStatus,
+          fulfillmentStatus: (foundInTable.fulfillmentStatus || null) as FulfillmentStatus,
+          ticketUploadedAt: foundInTable.ticketUploadedAt,
+          approvedAt: null, // No disponible en OrganizerReservationItem
+          deliveredAt: foundInTable.deliveredAt,
+          rejectionReason: null, // No disponible en OrganizerReservationItem
+          ticketUploadDeadlineAt: foundInTable.ticketUploadDeadlineAt,
+          refundStatus: foundInTable.refundStatus,
+          refundedAt: null, // No disponible en OrganizerReservationItem
+          paidAt: null, // No disponible en OrganizerReservationItem
+          expiresAt: null, // No disponible en OrganizerReservationItem
+        });
+        setOkMsg(`Reserva #${id} encontrada en la tabla`);
+      } else {
+        setError(`No se encontró la reserva #${id} en tu lista. Verifica el número o carga más resultados.`);
+      }
     } catch (e: any) {
       const msg =
         e?.response?.data?.error ||
@@ -211,13 +230,10 @@ export default function OrganizerTickets() {
         `Archivo subido para la reserva #${targetReservationForUpload}. Queda en revisión — esperando aprobación de superadmin.`
       );
       // Actualiza tabla
-      fetchReservations();
-      // Si coincide con el ID del formulario, refresca estado
+      await fetchReservations();
+      // Limpiar estado si coincide con el formulario
       if (validReservationId === targetReservationForUpload) {
-        try {
-          const st = await getTicketStatus(targetReservationForUpload);
-          setStatus(st);
-        } catch {}
+        setStatus(null);
       }
     } catch (e: any) {
       const msg =

@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { loginUser } from "@/services/authService";
+import { getFriendlyErrorMessage } from "@/utils/errorMessages";
 
 function reasonMessage(reason?: string | null) {
   switch (reason) {
@@ -128,20 +129,20 @@ export default function Login() {
       }
     } catch (error: any) {
       const status = error?.response?.status;
-      const baseMsg =
-        error?.response?.data?.error ||
-        error?.response?.data?.message ||
-        error?.message ||
-        "No se pudo iniciar sesión";
-
+      
+      // Manejo especial para cuenta bloqueada (423)
       if (status === 423) {
+        const baseMsg = error?.response?.data?.error || error?.response?.data?.message || "La cuenta está temporalmente bloqueada por múltiples intentos fallidos";
         setErr(baseMsg);
         const until = error?.response?.data?.lockUntil;
         if (typeof until === "number") {
           setLockUntil(until);
           setNow(Date.now());
         }
-      } else if (status === 401) {
+      } 
+      // Manejo especial para credenciales incorrectas (401) con intentos restantes
+      else if (status === 401) {
+        const baseMsg = getFriendlyErrorMessage(error, "RUT/correo o contraseña incorrectos");
         const remaining = error?.response?.data?.attemptsRemaining;
         if (typeof remaining === "number") {
           if (remaining > 1) setErr(`${baseMsg}. Intentos restantes antes del bloqueo: ${remaining}.`);
@@ -150,8 +151,11 @@ export default function Login() {
         } else {
           setErr(baseMsg);
         }
-      } else {
-        setErr(baseMsg);
+      } 
+      // Otros errores
+      else {
+        const message = getFriendlyErrorMessage(error, "No se pudo iniciar sesión. Por favor intenta nuevamente");
+        setErr(message);
       }
     } finally {
       setLoading(false);
