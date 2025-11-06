@@ -18,6 +18,9 @@ export type AdminEvent = {
   /** Estado de publicación – mapeado desde `approved:boolean` */
   status: "approved" | "pending";
 
+  /** Estado activo/inactivo del evento */
+  isActive?: boolean;
+
   /** Fecha de creación del evento (ISO) */
   createdAt?: string | null;
 
@@ -95,6 +98,24 @@ export async function adminSetEventStatus(
   status: "approved" | "pending"
 ): Promise<AdminEvent> {
   const { data } = await api.patch<AdminEvent>(`/admin/events/${id}/status`, { status });
+  return data;
+}
+
+/**
+ * Activa o desactiva un evento como admin (incluso con ventas).
+ */
+export async function adminToggleEventActive(
+  id: number,
+  isActive: boolean
+): Promise<{
+  success: boolean;
+  message: string;
+  event: AdminEvent;
+  paidReservations: number;
+}> {
+  const { data } = await api.patch(`/admin/events/${id}/toggle-active`, {
+    isActive,
+  });
   return data;
 }
 

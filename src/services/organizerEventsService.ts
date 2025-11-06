@@ -17,6 +17,7 @@ export type OrganizerEvent = {
   // Cupos/estado
   capacity: number;
   status: "draft" | "pending" | "approved" | "rejected";
+  isActive?: boolean;
   updatedAt?: string;
 
   // 💲 Precio de publicación (CLP, entero)
@@ -96,6 +97,26 @@ export async function updateMyEvent(
 
 export async function deleteMyEvent(id: number): Promise<void> {
   await api.delete(`/organizer/events/${id}`);
+}
+
+/**
+ * Activa o desactiva un evento (incluso con ventas).
+ * @param id - ID del evento
+ * @param isActive - true para activar, false para desactivar
+ */
+export async function toggleEventActive(
+  id: number,
+  isActive: boolean
+): Promise<{
+  success: boolean;
+  message: string;
+  event: OrganizerEvent;
+  paidReservations: number;
+}> {
+  const { data } = await api.patch(`/organizer/events/${id}/toggle-active`, {
+    isActive,
+  });
+  return data;
 }
 
 /* ============ Event Sections (OWN events) ============ */

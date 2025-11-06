@@ -11,6 +11,7 @@ export type EventDetails = {
   capacity: number;
   price?: number;            // CLP (entero)
   approved: boolean;
+  isActive?: boolean;        // true = activo, false = desactivado por organizador
   coverImageUrl?: string | null;
 
   // Organización (el backend puede devolver organizerId u objeto organizer)

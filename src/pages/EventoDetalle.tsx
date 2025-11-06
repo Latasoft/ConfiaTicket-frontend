@@ -248,6 +248,30 @@ export default function EventoDetalle() {
         </div>
       </div>
 
+      {/* Banner de evento desactivado */}
+      {ev && (ev as any).isActive === false && (
+        <div className="max-w-6xl mx-auto px-6 pt-6">
+          <div className="rounded-lg border-2 border-red-300 bg-red-50 p-4">
+            <div className="flex items-start gap-3">
+              <span className="text-2xl">⚠️</span>
+              <div className="flex-1">
+                <h3 className="font-semibold text-red-900 mb-1">
+                  Evento desactivado
+                </h3>
+                <p className="text-sm text-red-800">
+                  Este evento ha sido desactivado por el organizador. No es posible comprar entradas en este momento.
+                  {isOwner && (
+                    <span className="block mt-2 text-red-700 italic">
+                      Como organizador, puedes reactivar este evento desde tu panel de control.
+                    </span>
+                  )}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* CONTENIDO */}
       <section className="max-w-6xl mx-auto p-6 grid gap-6 lg:grid-cols-[1fr,400px]">
         {/* Principal */}

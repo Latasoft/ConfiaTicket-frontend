@@ -4,6 +4,7 @@ import { NavLink, Link } from "react-router-dom";
 import {
   adminListEvents,
   adminSetEventStatus,
+  adminToggleEventActive,
   type AdminEvent,
 } from "@/services/adminEventsService";
 
@@ -213,6 +214,7 @@ export default function AdminEvents() {
               <th className="text-left p-3">Lugar</th>
               <th className="text-left p-3">Número de entradas</th>
               <th className="text-left p-3">Estado</th>
+              <th className="text-center p-3">Activo</th>
               <th className="text-left p-3">Organizador</th>
               <th className="text-right p-3">Acciones</th>
             </tr>
@@ -220,13 +222,13 @@ export default function AdminEvents() {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={9} className="p-6 text-center">
+                <td colSpan={10} className="p-6 text-center">
                   Cargando…
                 </td>
               </tr>
             ) : rows.length === 0 ? (
               <tr>
-                <td colSpan={9} className="p-6 text-center">
+                <td colSpan={10} className="p-6 text-center">
                   Sin resultados.
                 </td>
               </tr>
@@ -250,6 +252,43 @@ export default function AdminEvents() {
                   <td className="p-3">{ev.capacity}</td>
                   <td className="p-3">
                     <Badge s={ev.status} />
+                  </td>
+                  <td className="p-3 text-center">
+                    <button
+                      onClick={async () => {
+                        const newState = !ev.isActive;
+                        const confirmMsg = newState
+                          ? `¿Activar el evento "${ev.title}"?`
+                          : `¿Desactivar el evento "${ev.title}"? Los usuarios no podrán comprar entradas.`;
+                        
+                        if (!confirm(confirmMsg)) return;
+                        
+                        try {
+                          const result = await adminToggleEventActive(ev.id, newState);
+                          setToast({
+                            kind: "success",
+                            text: result.message + (result.paidReservations > 0 
+                              ? ` (${result.paidReservations} entradas vendidas)` 
+                              : ''),
+                          });
+                          load();
+                        } catch (error: unknown) {
+                          const err = error as { response?: { data?: { error?: string } } };
+                          setToast({
+                            kind: "error",
+                            text: err.response?.data?.error || "Error al cambiar estado del evento",
+                          });
+                        }
+                      }}
+                      className={`px-3 py-1 rounded-full text-xs font-medium ${
+                        ev.isActive !== false
+                          ? 'bg-green-100 text-green-800 hover:bg-green-200'
+                          : 'bg-red-100 text-red-800 hover:bg-red-200'
+                      }`}
+                      title={ev.isActive !== false ? 'Desactivar evento' : 'Activar evento'}
+                    >
+                      {ev.isActive !== false ? '🔴 Desactivar' : '🟢 Activar'}
+                    </button>
                   </td>
                   <td className="p-3">
                     {ev.organizer
