@@ -138,9 +138,21 @@ export default function TicketPurchaseFlow({ eventId, eventType, eventPrice, onP
       // Iniciar pago con la reserva ya creada
       const paymentData = await initiatePayment(currentReservationId);
 
-      // Redirigir a Transbank (o pasarela configurada)
-      if (paymentData.url) {
-        window.location.href = `${paymentData.url}?token_ws=${paymentData.token}`;
+      // Redirigir a Transbank usando POST
+      if (paymentData.url && paymentData.token) {
+        // Crear formulario
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = paymentData.url;
+        
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'token_ws';
+        input.value = paymentData.token;
+        
+        form.appendChild(input);
+        document.body.appendChild(form);
+        form.submit();
       } else {
         setStep('success');
         onPurchaseComplete?.(currentReservationId);
