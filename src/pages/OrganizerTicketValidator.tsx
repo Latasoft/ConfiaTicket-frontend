@@ -187,7 +187,6 @@ export default function OrganizerTicketValidator() {
       }
       
       const decodedText = await scanner.scanFile(file, true);
-      console.log('QR detectado en imagen:', decodedText);
       
       // Limpiar el div temporal si fue creado
       const tempDiv = document.getElementById('qr-reader-temp');
