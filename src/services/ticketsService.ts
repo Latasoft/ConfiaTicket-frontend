@@ -137,37 +137,6 @@ export type TicketListResponse = {
   pageSize: number;
 };
 
-/* ========= Tipos para listado (Organizador) ========= */
-
-export type OrganizerReservationItem = {
-  reservationId: number;
-  createdAt: string;
-  event?: { id: number; title: string; date: string | null };
-  buyer?: { id: number; name: string | null; email: string | null };
-  quantity: number;
-  amount: number;
-  status: ReservationStatus | string;
-  fulfillmentStatus?: string | null;
-  ticketUploadedAt?: string | null;
-  deliveredAt?: string | null;
-  hasTicket: boolean;
-  mime?: string | null;
-  size?: number | null; // bytes
-  uploadUrl: string; // /api/organizer/reservations/:id/ticket
-  canUpload: boolean;
-  // NUEVOS (deadline/reembolso)
-  ticketUploadDeadlineAt?: string | null;
-  deadlineExpired?: boolean;
-  refundStatus?: RefundStatus;
-};
-
-export type OrganizerReservationsResponse = {
-  items: OrganizerReservationItem[];
-  total: number;
-  page: number;
-  pageSize: number;
-};
-
 /* ========= Utils ========= */
 
 export function extractFilenameFromContentDisposition(cd?: string | null): string | undefined {
@@ -300,34 +269,6 @@ export async function refreshTicketStatus(reservationId: number): Promise<Bookin
   return data as BookingStatus;
 }
 
-/* ========= Organizador ========= */
-
-export async function listOrganizerReservations(params: {
-  page?: number;
-  pageSize?: number;
-  q?: string;
-  status?: string;
-  eventId?: number;
-  needsTicket?: boolean;
-}): Promise<OrganizerReservationsResponse> {
-  const { data } = await api.get("/organizer/reservations", { params });
-  return data as OrganizerReservationsResponse;
-}
-
-export async function organizerUploadTicket(
-  reservationId: number,
-  file: File
-): Promise<any> {
-  const form = new FormData();
-  form.append("ticket", file);
-  const { data } = await api.post(
-    `/organizer/reservations/${reservationId}/ticket`,
-    form,
-    { headers: { "Content-Type": "multipart/form-data" } }
-  );
-  return data;
-}
-
 /* ========= Admin ========= */
 
 export async function adminListPendingTickets(params?: {
@@ -401,9 +342,6 @@ const ticketsService = {
   getReservationDetail,
   refreshPaymentStatus,
   refreshTicketStatus,
-  // Organizador
-  listOrganizerReservations,
-  organizerUploadTicket,
   // Admin
   adminListPendingTickets,
   adminApproveTicket,

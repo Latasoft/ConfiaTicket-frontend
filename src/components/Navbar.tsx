@@ -324,17 +324,6 @@ export default function Navbar() {
                     </NavLink>
 
                     <NavLink
-                      to="/organizador/entradas"
-                      className={({ isActive }) =>
-                        `block px-3 py-2 hover:bg-black/5 ${isActive ? "font-semibold underline underline-offset-4" : ""}`
-                      }
-                      onClick={() => setOrgOpen(false)}
-                      role="menuitem"
-                    >
-                      Subir entradas
-                    </NavLink>
-
-                    <NavLink
                       to="/organizador/pagos"
                       className={({ isActive }) =>
                         `block px-3 py-2 hover:bg-black/5 ${isActive ? "font-semibold underline underline-offset-4" : ""}`

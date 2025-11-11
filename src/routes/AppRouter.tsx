@@ -21,7 +21,6 @@ import OrganizerApply from "@/pages/OrganizerApply";
 import OrganizerPending from "@/pages/OrganizerPending";
 import OrganizerDashboard from "@/pages/OrganizerDashboard";
 import OrganizerEventForm from "@/pages/OrganizerEventForm";
-import OrganizerTickets from "@/pages/OrganizerTickets";
 import OrganizerPayoutSettings from "@/pages/OrganizerPayoutSettings";
 import OrganizerPayouts from "@/pages/OrganizerPayouts";
 import OrganizerTicketValidator from "@/pages/OrganizerTicketValidator";
@@ -208,16 +207,6 @@ export const router = createBrowserRouter([
           <RequireAuth>
             <RequireVerifiedOrganizer>
               <OrganizerEventForm />
-            </RequireVerifiedOrganizer>
-          </RequireAuth>
-        ),
-      },
-      {
-        path: "/organizador/entradas",
-        element: (
-          <RequireAuth>
-            <RequireVerifiedOrganizer>
-              <OrganizerTickets />
             </RequireVerifiedOrganizer>
           </RequireAuth>
         ),
