@@ -42,13 +42,23 @@ export default function EventoDetalle() {
 
   const { user } = useAuth() as { user?: { id: number; role: string } };
 
-  // ✅ Detectar si venimos de un pago exitoso
+  //Detectar si venimos de un pago exitoso
   const showPurchaseSuccess = searchParams.get('showPurchaseSuccess') === 'true';
   const successReservationId = searchParams.get('reservationId');
   const successPurchaseGroupId = searchParams.get('purchaseGroupId');
+  
+  //Detectar estados de pago (failed, aborted, timeout, error, own-event-forbidden)
+  const paymentStatus = searchParams.get('paymentStatus'); // 'failed' | 'aborted' | 'timeout' | 'error' | 'own-event-forbidden'
+  const paymentError = searchParams.get('error');
+  const paymentAmount = searchParams.get('amount');
+  
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [modalReservationId, setModalReservationId] = useState<string | null>(null);
   const [modalPurchaseGroupId, setModalPurchaseGroupId] = useState<string | null>(null);
+  const [modalPaymentStatus, setModalPaymentStatus] = useState<string | null>(null);
+  const [modalPaymentError, setModalPaymentError] = useState<string | null>(null);
+  const [modalPaymentAmount, setModalPaymentAmount] = useState<string | null>(null);
 
   // Mostrar modal cuando detectamos parámetros de éxito
   useEffect(() => {
@@ -66,6 +76,25 @@ export default function EventoDetalle() {
       setSearchParams(newParams, { replace: true });
     }
   }, [showPurchaseSuccess, successReservationId, successPurchaseGroupId, searchParams, setSearchParams]);
+
+  //Mostrar modal para estados de pago (failed, aborted, timeout, error)
+  useEffect(() => {
+    if (paymentStatus && ['failed', 'aborted', 'timeout', 'error', 'own-event-forbidden'].includes(paymentStatus)) {
+      setModalPaymentStatus(paymentStatus);
+      setModalPaymentError(paymentError);
+      setModalPaymentAmount(paymentAmount);
+      setShowPaymentModal(true);
+      
+      // Limpiar parámetros de URL
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('paymentStatus');
+      newParams.delete('error');
+      newParams.delete('amount');
+      newParams.delete('buyOrder');
+      newParams.delete('reservationId');
+      setSearchParams(newParams, { replace: true });
+    }
+  }, [paymentStatus, paymentError, paymentAmount, searchParams, setSearchParams]);
 
   const [activeHold, setActiveHold] = useState<null | {
     id: number;
@@ -461,7 +490,7 @@ export default function EventoDetalle() {
         </aside>
       </section>
 
-      {/* ✅ Modal de Compra Exitosa */}
+      {/*Modal de Compra Exitosa */}
       {showSuccessModal && modalReservationId && (
         <div 
           className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 animate-fade-in"
@@ -528,6 +557,188 @@ export default function EventoDetalle() {
                 <button
                   onClick={() => setShowSuccessModal(false)}
                   className="px-8 py-3 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-700 transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                  Cerrar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/*Modal de Estados de Pago (Failed, Aborted, Timeout, Error) */}
+      {showPaymentModal && modalPaymentStatus && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 animate-fade-in"
+          onClick={() => setShowPaymentModal(false)}
+        >
+          <div 
+            className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full animate-slide-in"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header del modal según el estado */}
+            {modalPaymentStatus === 'failed' && (
+              <div className="bg-gradient-to-r from-red-500 to-rose-600 text-white p-6 rounded-t-2xl">
+                <div className="flex items-center gap-4">
+                  <div className="bg-white bg-opacity-20 rounded-full p-3">
+                    <svg className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold">Pago rechazado</h2>
+                    <p className="text-red-100 text-sm">No pudimos procesar tu transacción</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {modalPaymentStatus === 'aborted' && (
+              <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white p-6 rounded-t-2xl">
+                <div className="flex items-center gap-4">
+                  <div className="bg-white bg-opacity-20 rounded-full p-3">
+                    <svg className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold">Pago cancelado</h2>
+                    <p className="text-amber-100 text-sm">Cancelaste el proceso de pago</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {modalPaymentStatus === 'timeout' && (
+              <div className="bg-gradient-to-r from-orange-500 to-red-500 text-white p-6 rounded-t-2xl">
+                <div className="flex items-center gap-4">
+                  <div className="bg-white bg-opacity-20 rounded-full p-3">
+                    <svg className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold">Pago expirado</h2>
+                    <p className="text-orange-100 text-sm">El tiempo límite para pagar se agotó</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {(modalPaymentStatus === 'error' || modalPaymentStatus === 'own-event-forbidden') && (
+              <div className="bg-gradient-to-r from-rose-500 to-pink-600 text-white p-6 rounded-t-2xl">
+                <div className="flex items-center gap-4">
+                  <div className="bg-white bg-opacity-20 rounded-full p-3">
+                    <svg className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold">
+                      {modalPaymentStatus === 'own-event-forbidden' ? 'Acción no permitida' : 'Error en el pago'}
+                    </h2>
+                    <p className="text-rose-100 text-sm">Ocurrió un problema al procesar tu solicitud</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Contenido del modal */}
+            <div className="p-6">
+              {/* Mensaje de error */}
+              <div className="bg-gray-50 rounded-xl p-6 mb-6">
+                {modalPaymentStatus === 'failed' && (
+                  <div>
+                    <p className="text-gray-700 mb-4">
+                      {modalPaymentError || 'Tu banco rechazó la transacción. Esto puede deberse a fondos insuficientes, límites de compra excedidos, o problemas con tu tarjeta.'}
+                    </p>
+                    <ul className="text-sm text-gray-600 space-y-2 list-disc list-inside">
+                      <li>Verifica que tu tarjeta tenga fondos suficientes</li>
+                      <li>Confirma que tu tarjeta esté habilitada para compras en línea</li>
+                      <li>Intenta con otra tarjeta o medio de pago</li>
+                      <li>Contacta a tu banco si el problema persiste</li>
+                    </ul>
+                  </div>
+                )}
+
+                {modalPaymentStatus === 'aborted' && (
+                  <div>
+                    <p className="text-gray-700 mb-4">
+                      Cancelaste el proceso de pago en Webpay. Tu reserva ha sido liberada y las entradas están nuevamente disponibles.
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      Puedes volver a intentar la compra cuando lo desees. Las entradas se reservarán por 15 minutos una vez que inicies el proceso.
+                    </p>
+                  </div>
+                )}
+
+                {modalPaymentStatus === 'timeout' && (
+                  <div>
+                    <p className="text-gray-700 mb-4">
+                      {modalPaymentError || 'El tiempo límite para completar el pago se agotó. Tu reserva ha sido liberada automáticamente.'}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      Las entradas están nuevamente disponibles. Puedes volver a seleccionarlas e intentar el pago nuevamente.
+                    </p>
+                  </div>
+                )}
+
+                {modalPaymentStatus === 'error' && (
+                  <div>
+                    <p className="text-gray-700 mb-4">
+                      {modalPaymentError || 'Ocurrió un error al procesar tu pago. Por favor, intenta nuevamente en unos minutos.'}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      Si el problema persiste, contacta a nuestro equipo de soporte.
+                    </p>
+                  </div>
+                )}
+
+                {modalPaymentStatus === 'own-event-forbidden' && (
+                  <div>
+                    <p className="text-gray-700 mb-4">
+                      No puedes comprar entradas de tu propio evento como organizador. La reserva asociada fue cancelada.
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      Si necesitas entradas para tu evento, debes crearlas desde el panel de organizador.
+                    </p>
+                  </div>
+                )}
+
+                {/* Mostrar monto si está disponible */}
+                {modalPaymentAmount && (
+                  <div className="mt-4 pt-4 border-t border-gray-200">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Monto del intento:</span>
+                      <span className="font-semibold text-gray-900">
+                        ${Number(modalPaymentAmount).toLocaleString('es-CL')}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Botones de acción */}
+              <div className="flex flex-col sm:flex-row gap-4">
+                <button
+                  onClick={() => {
+                    setShowPaymentModal(false);
+                    // Opcional: hacer scroll hasta el selector de entradas
+                    window.scrollTo({ top: 400, behavior: 'smooth' });
+                  }}
+                  className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  Volver a intentar
+                </button>
+                <button
+                  onClick={() => setShowPaymentModal(false)}
+                  className="flex-1 px-6 py-3 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-700 transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
