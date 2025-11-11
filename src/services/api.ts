@@ -25,39 +25,125 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// ---- Response: SOLO 401 redirige a login. 403 NO redirige ni borra token.
+// ---- Response: Auto-refresh en 401, luego retry. Si falla, redirige a login.
+let isRefreshing = false;
+let failedQueue: Array<{
+  resolve: (value?: unknown) => void;
+  reject: (reason?: unknown) => void;
+}> = [];
+
+const processQueue = (error: unknown = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve();
+    }
+  });
+  failedQueue = [];
+};
+
 api.interceptors.response.use(
   (res) => res,
-  (err) => {
+  async (err) => {
+    const originalRequest = err.config;
     const status = err?.response?.status as number | undefined;
-    const url = String(err?.config?.url || "");
+    const url = String(originalRequest?.url || "");
     const hadToken = !!localStorage.getItem("token");
 
     const isAuthEndpoint = /\/auth\/(login|register|forgot-password|reset-password)/.test(url);
+    const isRefreshEndpoint = url.includes("/auth/refresh");
     const isLoginPage =
       typeof window !== "undefined" && window.location.pathname.startsWith("/login");
 
-    // 401 -> sesión inválida/expirada: limpiar y enviar a login
-    if (status === 401 && hadToken && !isAuthEndpoint) {
-      // Derivar razón
-      const msg: string =
-        err?.response?.data?.error || err?.response?.data?.message || "";
-      const reason = msg.toLowerCase().includes("desactivada")
-        ? "deactivated"
-        : "session_expired";
+    // 401 -> intentar renovar token automáticamente
+    if (status === 401 && hadToken && !isAuthEndpoint && !originalRequest._retry) {
+      // Si es el endpoint de refresh el que falló, no intentar de nuevo
+      if (isRefreshEndpoint) {
+        // El refresh falló, limpiar y redirigir
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        try {
+          window.dispatchEvent(
+            new CustomEvent("auth:logout", { detail: { reason: "session_expired" } })
+          );
+        } catch {
+          // ignore
+        }
+        if (!isLoginPage) {
+          window.location.replace("/login?reason=session_expired");
+        }
+        return Promise.reject(err);
+      }
 
-      // Limpiar sesión local
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
+      // Si ya hay un refresh en progreso, esperar
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+          .then(() => {
+            // Reintentar la request original con el nuevo token
+            return api(originalRequest);
+          })
+          .catch((error) => {
+            return Promise.reject(error);
+          });
+      }
 
-      // Avisar al resto de la app (opcional)
+      originalRequest._retry = true;
+      isRefreshing = true;
+
       try {
-        window.dispatchEvent(new CustomEvent("auth:logout", { detail: { reason } }));
-      } catch {}
+        // Intentar renovar el token
+        const { data } = await api.post("/auth/refresh");
+        const newToken = data.token;
 
-      if (typeof window !== "undefined" && !isLoginPage) {
-        const qs = new URLSearchParams({ reason }).toString();
-        window.location.replace(`/login?${qs}`);
+        if (newToken) {
+          // Guardar nuevo token
+          localStorage.setItem("token", newToken);
+          
+          // Actualizar header de la request original
+          originalRequest.headers = originalRequest.headers || {};
+          originalRequest.headers.Authorization = `Bearer ${newToken}`;
+
+          // Procesar cola de requests pendientes
+          processQueue(null);
+
+          // Reintentar request original
+          return api(originalRequest);
+        } else {
+          throw new Error("No token returned from refresh");
+        }
+      } catch (refreshError) {
+        // Refresh falló, limpiar sesión y redirigir
+        processQueue(refreshError);
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+
+        const msg: string =
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (refreshError as any)?.response?.data?.error ||
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (refreshError as any)?.response?.data?.message ||
+          "";
+        const reason = msg.toLowerCase().includes("desactivada")
+          ? "deactivated"
+          : "session_expired";
+
+        try {
+          window.dispatchEvent(new CustomEvent("auth:logout", { detail: { reason } }));
+        } catch {
+          // ignore
+        }
+
+        if (!isLoginPage) {
+          const qs = new URLSearchParams({ reason }).toString();
+          window.location.replace(`/login?${qs}`);
+        }
+
+        return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
       }
     }
 
@@ -71,7 +157,9 @@ api.interceptors.response.use(
             detail: { url, payload: err?.response?.data },
           })
         );
-      } catch {}
+      } catch {
+        // ignore
+      }
     }
 
     return Promise.reject(err);
