@@ -9,6 +9,8 @@ type LocalStatus =
   | "authorized"          // ✅ pre-autorizado (captura diferida)
   | "failed"
   | "aborted"
+  | "timeout"             // ✅ pago expiró (Webpay timeout)
+  | "error"               // ✅ error general del sistema
   | "own-event-forbidden"
   | "unknown";
 
@@ -63,6 +65,7 @@ export default function PaymentResult() {
   const token = params.get("token") || "";
   const buyOrderParam = params.get("buyOrder") || "";
   const amountParam = params.get("amount");
+  const errorParam = params.get("error") || ""; // ✅ mensaje de error personalizado
 
   // Parámetros específicos
   const reservationIdParam = params.get("reservationId") || "";
@@ -74,7 +77,7 @@ export default function PaymentResult() {
 
   const [loading, setLoading] = useState<boolean>(!!(token || buyOrderParam));
   const [error, setError] = useState<string | null>(null);
-  const [tbkInfo, setTbkInfo] = useState<any | null>(null);
+  const [tbkInfo, setTbkInfo] = useState<Record<string, unknown> | null>(null);
   const [localInfo, setLocalInfo] = useState<{
     status?: string;
     amount?: number;
@@ -113,6 +116,8 @@ export default function PaymentResult() {
       statusParam === "success" ||
       statusParam === "failed" ||
       statusParam === "aborted" ||
+      statusParam === "timeout" ||
+      statusParam === "error" ||
       statusParam === "own-event-forbidden" ||
       statusParam === "authorized"
     ) {
@@ -137,6 +142,10 @@ export default function PaymentResult() {
         return "Rechazado";
       case "aborted":
         return "Cancelado";
+      case "timeout":
+        return "Expirado";
+      case "error":
+        return "Error";
       case "own-event-forbidden":
         return "Acción no permitida";
       default:
@@ -179,12 +188,13 @@ export default function PaymentResult() {
           });
           setTbkInfo(null);
         }
-      } catch (e: any) {
+      } catch (e) {
         if (!active) return;
+        const error = e as { response?: { data?: { error?: string; message?: string } }; message?: string };
         const errText =
-          e?.response?.data?.error ||
-          e?.response?.data?.message ||
-          e?.message ||
+          error?.response?.data?.error ||
+          error?.response?.data?.message ||
+          error?.message ||
           "No se pudo obtener el estado del pago.";
         setError(errText);
       } finally {
@@ -265,10 +275,11 @@ export default function PaymentResult() {
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
-    } catch (e: any) {
+    } catch (e) {
+      const error = e as { response?: { data?: { error?: string } }; message?: string };
       setError(
-        e?.response?.data?.error ||
-          e?.message ||
+        error?.response?.data?.error ||
+          error?.message ||
           "No se pudo descargar la entrada. Intenta nuevamente."
       );
     } finally {
@@ -326,7 +337,8 @@ export default function PaymentResult() {
         <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-4 text-red-800">
           <h1 className="text-xl font-semibold">Pago rechazado</h1>
           <p className="text-sm">
-            No pudimos confirmar la transacción. Si el problema persiste, intenta nuevamente o usa otro medio de pago.
+            {errorParam || "No pudimos confirmar la transacción."}{" "}
+            Si el problema persiste, intenta nuevamente o usa otro medio de pago.
           </p>
         </div>
       )}
@@ -339,6 +351,28 @@ export default function PaymentResult() {
             {isResale
               ? "Puedes reintentarlo desde Mis órdenes de reventa."
               : "Puedes volver al evento y reintentar cuando quieras."}
+          </p>
+        </div>
+      )}
+
+      {localStatus === "timeout" && (
+        <div className="mb-4 rounded-lg border border-orange-200 bg-orange-50 p-4 text-orange-900">
+          <h1 className="text-xl font-semibold">Pago expirado</h1>
+          <p className="text-sm">
+            {errorParam || "El pago expiró o fue cancelado. Tu reserva ha sido liberada."}{" "}
+            {isResale
+              ? "Puedes reintentarlo desde Mis órdenes de reventa."
+              : "Puedes volver al evento y reintentar cuando quieras."}
+          </p>
+        </div>
+      )}
+
+      {localStatus === "error" && (
+        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-4 text-red-800">
+          <h1 className="text-xl font-semibold">Error en el pago</h1>
+          <p className="text-sm">
+            {errorParam || "Ocurrió un error al procesar tu pago."}{" "}
+            Si el problema persiste, contacta a soporte.
           </p>
         </div>
       )}
@@ -509,11 +543,12 @@ export default function PaymentResult() {
                     });
                     setTbkInfo(null);
                   }
-                } catch (e: any) {
+                } catch (e) {
+                  const error = e as { response?: { data?: { error?: string; message?: string } }; message?: string };
                   const errText =
-                    e?.response?.data?.error ||
-                    e?.response?.data?.message ||
-                    e?.message ||
+                    error?.response?.data?.error ||
+                    error?.response?.data?.message ||
+                    error?.message ||
                     "No se pudo actualizar el estado.";
                   setError(errText);
                 } finally {
@@ -551,10 +586,11 @@ export default function PaymentResult() {
                     setError(null);
                     const { data } = await api.get(`/tickets/${id}/status`);
                     setTicketStatus(data as TicketFlowStatus);
-                  } catch (e: any) {
+                  } catch (e) {
+                    const error = e as { response?: { data?: { error?: string } }; message?: string };
                     setError(
-                      e?.response?.data?.error ||
-                        e?.message ||
+                      error?.response?.data?.error ||
+                        error?.message ||
                         "No se pudo actualizar el estado del ticket."
                     );
                   } finally {
