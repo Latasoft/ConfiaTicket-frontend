@@ -41,8 +41,15 @@ export async function createReservation(
 /**
  * Iniciar el proceso de pago para una reserva
  */
-export async function initiatePayment(reservationId: number): Promise<{ url: string; token: string }> {
-  const response = await api.post(`/payments/create`, { reservationId });
+export async function initiatePayment(
+  reservationId: number,
+  purchaseGroupId?: string
+): Promise<{ url: string; token: string }> {
+  const body = purchaseGroupId
+    ? { purchaseGroupId }
+    : { reservationId };
+  
+  const response = await api.post(`/payments/create`, body);
   return response.data;
 }
 

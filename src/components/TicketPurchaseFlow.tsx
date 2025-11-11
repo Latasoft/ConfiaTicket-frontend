@@ -135,8 +135,11 @@ export default function TicketPurchaseFlow({ eventId, eventType, eventPrice, onP
     setError(null);
 
     try {
-      // Iniciar pago con la reserva ya creada
-      const paymentData = await initiatePayment(currentReservationId);
+      // Iniciar pago: si hay purchaseGroupId, usarlo; si no, usar reservationId
+      const paymentData = await initiatePayment(
+        currentReservationId,
+        currentPurchaseGroupId || undefined
+      );
 
       // Redirigir a Transbank usando POST
       if (paymentData.url && paymentData.token) {

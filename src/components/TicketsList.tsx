@@ -73,6 +73,7 @@ export default function TicketsList({ reservationId, purchaseGroupId, showFullVi
 
   useEffect(() => {
     loadTickets();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reservationId, purchaseGroupId]);
 
   const loadTickets = async () => {
@@ -95,8 +96,9 @@ export default function TicketsList({ reservationId, purchaseGroupId, showFullVi
         setReservations([response.data.reservation]);
         setTickets(response.data.tickets);
       }
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Error al cargar los tickets');
+    } catch (err) {
+      const error = err as { response?: { data?: { error?: string } } };
+      setError(error.response?.data?.error || 'Error al cargar los tickets');
     } finally {
       setLoading(false);
     }
@@ -115,8 +117,6 @@ export default function TicketsList({ reservationId, purchaseGroupId, showFullVi
         return;
       }
       
-      console.log(`📥 [DEBUG] Descargando ticket ${ticket.id} de reservación ${resId}`);
-      
       const response = await api.get(
         `/bookings/${resId}/tickets/${ticket.id}/download`,
         { responseType: 'blob' }
@@ -130,7 +130,7 @@ export default function TicketsList({ reservationId, purchaseGroupId, showFullVi
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error descargando ticket:', err);
       alert('Error al descargar el ticket');
     } finally {
@@ -163,15 +163,6 @@ export default function TicketsList({ reservationId, purchaseGroupId, showFullVi
   }
 
   if (!reservation) return null;
-
-  // Debug: mostrar detalles de la reservación
-  console.log('💰 [DEBUG] Reservación en modal de éxito:', {
-    id: reservation.id,
-    code: reservation.code,
-    amount: reservation.amount,
-    quantity: reservation.quantity,
-    status: reservation.status
-  });
 
   return (
     <div className="space-y-6">
