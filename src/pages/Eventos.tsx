@@ -98,83 +98,104 @@ export default function Eventos() {
   }
 
   return (
-    <section className="max-w-6xl mx-auto p-6">
-      {/* Header + búsqueda + orden */}
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-6">
-        <h2 className="text-3xl font-extrabold tracking-tight">Eventos</h2>
+    <section className="min-h-screen bg-dark-900 py-12 px-4">
+      <div className="max-w-7xl mx-auto">
+        {/* Header + búsqueda + orden */}
+        <div className="flex flex-col gap-6 mb-10">
+          <h2 className="text-5xl font-display font-bold bg-gradient-to-r from-neon-cyan via-neon-purple to-neon-pink bg-clip-text text-transparent">
+            Eventos
+          </h2>
 
-        <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-3">
-          <div className="relative md:w-80">
-            <input
-              value={q}
-              onChange={(e) => handleQueryChange(e.target.value)}
-              className="w-full border rounded-lg px-4 py-2 pl-10 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Buscar por título, lugar o ciudad…"
-            />
-            <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <circle cx="11" cy="11" r="7" strokeWidth="2" />
-              <path d="M21 21l-4.35-4.35" strokeWidth="2" />
-            </svg>
-            {!!q && (
-              <button
-                type="button"
-                onClick={() => handleQueryChange("")}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                aria-label="Limpiar búsqueda"
-                title="Limpiar"
-              >
-                ×
-              </button>
-            )}
+          {/* Barra de búsqueda glassmorphism */}
+          <div className="glass-light rounded-2xl p-6 border border-dark-600">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:gap-4">
+              {/* Búsqueda */}
+              <div className="relative flex-1">
+                <input
+                  value={q}
+                  onChange={(e) => handleQueryChange(e.target.value)}
+                  className="input-modern w-full pl-12"
+                  placeholder="Buscar por título, lugar o ciudad…"
+                />
+                <svg className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-dark-300" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <circle cx="11" cy="11" r="7" strokeWidth="2" />
+                  <path d="M21 21l-4.35-4.35" strokeWidth="2" />
+                </svg>
+                {!!q && (
+                  <button
+                    type="button"
+                    onClick={() => handleQueryChange("")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-dark-300 hover:text-white text-2xl"
+                    aria-label="Limpiar búsqueda"
+                    title="Limpiar"
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
+
+              {/* Ordenar */}
+              <div className="flex items-center gap-3">
+                <label className="text-sm text-dark-100 whitespace-nowrap hidden lg:block">Ordenar por</label>
+                <select 
+                  value={sort} 
+                  onChange={(e) => setSort(e.target.value as SortKey)} 
+                  className="input-modern min-w-[200px]"
+                >
+                  <option value="date-asc">Fecha (próximos primero)</option>
+                  <option value="date-desc">Fecha (recientes primero)</option>
+                  <option value="price-asc">Precio (más barato)</option>
+                  <option value="price-desc">Precio (más caro)</option>
+                  <option value="title-asc">Título (A–Z)</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Filtros */}
+            <div className="flex flex-wrap items-center gap-4 mt-4">
+              <label className="inline-flex items-center gap-2 text-sm text-dark-100 cursor-pointer hover:text-white transition-colors">
+                <input
+                  type="checkbox"
+                  checked={showPast}
+                  onChange={(e) => setShowPast(e.target.checked)}
+                  className="rounded border-dark-500 bg-dark-700 text-neon-cyan focus:ring-neon-cyan focus:ring-offset-dark-800"
+                />
+                <span>Mostrar pasados</span>
+              </label>
+
+              <label className="inline-flex items-center gap-2 text-sm text-dark-100 cursor-pointer hover:text-white transition-colors">
+                <input
+                  type="checkbox"
+                  checked={includeSoldOut}
+                  onChange={(e) => setIncludeSoldOut(e.target.checked)}
+                  className="rounded border-dark-500 bg-dark-700 text-neon-cyan focus:ring-neon-cyan focus:ring-offset-dark-800"
+                />
+                <span>Incluir agotados</span>
+              </label>
+            </div>
           </div>
-
-          <div className="flex items-center gap-3">
-            <label className="text-sm text-gray-600">Ordenar por</label>
-            <select value={sort} onChange={(e) => setSort(e.target.value as SortKey)} className="border rounded-lg px-3 py-2">
-              <option value="date-asc">Fecha (próximos primero)</option>
-              <option value="date-desc">Fecha (recientes primero)</option>
-              <option value="price-asc">Precio (más barato)</option>
-              <option value="price-desc">Precio (más caro)</option>
-              <option value="title-asc">Título (A–Z)</option>
-            </select>
-          </div>
-
-          <label className="inline-flex items-center gap-2 text-sm text-gray-700">
-            <input
-              type="checkbox"
-              checked={showPast}
-              onChange={(e) => setShowPast(e.target.checked)}
-              className="rounded border-gray-300"
-            />
-            Mostrar pasados
-          </label>
-
-          <label className="inline-flex items-center gap-2 text-sm text-gray-700">
-            <input
-              type="checkbox"
-              checked={includeSoldOut}
-              onChange={(e) => setIncludeSoldOut(e.target.checked)}
-              className="rounded border-gray-300"
-            />
-            Incluir agotados
-          </label>
         </div>
+
+        {/* Estados */}
+        {err && (
+          <div className="glass border border-red-500/50 rounded-xl p-4 mb-6 text-white flex items-start gap-3">
+            <span className="text-2xl">⚠️</span>
+            <p className="flex-1">{err}</p>
+          </div>
+        )}
+
+        {loading ? (
+          <SkeletonGrid />
+        ) : filtered.length === 0 ? (
+          <EmptyState query={debouncedQ} />
+        ) : (
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {filtered.map((ev) => (
+              <EventCard key={ev.id} ev={ev} />
+            ))}
+          </div>
+        )}
       </div>
-
-      {/* Estados */}
-      {err && <p className="rounded-xl border bg-red-50 text-red-700 p-4 mb-4">{err}</p>}
-
-      {loading ? (
-        <SkeletonGrid />
-      ) : filtered.length === 0 ? (
-        <EmptyState query={debouncedQ} />
-      ) : (
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((ev) => (
-            <EventCard key={ev.id} ev={ev} />
-          ))}
-        </div>
-      )}
     </section>
   );
 }
@@ -320,23 +341,23 @@ function EventCard({ ev }: { ev: EventItem }) {
 
   const toHref = isDisabled ? "#" : `/eventos/${ev.id}`;
   const linkClass =
-    "group rounded-2xl border overflow-hidden bg-white shadow-sm " +
-    (isDisabled ? "opacity-75 cursor-not-allowed pointer-events-none" : "hover:shadow-md transition-shadow");
+    "group card-modern hover-lift overflow-hidden transition-all duration-300 " +
+    (isDisabled ? "opacity-60 cursor-not-allowed pointer-events-none" : "hover:border-neon-cyan/50 hover:shadow-xl hover:shadow-neon-cyan/10");
 
   const showImage = !!imageUrl && !broken;
 
   return (
     <Link to={toHref} aria-disabled={isDisabled || undefined} tabIndex={isDisabled ? -1 : undefined} className={linkClass}>
       {/* Imagen */}
-      <div className="relative overflow-hidden aspect-[16/9]">
+      <div className="relative overflow-hidden aspect-[16/9] bg-dark-700">
         {showImage ? (
           <>
             <img
               src={imageUrl}
               alt={ev.title}
               loading="lazy"
-              className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-              style={{ filter: "saturate(1.05) contrast(1.03)" }}
+              className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+              style={{ filter: "saturate(1.2) contrast(1.1)" }}
               referrerPolicy="no-referrer"
               onError={() => setBroken(true)}
             />
@@ -383,13 +404,13 @@ function EventCard({ ev }: { ev: EventItem }) {
 
       {/* Cuerpo */}
       <div className="p-4">
-        <p className="text-sm text-gray-600 flex items-center gap-1">
+        <p className="text-sm text-dark-100 flex items-center gap-1">
           <CalendarIcon />
           {formatFechaLarga((ev as any).date)}
         </p>
 
         {((ev as any).location || (ev as any).venue) && (
-          <p className="mt-1 text-sm text-gray-700 flex items-center gap-1">
+          <p className="mt-1 text-sm text-dark-200 flex items-center gap-1">
             <PinIcon />
             {(ev as any).location || (ev as any).venue}
           </p>
@@ -397,26 +418,26 @@ function EventCard({ ev }: { ev: EventItem }) {
 
         <div className="mt-3 flex flex-wrap items-center gap-2">
           {typeof priceChip === "number" && (
-            <span className="text-xs bg-black/5 text-gray-700 px-2 py-1 rounded-full">Desde {formatMoney(priceChip)}</span>
+            <span className="text-xs glass border border-neon-cyan/30 text-neon-cyan px-2 py-1 rounded-full">Desde {formatMoney(priceChip)}</span>
           )}
           {salesCloseAt && !salesClosed && (
-            <span className="text-xs bg-indigo-50 text-indigo-700 px-2 py-1 rounded-full border border-indigo-200">
+            <span className="text-xs glass border border-neon-purple/30 text-neon-purple px-2 py-1 rounded-full">
               Cierra ventas: {formatFechaCorta(salesCloseAt)}
             </span>
           )}
           {/* Chip informativo cuando está “agotado” por reservas pero aún queda stock real por pagados */}
           {soldOutVisual && (remainingPaidOnly ?? 0) > 0 && (
-            <span className="text-xs bg-amber-50 text-amber-800 px-2 py-1 rounded-full border border-amber-200">
+            <span className="text-xs glass border border-neon-yellow/30 text-neon-yellow px-2 py-1 rounded-full">
               Reservado por otros • vuelve en minutos
             </span>
           )}
           {soldOutVisual && (remainingPaidOnly ?? 0) <= 0 && (
-            <span className="text-xs bg-red-50 text-red-700 px-2 py-1 rounded-full border border-red-200">Entradas agotadas</span>
+            <span className="text-xs glass border border-red-500/30 text-red-400 px-2 py-1 rounded-full">Entradas agotadas</span>
           )}
         </div>
 
         <div className="mt-4">
-          <span className={`inline-flex items-center gap-1 ${isDisabled ? "text-gray-400" : "text-blue-600 group-hover:gap-2 transition-all"}`}>
+          <span className={`inline-flex items-center gap-1 ${isDisabled ? "text-dark-300" : "text-neon-cyan group-hover:gap-2 transition-all"}`}>
             Ver detalles
             <ArrowRight />
           </span>
@@ -432,13 +453,13 @@ function SkeletonGrid() {
   return (
     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
       {[...Array(6)].map((_, i) => (
-        <div key={i} className="rounded-2xl border overflow-hidden animate-pulse">
-          <div className="aspect-[16/9] bg-gray-200" />
+        <div key={i} className="card-modern overflow-hidden animate-pulse">
+          <div className="aspect-[16/9] bg-dark-700" />
           <div className="p-4 space-y-3">
-            <div className="h-4 w-2/3 bg-gray-200 rounded" />
-            <div className="h-3 w-1/2 bg-gray-200 rounded" />
-            <div className="h-3 w-1/3 bg-gray-200 rounded" />
-            <div className="h-8 w-24 bg-gray-200 rounded mt-2" />
+            <div className="h-4 w-2/3 bg-dark-700 rounded" />
+            <div className="h-3 w-1/2 bg-dark-700 rounded" />
+            <div className="h-3 w-1/3 bg-dark-700 rounded" />
+            <div className="h-8 w-24 bg-dark-700 rounded mt-2" />
           </div>
         </div>
       ))}
@@ -448,11 +469,11 @@ function SkeletonGrid() {
 
 function EmptyState({ query }: { query?: string }) {
   return (
-    <div className="rounded-xl border p-10 text-center">
+    <div className="glass-light rounded-2xl border border-dark-600 p-10 text-center">
       <div className="text-5xl mb-2">🧐</div>
-      <h3 className="text-lg font-semibold">Sin resultados</h3>
-      <p className="text-gray-600">
-        {query ? <>No encontramos eventos que coincidan con “<b>{query}</b>”.</> : <>Prueba otra búsqueda o vuelve más tarde.</>}
+      <h3 className="text-lg font-semibold text-white">Sin resultados</h3>
+      <p className="text-dark-200">
+        {query ? <>No encontramos eventos que coincidan con "<b className="text-white">{query}</b>".</> : <>Prueba otra búsqueda o vuelve más tarde.</>}
       </p>
     </div>
   );
@@ -462,7 +483,7 @@ function EmptyState({ query }: { query?: string }) {
 
 function CalendarIcon() {
   return (
-    <svg className="h-4 w-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+    <svg className="h-4 w-4 text-dark-300" viewBox="0 0 24 24" fill="none" stroke="currentColor">
       <rect x="3" y="4" width="18" height="18" rx="2" ry="2" strokeWidth="2" />
       <line x1="16" y1="2" x2="16" y2="6" strokeWidth="2" />
       <line x1="8" y1="2" x2="8" y2="6" strokeWidth="2" />
@@ -472,7 +493,7 @@ function CalendarIcon() {
 }
 function PinIcon() {
   return (
-    <svg className="h-4 w-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+    <svg className="h-4 w-4 text-dark-300" viewBox="0 0 24 24" fill="none" stroke="currentColor">
       <path d="M12 21s-6-5.33-6-10a6 6 0 1112 0c0 4.67-6 10-6 10z" strokeWidth="2" strokeLinejoin="round" />
       <circle cx="12" cy="11" r="2" strokeWidth="2" />
     </svg>

@@ -191,8 +191,8 @@ export default function EventoDetalle() {
   }, [activeHold, initialLeft]);
 
   if (loading) return <HeroSkeleton />;
-  if (err) return <p className="p-6 text-red-600">{err}</p>;
-  if (!ev) return <p className="p-6">No se encontró el evento.</p>;
+  if (err) return <p className="p-6 text-red-400 bg-dark-900 min-h-screen">{err}</p>;
+  if (!ev) return <p className="p-6 text-dark-200 bg-dark-900 min-h-screen">No se encontró el evento.</p>;
 
   // Imagen
   const rawImage = (ev as any).imageUrl ?? (ev as any).coverImageUrl ?? undefined;
@@ -225,7 +225,7 @@ export default function EventoDetalle() {
     : null;
 
   return (
-    <div className="min-h-[60vh]">
+    <div className="min-h-[60vh] bg-dark-900">
       {/* HERO */}
       <div className="relative h-72 md:h-96 w-full overflow-hidden">
         {showImage ? (
@@ -280,17 +280,17 @@ export default function EventoDetalle() {
       {/* Banner de evento desactivado */}
       {ev && (ev as any).isActive === false && (
         <div className="max-w-6xl mx-auto px-6 pt-6">
-          <div className="rounded-lg border-2 border-red-300 bg-red-50 p-4">
+          <div className="glass border-2 border-red-500/50 rounded-lg p-4">
             <div className="flex items-start gap-3">
               <span className="text-2xl">⚠️</span>
               <div className="flex-1">
-                <h3 className="font-semibold text-red-900 mb-1">
+                <h3 className="font-semibold text-white mb-1">
                   Evento desactivado
                 </h3>
-                <p className="text-sm text-red-800">
+                <p className="text-sm text-dark-200">
                   Este evento ha sido desactivado por el organizador. No es posible comprar entradas en este momento.
                   {isOwner && (
-                    <span className="block mt-2 text-red-700 italic">
+                    <span className="block mt-2 text-red-400 italic">
                       Como organizador, puedes reactivar este evento desde tu panel de control.
                     </span>
                   )}
@@ -306,10 +306,10 @@ export default function EventoDetalle() {
         {/* Principal */}
         <article className="space-y-6 min-w-0">{/* min-w-0 previene overflow */}
           <div>
-            <h2 className="text-xl font-semibold mb-3">Acerca del evento</h2>
+            <h2 className="text-2xl font-display font-bold text-white mb-3">Acerca del evento</h2>
 
             <div className="flex flex-wrap gap-2 mb-4">
-              <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-800">
+              <span className="text-xs px-2 py-1 rounded-full glass border border-neon-cyan/30 text-neon-cyan">
                 📅 {formatFechaLarga(dateIso)}
               </span>
               {venue && (
@@ -317,7 +317,7 @@ export default function EventoDetalle() {
                   href={mapsHref!}
                   target="_blank"
                   rel="noreferrer"
-                  className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-800 hover:bg-gray-200"
+                  className="text-xs px-2 py-1 rounded-full glass border border-neon-purple/30 text-neon-purple hover:border-neon-purple/50"
                   title="Ver en Google Maps"
                 >
                   📍 {venue}
@@ -327,11 +327,11 @@ export default function EventoDetalle() {
 
             <div className="prose max-w-none mb-6">
               {(ev as any)?.description?.trim() ? (
-                <p className="text-gray-700 whitespace-pre-line">
+                <p className="text-dark-100 whitespace-pre-line">
                   {(ev as any).description}
                 </p>
               ) : (
-                <p className="text-gray-600">
+                <p className="text-dark-200">
                   Aún no hay una descripción detallada. Aquí tienes la
                   información clave de fecha, lugar y precio. Si necesitas más
                   detalles, usa el botón de ayuda o contacta al organizador.
@@ -340,15 +340,15 @@ export default function EventoDetalle() {
             </div>
 
             {(organizer?.name || organizer?.email) && (
-              <div className="mb-6 rounded-lg border p-4">
-                <div className="text-sm text-gray-600 mb-1">Organiza</div>
-                <div className="font-medium">
+              <div className="mb-6 glass-light rounded-lg border border-dark-600 p-4">
+                <div className="text-sm text-dark-200 mb-1">Organiza</div>
+                <div className="font-medium text-white">
                   {organizer?.name || "Organizador"}
                 </div>
                 {organizer?.email && (
                   <a
                     href={`mailto:${organizer.email}`}
-                    className="text-sm underline text-gray-700 hover:text-gray-900"
+                    className="text-sm underline text-neon-cyan hover:text-neon-cyan/80"
                   >
                     {organizer.email}
                   </a>
@@ -358,15 +358,15 @@ export default function EventoDetalle() {
 
             {/* Mapa embebido */}
             {mapsEmbed && (
-              <div className="mb-6 rounded-lg border overflow-hidden">
-                <div className="flex items-center justify-between px-4 py-2">
-                  <h3 className="font-medium">Cómo llegar</h3>
+              <div className="mb-6 glass-light rounded-lg border border-dark-600 overflow-hidden">
+                <div className="flex items-center justify-between px-4 py-2 border-b border-dark-600">
+                  <h3 className="font-medium text-white">Cómo llegar</h3>
                   {mapsHref && (
                     <a
                       href={mapsHref}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-sm underline text-gray-700 hover:text-gray-900"
+                      className="text-sm underline text-neon-cyan hover:text-neon-cyan/80"
                     >
                       Abrir en Google Maps
                     </a>
@@ -387,16 +387,16 @@ export default function EventoDetalle() {
           </div>
 
           {city && (
-            <div className="rounded-lg border p-4">
-              <h3 className="font-semibold mb-1">Ciudad</h3>
-              <p>{city}</p>
+            <div className="glass-light rounded-lg border border-dark-600 p-4">
+              <h3 className="font-semibold text-white mb-1">Ciudad</h3>
+              <p className="text-dark-100">{city}</p>
             </div>
           )}
         </article>
 
         {/* Lateral / CTA */}
         <aside className="lg:sticky lg:top-20 lg:self-start">
-          <div className="rounded-2xl border p-5 space-y-4 max-h-[calc(100vh-6rem)] overflow-y-auto">
+          <div className="card-modern p-5 space-y-4 max-h-[calc(100vh-6rem)] overflow-y-auto">
             <div className="space-y-2">
               {typeof unitPrice === "number" && (
                 <div>
@@ -529,9 +529,9 @@ export default function EventoDetalle() {
             {/* Contenido del modal */}
             <div className="p-6">
               {/* Lista de entradas */}
-              <div className="bg-gray-50 rounded-xl p-6 mb-6">
-                <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                  <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="glass-light rounded-xl border border-dark-600 p-6 mb-6">
+                <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                  <svg className="w-6 h-6 text-neon-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
                   </svg>
                   Tus Entradas
@@ -547,7 +547,7 @@ export default function EventoDetalle() {
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <button
                   onClick={() => window.location.href = '/mis-entradas'}
-                  className="px-8 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+                  className="btn-primary px-8 py-3 flex items-center justify-center gap-2"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
@@ -556,7 +556,7 @@ export default function EventoDetalle() {
                 </button>
                 <button
                   onClick={() => setShowSuccessModal(false)}
-                  className="px-8 py-3 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-700 transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+                  className="btn-secondary px-8 py-3 flex items-center justify-center gap-2"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -649,13 +649,13 @@ export default function EventoDetalle() {
             {/* Contenido del modal */}
             <div className="p-6">
               {/* Mensaje de error */}
-              <div className="bg-gray-50 rounded-xl p-6 mb-6">
+              <div className="glass-light rounded-xl border border-dark-600 p-6 mb-6">
                 {modalPaymentStatus === 'failed' && (
                   <div>
-                    <p className="text-gray-700 mb-4">
+                    <p className="text-dark-100 mb-4">
                       {modalPaymentError || 'Tu banco rechazó la transacción. Esto puede deberse a fondos insuficientes, límites de compra excedidos, o problemas con tu tarjeta.'}
                     </p>
-                    <ul className="text-sm text-gray-600 space-y-2 list-disc list-inside">
+                    <ul className="text-sm text-dark-200 space-y-2 list-disc list-inside">
                       <li>Verifica que tu tarjeta tenga fondos suficientes</li>
                       <li>Confirma que tu tarjeta esté habilitada para compras en línea</li>
                       <li>Intenta con otra tarjeta o medio de pago</li>
@@ -666,10 +666,10 @@ export default function EventoDetalle() {
 
                 {modalPaymentStatus === 'aborted' && (
                   <div>
-                    <p className="text-gray-700 mb-4">
+                    <p className="text-dark-100 mb-4">
                       Cancelaste el proceso de pago en Webpay. Tu reserva ha sido liberada y las entradas están nuevamente disponibles.
                     </p>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-dark-200">
                       Puedes volver a intentar la compra cuando lo desees. Las entradas se reservarán por 15 minutos una vez que inicies el proceso.
                     </p>
                   </div>
@@ -677,10 +677,10 @@ export default function EventoDetalle() {
 
                 {modalPaymentStatus === 'timeout' && (
                   <div>
-                    <p className="text-gray-700 mb-4">
+                    <p className="text-dark-100 mb-4">
                       {modalPaymentError || 'El tiempo límite para completar el pago se agotó. Tu reserva ha sido liberada automáticamente.'}
                     </p>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-dark-200">
                       Las entradas están nuevamente disponibles. Puedes volver a seleccionarlas e intentar el pago nuevamente.
                     </p>
                   </div>
@@ -688,10 +688,10 @@ export default function EventoDetalle() {
 
                 {modalPaymentStatus === 'error' && (
                   <div>
-                    <p className="text-gray-700 mb-4">
+                    <p className="text-dark-100 mb-4">
                       {modalPaymentError || 'Ocurrió un error al procesar tu pago. Por favor, intenta nuevamente en unos minutos.'}
                     </p>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-dark-200">
                       Si el problema persiste, contacta a nuestro equipo de soporte.
                     </p>
                   </div>
@@ -699,10 +699,10 @@ export default function EventoDetalle() {
 
                 {modalPaymentStatus === 'own-event-forbidden' && (
                   <div>
-                    <p className="text-gray-700 mb-4">
+                    <p className="text-dark-100 mb-4">
                       No puedes comprar entradas de tu propio evento como organizador. La reserva asociada fue cancelada.
                     </p>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-dark-200">
                       Si necesitas entradas para tu evento, debes crearlas desde el panel de organizador.
                     </p>
                   </div>
@@ -710,10 +710,10 @@ export default function EventoDetalle() {
 
                 {/* Mostrar monto si está disponible */}
                 {modalPaymentAmount && (
-                  <div className="mt-4 pt-4 border-t border-gray-200">
+                  <div className="mt-4 pt-4 border-t border-dark-700">
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Monto del intento:</span>
-                      <span className="font-semibold text-gray-900">
+                      <span className="text-dark-200">Monto del intento:</span>
+                      <span className="font-semibold text-white">
                         ${Number(modalPaymentAmount).toLocaleString('es-CL')}
                       </span>
                     </div>
@@ -729,7 +729,7 @@ export default function EventoDetalle() {
                     // Opcional: hacer scroll hasta el selector de entradas
                     window.scrollTo({ top: 400, behavior: 'smooth' });
                   }}
-                  className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+                  className="btn-primary flex-1 px-6 py-3 flex items-center justify-center gap-2"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -738,7 +738,7 @@ export default function EventoDetalle() {
                 </button>
                 <button
                   onClick={() => setShowPaymentModal(false)}
-                  className="flex-1 px-6 py-3 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-700 transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+                  className="btn-secondary flex-1 px-6 py-3 flex items-center justify-center gap-2"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -843,15 +843,15 @@ function PinIcon() {
 }
 function HeroSkeleton() {
   return (
-    <div>
-      <div className="h-72 md:h-96 w-full bg-gray-200 animate-pulse" />
+    <div className="bg-dark-900 min-h-screen">
+      <div className="h-72 md:h-96 w-full bg-dark-700 animate-pulse" />
       <div className="max-w-6xl mx-auto p-6 grid gap-6 md:grid-cols-[1fr,360px]">
         <div className="space-y-3">
-          <div className="h-6 w-1/2 bg-gray-200 rounded" />
-          <div className="h-4 w-3/4 bg-gray-200 rounded" />
-          <div className="h-32 bg-gray-200 rounded" />
+          <div className="h-6 w-1/2 bg-dark-700 rounded" />
+          <div className="h-4 w-3/4 bg-dark-700 rounded" />
+          <div className="h-32 bg-dark-700 rounded" />
         </div>
-        <div className="h-40 bg-gray-200 rounded" />
+        <div className="h-40 bg-dark-700 rounded" />
       </div>
     </div>
   );

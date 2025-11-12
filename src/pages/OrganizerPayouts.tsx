@@ -50,16 +50,16 @@ function fmtDate(d?: string | null) {
 function StatusPill({ s }: { s: string }) {
   const color =
     s === "PAID"
-      ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+      ? "glass border-neon-green/50 text-neon-green"
       : s === "PENDING"
-      ? "bg-amber-50 text-amber-800 border-amber-200"
+      ? "glass border-neon-yellow/50 text-neon-yellow"
       : s === "IN_TRANSIT" || s === "SCHEDULED"
-      ? "bg-blue-50 text-blue-700 border-blue-200"
+      ? "glass border-neon-cyan/50 text-neon-cyan"
       : s === "FAILED" || s === "CANCELED"
-      ? "bg-rose-50 text-rose-700 border-rose-200"
-      : "bg-gray-50 text-gray-700 border-gray-200";
+      ? "glass border-red-500/50 text-red-400"
+      : "glass border-dark-500 text-dark-100";
   return (
-    <span className={`px-2 py-0.5 text-xs rounded-full border ${color}`}>
+    <span className={`px-2 py-0.5 text-xs rounded-full ${color}`}>
       {s}
     </span>
   );
@@ -154,54 +154,57 @@ export default function OrganizerPayouts() {
   const showPayoutBanner = !!account && !account.payoutsReady;
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-6">
-      <div className="flex items-start justify-between gap-4 mb-4">
-        <div>
-          <h1 className="text-xl font-semibold">Mis pagos al organizador</h1>
-          <p className="text-sm text-gray-600">
-            Aquí verás los pagos (payouts) que te transferimos por tus ventas
-            aprobadas.
-          </p>
+    <div className="min-h-screen bg-dark-900 py-8 px-4">
+      <div className="max-w-6xl mx-auto">
+        <div className="flex items-start justify-between gap-4 mb-4">
+          <div>
+            <h1 className="text-4xl font-display font-bold bg-gradient-to-r from-neon-cyan to-neon-purple bg-clip-text text-transparent">
+              Mis pagos al organizador
+            </h1>
+            <p className="text-sm text-dark-200 mt-2">
+              Aquí verás los pagos (payouts) que te transferimos por tus ventas
+              aprobadas.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Link
+              to="/organizador/cuenta-cobro"
+              className="text-sm btn-ghost px-3 py-2"
+            >
+              Configurar cuenta de cobro
+            </Link>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Link
-            to="/organizador/cuenta-cobro"
-            className="text-sm px-3 py-2 rounded-md border hover:bg-black/5"
-          >
-            Configurar cuenta de cobro
-          </Link>
-        </div>
-      </div>
 
-      {/* Banner inteligente */}
-      {showPayoutBanner && (
-        <div className="mb-4 rounded-md border px-3 py-3 text-sm flex items-start justify-between gap-3 border-amber-200 bg-amber-50 text-amber-800">
-          <div className="space-y-1">
-            {account?.payoutsEnabled === false ? (
-              <>
-                <strong>Importante:</strong>{" "}
-                <span>
-                  tus pagos están deshabilitados. Completa tu{" "}
-                  <Link to="/organizador/cuenta-cobro" className="underline">
-                    cuenta de cobro
-                  </Link>{" "}
-                  para que podamos programar depósitos cuando el admin apruebe
-                  tus ventas.
-                </span>
-              </>
-            ) : (
-              <>
-                <strong>Atención:</strong>{" "}
-                <span>
-                  tu cuenta de cobro tiene datos incompletos. Revísala para
-                  habilitar pagos y recibir transferencias.
-                </span>
-              </>
+        {/* Banner inteligente */}
+        {showPayoutBanner && (
+          <div className="mb-4 glass border border-neon-yellow/50 rounded-xl px-3 py-3 text-sm flex items-start justify-between gap-3 text-white">
+            <div className="space-y-1">
+              {account?.payoutsEnabled === false ? (
+                <>
+                  <strong>Importante:</strong>{" "}
+                  <span>
+                    tus pagos están deshabilitados. Completa tu{" "}
+                    <Link to="/organizador/cuenta-cobro" className="text-neon-cyan hover:text-neon-cyan/80 underline">
+                      cuenta de cobro
+                    </Link>{" "}
+                    para que podamos programar depósitos cuando el admin apruebe
+                    tus ventas.
+                  </span>
+                </>
+              ) : (
+                <>
+                  <strong>Atención:</strong>{" "}
+                  <span>
+                    tu cuenta de cobro tiene datos incompletos. Revísala para
+                    habilitar pagos y recibir transferencias.
+                  </span>
+                </>
             )}
           </div>
           <Link
             to="/organizador/cuenta-cobro"
-            className="shrink-0 px-3 py-2 rounded border hover:bg-black/5"
+            className="shrink-0 btn-ghost px-3 py-2"
           >
             Configurar ahora
           </Link>
@@ -266,28 +269,28 @@ export default function OrganizerPayouts() {
       </form>
 
       {/* Tabla / estados */}
-      <div className="border rounded-md overflow-hidden">
+      <div className="card-modern overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="bg-gray-50 border-b">
+          <thead className="glass-light border-b border-dark-600">
             <tr className="text-left">
-              <th className="px-3 py-2">Fecha</th>
-              <th className="px-3 py-2">Evento</th>
-              <th className="px-3 py-2">Orden</th>
-              <th className="px-3 py-2">Monto</th>
-              <th className="px-3 py-2">Estado</th>
-              <th className="px-3 py-2">Pagado el</th>
+              <th className="px-3 py-2 text-white font-semibold">Fecha</th>
+              <th className="px-3 py-2 text-white font-semibold">Evento</th>
+              <th className="px-3 py-2 text-white font-semibold">Orden</th>
+              <th className="px-3 py-2 text-white font-semibold">Monto</th>
+              <th className="px-3 py-2 text-white font-semibold">Estado</th>
+              <th className="px-3 py-2 text-white font-semibold">Pagado el</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={6} className="px-3 py-6 text-center text-gray-500">
+                <td colSpan={6} className="px-3 py-6 text-center text-dark-200">
                   Cargando…
                 </td>
               </tr>
             ) : rows.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-3 py-10 text-center text-gray-600">
+                <td colSpan={6} className="px-3 py-10 text-center text-dark-200">
                   {showPayoutBanner ? (
                     <>Aún no hay pagos. Cuando vendas y aprobemos tus tickets, verás los depósitos aquí.</>
                   ) : (
@@ -299,39 +302,39 @@ export default function OrganizerPayouts() {
               rows.map((p) => {
                 const d = primaryDate(p);
                 return (
-                  <tr key={p.id} className="border-t">
+                  <tr key={p.id} className="border-t border-dark-700">
                     <td className="px-3 py-2 align-top">
-                      <div className="font-medium">{fmtDate(d.value)}</div>
+                      <div className="font-medium text-white">{fmtDate(d.value)}</div>
                       {d.label && (
-                        <div className="text-xs text-gray-500">{d.label}</div>
+                        <div className="text-xs text-dark-200">{d.label}</div>
                       )}
                     </td>
                     <td className="px-3 py-2 align-top">
-                      <div className="font-medium">{p.event?.title ?? "—"}</div>
-                      <div className="text-xs text-gray-500">
+                      <div className="font-medium text-white">{p.event?.title ?? "—"}</div>
+                      <div className="text-xs text-dark-200">
                         {p.event?.date ? fmtDate(p.event.date) : ""}
                       </div>
                     </td>
                     <td className="px-3 py-2 align-top">
-                      <div className="text-xs text-gray-600">
+                      <div className="text-xs text-dark-100">
                         {p.paymentId ? `payment #${p.paymentId}` : "—"}
                       </div>
-                      <div className="text-xs text-gray-500">
+                      <div className="text-xs text-dark-200">
                         {p.buyOrder ? `buyOrder: ${p.buyOrder}` : ""}
                       </div>
-                      <div className="text-xs text-gray-500">
+                      <div className="text-xs text-dark-200">
                         {p.pspPayoutId ? `pspId: ${p.pspPayoutId}` : ""}
                       </div>
                     </td>
                     <td className="px-3 py-2 align-top">
-                      <div className="font-medium">
+                      <div className="font-medium text-white">
                         {fmtMoneyCLP(p.amount, p.currency || "CLP")}
                       </div>
                     </td>
                     <td className="px-3 py-2 align-top">
                       <StatusPill s={String(p.status)} />
                     </td>
-                    <td className="px-3 py-2 align-top">{fmtDate(p.paidAt)}</td>
+                    <td className="px-3 py-2 align-top text-dark-100">{fmtDate(p.paidAt)}</td>
                   </tr>
                 );
               })
@@ -342,11 +345,11 @@ export default function OrganizerPayouts() {
 
       {/* Paginación */}
       <div className="mt-4 flex items-center justify-between">
-        <div className="text-xs text-gray-600">
+        <div className="text-xs text-dark-200">
           {total > 0 ? (
             <>
               Mostrando{" "}
-              <span className="font-medium">
+              <span className="font-medium text-white">
                 {Math.min((page - 1) * pageSize + 1, total)}–
                 {Math.min(page * pageSize, total)}
               </span>{" "}
@@ -358,17 +361,17 @@ export default function OrganizerPayouts() {
         </div>
         <div className="flex items-center gap-2">
           <button
-            className="px-3 py-1.5 border rounded-md disabled:opacity-50"
+            className="btn-ghost px-3 py-1.5 disabled:opacity-50"
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page <= 1 || loading}
           >
             Anterior
           </button>
-          <span className="text-sm">
+          <span className="text-sm text-white">
             {page} / {totalPages}
           </span>
           <button
-            className="px-3 py-1.5 border rounded-md disabled:opacity-50"
+            className="btn-ghost px-3 py-1.5 disabled:opacity-50"
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={page >= totalPages || loading}
           >
@@ -378,10 +381,11 @@ export default function OrganizerPayouts() {
       </div>
 
       {error && (
-        <div className="mt-4 p-3 border rounded-md bg-rose-50 text-rose-700">
+        <div className="mt-4 p-3 glass border border-red-500/50 rounded-xl text-white">
           {error}
         </div>
       )}
+      </div>
     </div>
   );
 }

@@ -133,10 +133,10 @@ export default function OrganizerDashboard() {
     if (!showPayoutBanner) return null;
     const notEnabled = account?.payoutsEnabled !== true;
     const base =
-      "mb-4 rounded-md border px-3 py-3 text-sm flex items-start justify-between gap-3";
+      "mb-4 rounded-xl border px-3 py-3 text-sm flex items-start justify-between gap-3";
     const cls = notEnabled
-      ? "border-blue-200 bg-blue-50 text-blue-800"
-      : "border-amber-200 bg-amber-50 text-amber-800";
+      ? "glass border-neon-cyan/50 text-white"
+      : "glass border-neon-yellow/50 text-white";
     return (
       <div className={`${base} ${cls}`}>
         <div className="space-y-1">
@@ -145,7 +145,7 @@ export default function OrganizerDashboard() {
               <strong>Importante:</strong>{" "}
               <span>
                 tus pagos están deshabilitados. Configura tu{" "}
-                <Link to="/organizador/cuenta-cobro" className="underline">
+                <Link to="/organizador/cuenta-cobro" className="text-neon-cyan hover:text-neon-cyan/80 underline">
                   cuenta de cobro
                 </Link>{" "}
                 para que podamos programar depósitos cuando el admin apruebe tus
@@ -164,7 +164,7 @@ export default function OrganizerDashboard() {
         </div>
         <Link
           to="/organizador/cuenta-cobro"
-          className="shrink-0 px-3 py-2 rounded border hover:bg-black/5"
+          className="shrink-0 btn-ghost px-3 py-2"
         >
           Configurar ahora
         </Link>
@@ -173,49 +173,52 @@ export default function OrganizerDashboard() {
   }
 
   function Badge({ s }: { s: OrganizerEvent["status"] }) {
-    const base = "text-xs px-2 py-1 rounded";
+    const base = "text-xs px-2 py-1 rounded glass";
     const map: Record<OrganizerEvent["status"], string> = {
-      draft: "bg-gray-100 text-gray-800",
-      pending: "bg-yellow-100 text-yellow-900",
-      approved: "bg-green-100 text-green-800",
-      rejected: "bg-red-100 text-red-800",
+      draft: "border border-dark-500 text-dark-100",
+      pending: "border border-neon-yellow/50 text-neon-yellow",
+      approved: "border border-neon-green/50 text-neon-green",
+      rejected: "border border-red-500/50 text-red-400",
     };
     return <span className={`${base} ${map[s]}`}>{s}</span>;
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-4">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <h1 className="text-2xl font-bold">Panel de Organizador</h1>
-        <Link
-          to="/organizador/eventos/nuevo"
-          className="px-3 py-2 rounded bg-black text-white hover:opacity-90"
-        >
-          Crear evento
-        </Link>
-      </div>
+    <div className="min-h-screen bg-dark-900 py-8 px-4">
+      <div className="max-w-6xl mx-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-4xl font-display font-bold bg-gradient-to-r from-neon-cyan to-neon-purple bg-clip-text text-transparent">
+            Panel de Organizador
+          </h1>
+          <Link
+            to="/organizador/eventos/nuevo"
+            className="btn-primary px-4 py-2"
+          >
+            Crear evento
+          </Link>
+        </div>
 
-      {/* Banner de cuenta de cobro (si corresponde) */}
-      <Banner />
+        {/* Banner de cuenta de cobro (si corresponde) */}
+        <Banner />
 
       {/* Toast / Banner de navegación */}
       {toast && (
         <div
           className={
-            "mb-4 rounded border px-3 py-2 text-sm " +
+            "mb-4 rounded-xl px-3 py-2 text-sm glass border " +
             (toast.kind === "error"
-              ? "border-red-300 bg-red-50 text-red-800"
+              ? "border-red-500/50 text-white"
               : toast.kind === "success"
-              ? "border-green-300 bg-green-50 text-green-800"
-              : "border-amber-300 bg-amber-50 text-amber-800")
+              ? "border-neon-green/50 text-white"
+              : "border-neon-yellow/50 text-white")
           }
         >
           <div className="flex items-start justify-between gap-3">
             <span>{toast.text}</span>
             <button
               onClick={() => setToast(null)}
-              className="text-xs px-2 py-1 border rounded hover:bg-black/5"
+              className="text-xs btn-ghost px-2 py-1"
             >
               Cerrar
             </button>
@@ -228,13 +231,13 @@ export default function OrganizerDashboard() {
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          className="border rounded px-3 py-2 w-full md:w-1/2"
+          className="input-modern w-full md:w-1/2"
           placeholder="Buscar por título…"
         />
         <select
           value={status}
           onChange={(e) => setStatus(e.target.value as any)}
-          className="border rounded px-3 py-2 w-full md:w-48"
+          className="input-modern w-full md:w-48"
         >
           <option value="">Todos los estados</option>
           <option value="draft">Borrador</option>
@@ -247,56 +250,56 @@ export default function OrganizerDashboard() {
             setQ("");
             setStatus("");
           }}
-          className="border rounded px-3 py-2 w-full md:w-auto hover:bg-black/5"
+          className="btn-ghost px-3 py-2 w-full md:w-auto"
         >
           Limpiar
         </button>
       </div>
 
       {/* Tabla */}
-      <div className="border rounded overflow-x-auto">
+      <div className="card-modern overflow-x-auto">
         <table className="min-w-full text-sm">
-          <thead className="bg-gray-50">
+          <thead className="glass-light border-b border-dark-600">
             <tr>
-              <th className="text-left p-3">Título</th>
-              <th className="text-left p-3">Tipo</th>
-              <th className="text-left p-3">Inicio</th>
-              <th className="text-left p-3">Lugar</th>
-              <th className="text-left p-3">Entradas</th>
-              <th className="text-left p-3">Estado</th>
-              <th className="text-center p-3">Activo</th>
-              <th className="text-right p-3">Acciones</th>
+              <th className="text-left p-3 text-white font-semibold">Título</th>
+              <th className="text-left p-3 text-white font-semibold">Tipo</th>
+              <th className="text-left p-3 text-white font-semibold">Inicio</th>
+              <th className="text-left p-3 text-white font-semibold">Lugar</th>
+              <th className="text-left p-3 text-white font-semibold">Entradas</th>
+              <th className="text-left p-3 text-white font-semibold">Estado</th>
+              <th className="text-center p-3 text-white font-semibold">Activo</th>
+              <th className="text-right p-3 text-white font-semibold">Acciones</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={8} className="p-6 text-center">
+                <td colSpan={8} className="p-6 text-center text-dark-200">
                   Cargando…
                 </td>
               </tr>
             ) : rows.length === 0 ? (
               <tr>
-                <td colSpan={8} className="p-6 text-center">
+                <td colSpan={8} className="p-6 text-center text-dark-200">
                   No hay eventos.
                 </td>
               </tr>
             ) : (
               rows.map((ev) => (
-                <tr key={ev.id} className="border-t">
-                  <td className="p-3">{ev.title}</td>
+                <tr key={ev.id} className="border-t border-dark-700">
+                  <td className="p-3 text-white">{ev.title}</td>
                   <td className="p-3">
-                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium glass border ${
                       ev.eventType === 'RESALE' 
-                        ? 'bg-blue-100 text-blue-800' 
-                        : 'bg-green-100 text-green-800'
+                        ? 'border-neon-cyan/50 text-neon-cyan' 
+                        : 'border-neon-green/50 text-neon-green'
                     }`}>
                       {ev.eventType === 'RESALE' ? '🎫 Reventa' : '🎉 Propio'}
                     </span>
                   </td>
-                  <td className="p-3">{formatDate(ev.startAt)}</td>
-                  <td className="p-3">{ev.venue}</td>
-                  <td className="p-3">{ev.capacity ?? "—"}</td>
+                  <td className="p-3 text-dark-100">{formatDate(ev.startAt)}</td>
+                  <td className="p-3 text-dark-100">{ev.venue}</td>
+                  <td className="p-3 text-dark-100">{ev.capacity ?? "—"}</td>
                   <td className="p-3">
                     <Badge s={ev.status} />
                   </td>
@@ -327,10 +330,10 @@ export default function OrganizerDashboard() {
                           });
                         }
                       }}
-                      className={`px-3 py-1 rounded-full text-xs font-medium ${
+                      className={`px-3 py-1 rounded-full text-xs font-medium glass border ${
                         ev.isActive !== false
-                          ? 'bg-green-100 text-green-800 hover:bg-green-200'
-                          : 'bg-red-100 text-red-800 hover:bg-red-200'
+                          ? 'border-neon-green/50 text-neon-green hover:border-neon-green'
+                          : 'border-red-500/50 text-red-400 hover:border-red-500'
                       }`}
                       title={ev.isActive !== false ? 'Desactivar evento' : 'Activar evento'}
                     >
@@ -342,7 +345,7 @@ export default function OrganizerDashboard() {
                       onClick={() =>
                         navigate(`/organizador/eventos/${ev.id}/editar`)
                       }
-                      className="px-2 py-1 mr-2 rounded border hover:bg-black/5"
+                      className="btn-ghost px-2 py-1 mr-2"
                     >
                       Editar
                     </button>
@@ -352,7 +355,7 @@ export default function OrganizerDashboard() {
                         await deleteMyEvent(ev.id);
                         fetchData();
                       }}
-                      className="px-2 py-1 rounded border hover:bg-red-50"
+                      className="btn-ghost px-2 py-1 hover:border-red-500/50 hover:text-red-400"
                     >
                       Eliminar
                     </button>
@@ -366,25 +369,26 @@ export default function OrganizerDashboard() {
 
       {/* Paginación */}
       <div className="flex items-center justify-between mt-4">
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-dark-200">
           Página {page} de {totalPages} — {total} evento(s)
         </p>
         <div className="flex gap-2">
           <button
             disabled={page <= 1 || loading}
             onClick={() => fetchData(page - 1)}
-            className="px-3 py-2 border rounded disabled:opacity-50 hover:bg-black/5"
+            className="btn-ghost px-3 py-2 disabled:opacity-50"
           >
             Anterior
           </button>
           <button
             disabled={page >= totalPages || loading}
             onClick={() => fetchData(page + 1)}
-            className="px-3 py-2 border rounded disabled:opacity-50 hover:bg-black/5"
+            className="btn-ghost px-3 py-2 disabled:opacity-50"
           >
             Siguiente
           </button>
         </div>
+      </div>
       </div>
     </div>
   );

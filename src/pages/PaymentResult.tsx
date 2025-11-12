@@ -288,24 +288,25 @@ export default function PaymentResult() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto p-4">
+    <div className="min-h-screen bg-dark-900 py-8 px-4">
+      <div className="max-w-2xl mx-auto">
       {/* Encabezados según estado */}
       {localStatus === "success" && (
-        <div className="mb-4 rounded-lg border border-green-200 bg-green-50 p-4 text-green-800">
+        <div className="mb-4 glass border border-neon-green/50 rounded-lg p-4 text-white">
           <h1 className="text-xl font-semibold">
             ¡Pago aprobado{isResale ? " (reventa)" : ""}!
           </h1>
           {isResale ? (
-            <p className="text-sm">
+            <p className="text-sm text-dark-100">
               El aviso fue pausado y ahora <strong>el vendedor debe subir la entrada</strong>.
               Cuando un administrador la apruebe, podrás confirmar la recepción para liberar el pago.
             </p>
           ) : (
             <>
-              <p className="text-sm">Tu transacción fue confirmada correctamente.</p>
-              {ticketMessage && <p className="mt-1 text-sm">{ticketMessage}</p>}
+              <p className="text-sm text-dark-100">Tu transacción fue confirmada correctamente.</p>
+              {ticketMessage && <p className="mt-1 text-sm text-dark-100">{ticketMessage}</p>}
               {!ticketMessage && (
-                <p className="mt-1 text-sm text-gray-700">Consultando estado del ticket…</p>
+                <p className="mt-1 text-sm text-dark-200">Consultando estado del ticket…</p>
               )}
             </>
           )}
@@ -313,30 +314,30 @@ export default function PaymentResult() {
       )}
 
       {localStatus === "authorized" && (
-        <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-900">
+        <div className="mb-4 glass border border-neon-yellow/50 rounded-lg p-4 text-white">
           <h1 className="text-xl font-semibold">Pago pre-autorizado</h1>
-          <p className="text-sm">
+          <p className="text-sm text-dark-100">
             Tu pago quedó <strong>pre-autorizado</strong>.{" "}
             <strong>El organizador tiene {uploadDeadlineAt ? "hasta el plazo indicado" : "24 horas"}</strong>{" "}
             para subir tu entrada. Si no lo hace dentro de ese plazo,{" "}
             <strong>te devolveremos tu dinero automáticamente</strong>.
           </p>
           {uploadDeadlineAt && (
-            <p className="mt-1 text-sm">
+            <p className="mt-1 text-sm text-dark-100">
               Plazo: <b>{new Date(uploadDeadlineAt).toLocaleString()}</b>
               {deadlineLeft != null && (
                 <> • tiempo restante: <b>{formatHMS(deadlineLeft)}</b></>
               )}
             </p>
           )}
-          {ticketMessage && <p className="mt-1 text-sm">{ticketMessage}</p>}
+          {ticketMessage && <p className="mt-1 text-sm text-dark-100">{ticketMessage}</p>}
         </div>
       )}
 
       {localStatus === "failed" && (
-        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-4 text-red-800">
+        <div className="mb-4 glass border border-red-500/50 rounded-lg p-4 text-white">
           <h1 className="text-xl font-semibold">Pago rechazado</h1>
-          <p className="text-sm">
+          <p className="text-sm text-dark-100">
             {errorParam || "No pudimos confirmar la transacción."}{" "}
             Si el problema persiste, intenta nuevamente o usa otro medio de pago.
           </p>
@@ -344,9 +345,9 @@ export default function PaymentResult() {
       )}
 
       {localStatus === "aborted" && (
-        <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-900">
+        <div className="mb-4 glass border border-neon-yellow/50 rounded-lg p-4 text-white">
           <h1 className="text-xl font-semibold">Pago cancelado</h1>
-          <p className="text-sm">
+          <p className="text-sm text-dark-100">
             Cancelaste el pago en Webpay.{" "}
             {isResale
               ? "Puedes reintentarlo desde Mis órdenes de reventa."
@@ -356,9 +357,9 @@ export default function PaymentResult() {
       )}
 
       {localStatus === "timeout" && (
-        <div className="mb-4 rounded-lg border border-orange-200 bg-orange-50 p-4 text-orange-900">
+        <div className="mb-4 glass border border-neon-orange/50 rounded-lg p-4 text-white">
           <h1 className="text-xl font-semibold">Pago expirado</h1>
-          <p className="text-sm">
+          <p className="text-sm text-dark-100">
             {errorParam || "El pago expiró o fue cancelado. Tu reserva ha sido liberada."}{" "}
             {isResale
               ? "Puedes reintentarlo desde Mis órdenes de reventa."
@@ -368,9 +369,9 @@ export default function PaymentResult() {
       )}
 
       {localStatus === "error" && (
-        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-4 text-red-800">
+        <div className="mb-4 glass border border-red-500/50 rounded-lg p-4 text-white">
           <h1 className="text-xl font-semibold">Error en el pago</h1>
-          <p className="text-sm">
+          <p className="text-sm text-dark-100">
             {errorParam || "Ocurrió un error al procesar tu pago."}{" "}
             Si el problema persiste, contacta a soporte.
           </p>
@@ -378,26 +379,26 @@ export default function PaymentResult() {
       )}
 
       {localStatus === "own-event-forbidden" && (
-        <div className="mb-4 rounded-lg border border-rose-200 bg-rose-50 p-4 text-rose-800">
+        <div className="mb-4 glass border border-red-500/50 rounded-lg p-4 text-white">
           <h1 className="text-xl font-semibold">Acción no permitida</h1>
-          <p className="text-sm">
+          <p className="text-sm text-dark-100">
             No puedes comprar entradas de tu propio evento. La reserva asociada fue cancelada.
           </p>
         </div>
       )}
 
       {localStatus === "unknown" && (
-        <div className="mb-4 rounded-lg border border-gray-200 bg-gray-50 p-4 text-gray-800">
+        <div className="mb-4 glass-light border border-dark-600 rounded-lg p-4 text-white">
           <h1 className="text-xl font-semibold">Estado en revisión</h1>
-          <p className="text-sm">
+          <p className="text-sm text-dark-200">
             No pudimos determinar el estado del pago todavía. A continuación te mostramos la información disponible.
           </p>
         </div>
       )}
 
       {/* Resumen */}
-      <div className="rounded-xl border p-4">
-        <h2 className="text-lg font-semibold mb-3">
+      <div className="card-modern p-4">
+        <h2 className="text-lg font-semibold text-white mb-3">
           {isResale ? "Resumen de reventa" : "Resumen de transacción"}
         </h2>
 
@@ -618,18 +619,19 @@ export default function PaymentResult() {
             </summary>
             <div className="mt-2 space-y-2">
               {localInfo && (
-                <pre className="text-xs bg-gray-50 border rounded p-2 overflow-auto">
+                <pre className="text-xs glass-light border border-dark-600 rounded p-2 overflow-auto text-dark-100">
 {JSON.stringify(localInfo, null, 2)}
                 </pre>
               )}
               {tbkInfo && (
-                <pre className="text-xs bg-gray-50 border rounded p-2 overflow-auto">
+                <pre className="text-xs glass-light border border-dark-600 rounded p-2 overflow-auto text-dark-100">
 {JSON.stringify(tbkInfo, null, 2)}
                 </pre>
               )}
             </div>
           </details>
         )}
+      </div>
       </div>
     </div>
   );

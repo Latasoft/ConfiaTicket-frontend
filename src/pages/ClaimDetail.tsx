@@ -150,10 +150,10 @@ export default function ClaimDetail() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
+      <div className="flex justify-center items-center min-h-screen bg-dark-900">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-          <p className="mt-4 text-gray-600">Cargando reclamo...</p>
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-neon-cyan"></div>
+          <p className="mt-4 text-dark-200">Cargando reclamo...</p>
         </div>
       </div>
     );
@@ -161,13 +161,16 @@ export default function ClaimDetail() {
 
   if (error || !claim) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-          {error || 'Reclamo no encontrado'}
+      <div className="min-h-screen bg-dark-900 py-8 px-4">
+        <div className="max-w-4xl mx-auto">
+          <div className="glass border border-red-500/50 rounded-xl p-4 text-white flex items-start gap-3">
+            <span className="text-2xl">⚠️</span>
+            <p className="flex-1">{error || 'Reclamo no encontrado'}</p>
+          </div>
+          <Link to="/mis-reclamos" className="mt-4 inline-block text-neon-cyan hover:text-neon-cyan/80">
+            ← Volver a mis reclamos
+          </Link>
         </div>
-        <Link to="/mis-reclamos" className="mt-4 inline-block text-blue-600 hover:underline">
-          ← Volver a mis reclamos
-        </Link>
       </div>
     );
   }
@@ -178,26 +181,27 @@ export default function ClaimDetail() {
     (claim.status === 'CANCELLED' || claim.status === 'REJECTED' || claim.status === 'RESOLVED');
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      {/* Breadcrumb */}
-      <div className="mb-6">
-        <Link to="/mis-reclamos" className="text-blue-600 hover:underline">
-          ← Volver a mis reclamos
-        </Link>
-      </div>
+    <div className="min-h-screen bg-dark-900 py-8 px-4">
+      <div className="max-w-4xl mx-auto">
+        {/* Breadcrumb */}
+        <div className="mb-6">
+          <Link to="/mis-reclamos" className="text-neon-cyan hover:text-neon-cyan/80">
+            ← Volver a mis reclamos
+          </Link>
+        </div>
 
-      {/* Header */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-        <div className="flex items-start justify-between mb-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              Reclamo #{claim.id}
-            </h1>
-            <p className="text-gray-600">
-              {claim.reservation?.event.title}
-            </p>
-          </div>
-          <div className="flex flex-col gap-2 items-end">
+        {/* Header */}
+        <div className="card-modern p-6 mb-6">
+          <div className="flex items-start justify-between mb-4">
+            <div>
+              <h1 className="text-3xl font-display font-bold bg-gradient-to-r from-neon-cyan to-neon-purple bg-clip-text text-transparent mb-2">
+                Reclamo #{claim.id}
+              </h1>
+              <p className="text-dark-200">
+                {claim.reservation?.event.title}
+              </p>
+            </div>
+            <div className="flex flex-col gap-2 items-end">
             <span
               className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(
                 claim.status
@@ -363,14 +367,14 @@ export default function ClaimDetail() {
                   <div
                     className={`max-w-[80%] rounded-lg p-4 ${
                       isAdmin
-                        ? 'bg-blue-50 border border-blue-200'
-                        : 'bg-gray-50 border border-gray-200'
+                        ? 'glass border border-neon-purple/50'
+                        : 'glass-light border border-dark-600'
                     }`}
                   >
                     <div className="flex items-center gap-2 mb-2">
                       <span
                         className={`text-xs font-medium ${
-                          isAdmin ? 'text-blue-700' : 'text-gray-700'
+                          isAdmin ? 'text-neon-purple' : 'text-neon-cyan'
                         }`}
                       >
                         {isAdmin ? '👨‍💼 Administrador' : '👤 Tú'}
@@ -488,7 +492,7 @@ export default function ClaimDetail() {
                 <button
                   onClick={() => fileInputRef.current?.click()}
                   disabled={sendingMessage || uploadingFiles}
-                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="btn-ghost px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   title="Adjuntar evidencia"
                 >
                   📎
@@ -569,7 +573,7 @@ export default function ClaimDetail() {
               <button
                 onClick={handleReopen}
                 disabled={actionLoading}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
+                className="btn-primary flex-1 px-4 py-2"
               >
                 {actionLoading ? 'Reabriendo...' : 'Reabrir'}
               </button>
@@ -579,7 +583,7 @@ export default function ClaimDetail() {
                   setReopenInfo('');
                 }}
                 disabled={actionLoading}
-                className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
+                className="btn-secondary flex-1 px-4 py-2"
               >
                 Cancelar
               </button>
@@ -587,6 +591,7 @@ export default function ClaimDetail() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

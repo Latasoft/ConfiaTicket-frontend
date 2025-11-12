@@ -401,12 +401,12 @@ export default function OrganizerEventForm() {
   }
 
   function StatusBadge({ s }: { s: OrganizerEvent["status"] }) {
-    const base = "text-xs px-2 py-1 rounded";
+    const base = "text-xs px-2 py-1 rounded glass";
     const map: Record<OrganizerEvent["status"], string> = {
-      draft: "bg-gray-100 text-gray-800",
-      pending: "bg-yellow-100 text-yellow-900",
-      approved: "bg-green-100 text-green-800",
-      rejected: "bg-red-100 text-red-800",
+      draft: "border border-dark-500 text-dark-100",
+      pending: "border border-neon-yellow/50 text-neon-yellow",
+      approved: "border border-neon-green/50 text-neon-green",
+      rejected: "border border-red-500/50 text-red-400",
     };
     return <span className={`${base} ${map[s]}`}>{s}</span>;
   }
@@ -445,21 +445,21 @@ export default function OrganizerEventForm() {
                 <div
                   className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${
                     currentStep === step.number
-                      ? "bg-black text-white"
+                      ? "bg-gradient-to-r from-neon-cyan to-neon-purple text-white"
                       : currentStep > step.number
-                      ? "bg-green-500 text-white"
-                      : "bg-gray-300 text-gray-600"
+                      ? "bg-neon-green text-dark-900"
+                      : "bg-dark-700 text-dark-200"
                   }`}
                 >
                   {currentStep > step.number ? "✓" : step.number}
                 </div>
-                <span className="text-xs mt-2 text-center font-medium">{step.label}</span>
+                <span className="text-xs mt-2 text-center font-medium text-white">{step.label}</span>
               </div>
           
               {index < steps.length - 1 && (
                 <div
                   className={`w-24 h-1 mx-2 ${
-                    currentStep > step.number ? "bg-green-500" : "bg-gray-300"
+                    currentStep > step.number ? "bg-neon-green" : "bg-dark-700"
                   }`}
                 />
               )}
@@ -471,33 +471,34 @@ export default function OrganizerEventForm() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto p-4">
-      {/* Modal de selección de tipo de evento */}
-      <EventTypeModal
-        isOpen={showTypeModal}
-        onSelect={handleEventTypeSelect}
-        onClose={() => {
-          setShowTypeModal(false);
-          navigate("/organizador/eventos");
-        }}
-      />
+    <div className="min-h-screen bg-dark-900 py-8 px-4">
+      <div className="max-w-3xl mx-auto">
+        {/* Modal de selección de tipo de evento */}
+        <EventTypeModal
+          isOpen={showTypeModal}
+          onSelect={handleEventTypeSelect}
+          onClose={() => {
+            setShowTypeModal(false);
+            navigate("/organizador/eventos");
+          }}
+        />
 
-      <h1 className="text-2xl font-bold mb-2">
-        {isEdit ? "Editar evento" : "Crear evento"}
-        {eventType && (
-          <span className="ml-3 text-base font-normal text-gray-600">
-            ({eventType === "resale" ? "Reventa" : "Evento Propio"})
-          </span>
-        )}
-      </h1>
+        <h1 className="text-4xl font-display font-bold bg-gradient-to-r from-neon-cyan to-neon-purple bg-clip-text text-transparent mb-2">
+          {isEdit ? "Editar evento" : "Crear evento"}
+          {eventType && (
+            <span className="ml-3 text-base font-normal text-dark-200">
+              ({eventType === "resale" ? "Reventa" : "Evento Propio"})
+            </span>
+          )}
+        </h1>
 
-      <Stepper />
+        <Stepper />
 
-      {toast && (
-        <div className="mb-4 rounded border px-3 py-2 text-sm border-red-300 bg-red-50 text-red-800">
-          <div className="flex items-start justify-between gap-3">
-            <span>{toast.text}</span>
-            <button onClick={() => setToast(null)} className="text-xs px-2 py-1 border rounded hover:bg-black/5">
+        {toast && (
+          <div className="mb-4 glass border border-red-500/50 rounded-xl px-3 py-2 text-sm text-white">
+            <div className="flex items-start justify-between gap-3">
+              <span>{toast.text}</span>
+              <button onClick={() => setToast(null)} className="text-xs btn-ghost px-2 py-1">
               Cerrar
             </button>
           </div>
@@ -876,29 +877,28 @@ export default function OrganizerEventForm() {
             </div>
             <button
               onClick={() => {
-                setShowPendingModal(false);
-                navigate("/organizador/eventos", {
-                  state: { 
-                    toast: { 
-                      kind: "info", 
-                      text: `Evento ${isEdit ? "actualizado" : "creado"}. Pendiente de aprobación.` 
-                    } 
-                  },
-                  replace: true,
-                });
-              }}
-              className="w-full px-4 py-2 bg-black text-white rounded hover:bg-black/90"
-            >
-              Aceptar
-            </button>
-          </div>
+              setShowPendingModal(false);
+              navigate("/organizador/eventos", {
+                state: { 
+                  toast: { 
+                    kind: "info", 
+                    text: `Evento ${isEdit ? "actualizado" : "creado"}. Pendiente de aprobación.` 
+                  } 
+                },
+                replace: true,
+              });
+            }}
+            className="w-full btn-primary px-4 py-2"
+          >
+            Aceptar
+          </button>
         </div>
-      )}
+      </div>
+    )}
+      </div>
     </div>
   );
-}
-
-/* =================== Componente de Tickets =================== */
+}/* =================== Componente de Tickets =================== */
 function TicketsStep({ 
   eventId, 
   onFinish, 

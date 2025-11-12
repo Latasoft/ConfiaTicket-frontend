@@ -252,69 +252,72 @@ export default function OrganizerTicketValidator() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-4">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Validar Tickets</h1>
-        <p className="text-gray-600 mt-2">Escanea los códigos QR de las entradas para validar el ingreso</p>
-      </div>
-
-      {/* Selector de evento */}
-      <div className="bg-white border rounded-lg p-4 mb-6">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Evento seleccionado
-        </label>
-        <select
-          value={selectedEventId || ''}
-          onChange={(e) => setSelectedEventId(Number(e.target.value))}
-          className="w-full border rounded-lg px-3 py-2"
-        >
-          {events.length === 0 && (
-            <option value="">No hay eventos aprobados</option>
-          )}
-          {events.map(event => (
-            <option key={event.id} value={event.id}>
-              {event.title} - {new Date(event.startAt).toLocaleDateString('es-CL')}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* Estadísticas para eventos OWN */}
-      {stats && selectedEvent?.eventType !== 'RESALE' && (
-        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-lg p-6 mb-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Estadísticas del evento</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-white rounded-lg p-4 text-center">
-              <div className="text-2xl font-bold text-blue-600">{stats.capacity}</div>
-              <div className="text-sm text-gray-600">Capacidad</div>
-            </div>
-            <div className="bg-white rounded-lg p-4 text-center">
-              <div className="text-2xl font-bold text-green-600">{stats.totalTickets}</div>
-              <div className="text-sm text-gray-600">Vendidos</div>
-            </div>
-            <div className="bg-white rounded-lg p-4 text-center">
-              <div className="text-2xl font-bold text-purple-600">{stats.scannedTickets}</div>
-              <div className="text-sm text-gray-600">Validados</div>
-            </div>
-            <div className="bg-white rounded-lg p-4 text-center">
-              <div className="text-2xl font-bold text-orange-600">{stats.pendingTickets}</div>
-              <div className="text-sm text-gray-600">Pendientes</div>
-            </div>
-          </div>
-          <div className="mt-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-gray-700">Progreso de validación</span>
-              <span className="text-sm font-semibold text-gray-900">{stats.scanProgress}%</span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-3">
-              <div 
-                className="bg-blue-600 h-3 rounded-full transition-all duration-300"
-                style={{ width: `${stats.scanProgress}%` }}
-              ></div>
-            </div>
-          </div>
+    <div className="min-h-screen bg-dark-900 py-8 px-4">
+      <div className="max-w-6xl mx-auto">
+        <div className="mb-6">
+          <h1 className="text-4xl font-display font-bold bg-gradient-to-r from-neon-cyan to-neon-purple bg-clip-text text-transparent">
+            Validar Tickets
+          </h1>
+          <p className="text-dark-200 mt-2">Escanea los códigos QR de las entradas para validar el ingreso</p>
         </div>
-      )}
+
+        {/* Selector de evento */}
+        <div className="card-modern p-4 mb-6">
+          <label className="block text-sm font-medium text-white mb-2">
+            Evento seleccionado
+          </label>
+          <select
+            value={selectedEventId || ''}
+            onChange={(e) => setSelectedEventId(Number(e.target.value))}
+            className="input-modern w-full"
+          >
+            {events.length === 0 && (
+              <option value="">No hay eventos aprobados</option>
+            )}
+            {events.map(event => (
+              <option key={event.id} value={event.id}>
+                {event.title} - {new Date(event.startAt).toLocaleDateString('es-CL')}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Estadísticas para eventos OWN */}
+        {stats && selectedEvent?.eventType !== 'RESALE' && (
+          <div className="card-gradient-cyan p-6 mb-6">
+            <h2 className="text-xl font-bold text-white mb-4">Estadísticas del evento</h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="glass-light rounded-xl border border-dark-600 p-4 text-center">
+                <div className="text-2xl font-bold text-neon-cyan">{stats.capacity}</div>
+                <div className="text-sm text-dark-200">Capacidad</div>
+              </div>
+              <div className="glass-light rounded-xl border border-dark-600 p-4 text-center">
+                <div className="text-2xl font-bold text-neon-green">{stats.totalTickets}</div>
+                <div className="text-sm text-dark-200">Vendidos</div>
+              </div>
+              <div className="glass-light rounded-xl border border-dark-600 p-4 text-center">
+                <div className="text-2xl font-bold text-neon-purple">{stats.scannedTickets}</div>
+                <div className="text-sm text-dark-200">Validados</div>
+              </div>
+              <div className="glass-light rounded-xl border border-dark-600 p-4 text-center">
+                <div className="text-2xl font-bold text-neon-orange">{stats.pendingTickets}</div>
+                <div className="text-sm text-dark-200">Pendientes</div>
+              </div>
+            </div>
+            <div className="mt-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-white">Progreso de validación</span>
+                <span className="text-sm font-semibold text-neon-cyan">{stats.scanProgress}%</span>
+              </div>
+              <div className="w-full bg-dark-700 rounded-full h-3">
+                <div 
+                  className="bg-gradient-to-r from-neon-cyan to-neon-purple h-3 rounded-full transition-all duration-300"
+                  style={{ width: `${stats.scanProgress}%` }}
+                ></div>
+              </div>
+            </div>
+          </div>
+        )}
 
       {/* Dashboard de estadísticas para eventos RESALE */}
       {resaleStats && selectedEvent?.eventType === 'RESALE' && (
@@ -690,7 +693,7 @@ export default function OrganizerTicketValidator() {
                     )}
                   </div>
                 </div>
-                <div className="text-sm text-gray-500">
+                <div className="text-sm text-dark-200">
                   {formatTimestamp(scan.timestamp)}
                 </div>
               </div>
@@ -698,6 +701,7 @@ export default function OrganizerTicketValidator() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

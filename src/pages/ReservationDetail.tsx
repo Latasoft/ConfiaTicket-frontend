@@ -232,64 +232,72 @@ export default function ReservationDetail() {
   })();
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-4">Detalle de mi reserva</h1>
+    <div className="min-h-screen bg-dark-900 py-8 px-4">
+      <div className="max-w-4xl mx-auto">
+        <h1 className="text-4xl font-display font-bold bg-gradient-to-r from-neon-cyan to-neon-purple bg-clip-text text-transparent mb-6">
+          Detalle de mi reserva
+        </h1>
 
-      {loading && <div className="rounded-md p-4 bg-gray-100 animate-pulse">Cargando…</div>}
+        {loading && <div className="card-modern p-4 animate-pulse">
+          <div className="h-4 bg-dark-700 rounded w-3/4"></div>
+        </div>}
 
-      {!loading && err && (
-        <div className="rounded-md p-4 bg-red-50 text-red-800 border border-red-200">{err}</div>
-      )}
+        {!loading && err && (
+          <div className="glass border border-red-500/50 rounded-xl p-4 text-white flex items-start gap-3">
+            <span className="text-2xl">⚠️</span>
+            <p className="flex-1">{err}</p>
+          </div>
+        )}
 
-      {!loading && !err && resv && (
-        <>
-          {showYellowBanner && (
-            <div className="mb-5 rounded-md border border-amber-200 bg-amber-50 p-4 text-amber-900">
-              <div className="font-semibold mb-1">Pago pre-autorizado</div>
-              <p className="text-sm">
-                Tu pago quedó <b>pre-autorizado</b>. El organizador tiene hasta el plazo indicado para subir tu
-                entrada. Si no lo hace dentro de ese plazo, <b>te devolveremos tu dinero automáticamente</b>.
-              </p>
-              <p className="text-sm mt-2">
-                Plazo: <b>{fmtDateTime(authDeadline)}</b>{" "}
-                — tiempo restante: <b>{seconds > 0 ? label : "Plazo vencido"}</b>
-              </p>
-              {resv.ticketUploadDeadlineAt && (
-                <p className="text-xs mt-1 text-amber-800">
-                  (Plazo para subir ticket: {fmtDateTime(resv.ticketUploadDeadlineAt)})
+        {!loading && !err && resv && (
+          <>
+            {showYellowBanner && (
+              <div className="mb-5 glass border border-neon-yellow/50 rounded-xl p-4 text-white">
+                <div className="font-semibold mb-1">Pago pre-autorizado</div>
+                <p className="text-sm text-dark-100">
+                  Tu pago quedó <b>pre-autorizado</b>. El organizador tiene hasta el plazo indicado para subir tu
+                  entrada. Si no lo hace dentro de ese plazo, <b>te devolveremos tu dinero automáticamente</b>.
                 </p>
-              )}
-            </div>
-          )}
+                <p className="text-sm mt-2 text-dark-100">
+                  Plazo: <b>{fmtDateTime(authDeadline)}</b>{" "}
+                  — tiempo restante: <b>{seconds > 0 ? label : "Plazo vencido"}</b>
+                </p>
+                {resv.ticketUploadDeadlineAt && (
+                  <p className="text-xs mt-1 text-dark-200">
+                    (Plazo para subir ticket: {fmtDateTime(resv.ticketUploadDeadlineAt)})
+                  </p>
+                )}
+              </div>
+            )}
 
-          <div className="rounded-lg border p-4 space-y-4">
+            <div className="card-modern p-4 space-y-4">
             {/* Encabezado / Evento */}
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <div className="text-sm text-gray-500">Reserva</div>
-                <div className="text-lg font-semibold">
+                <div className="text-sm text-dark-200">Reserva</div>
+                <div className="text-lg font-semibold text-white">
                   #{resv.id}
                   {resv.code ? ` — ${resv.code}` : ""}
                 </div>
               </div>
               <div className="text-right">
-                <div className="text-sm text-gray-500">Estado</div>
-                <div className="font-semibold">{reservationLabel}</div>
+                <div className="text-sm text-dark-200">Estado</div>
+                <div className="font-semibold text-white">{reservationLabel}</div>
               </div>
             </div>
 
             {resv.event?.title && (
-              <div className="rounded-md bg-gray-50 p-3">
-                <div className="text-sm text-gray-600">Evento</div>
-                <div className="font-medium">
+              <div className="glass-light rounded-xl border border-dark-600 p-3">
+                <div className="text-sm text-dark-200">Evento</div>
+                <div className="font-medium text-white">
                   {resv.event.title}{" "}
                   {resv.event.id ? (
-                    <Link to={`/eventos/${resv.event.id}`} className="text-indigo-600 hover:underline ml-2">
+                    <Link to={`/eventos/${resv.event.id}`} className="text-neon-cyan hover:text-neon-cyan/80 ml-2">
                       Ver evento
                     </Link>
                   ) : null}
                 </div>
-                <div className="text-sm text-gray-600">
+                <div className="text-sm text-dark-200">
                   {fmtDateTime(resv.event.date)}{" "}
                   {resv.event.venue || resv.event.location ? `— ${resv.event.venue ?? resv.event.location}` : ""}
                   {resv.event.city ? `, ${resv.event.city}` : ""}
@@ -299,21 +307,21 @@ export default function ReservationDetail() {
 
             {/* Resumen principal */}
             <div className="grid sm:grid-cols-2 gap-4">
-              <div className="rounded-md border p-3">
-                <div className="text-sm text-gray-500 mb-1">Orden de compra</div>
-                <div className="font-mono">{pay?.buyOrder || "—"}</div>
+              <div className="glass-light rounded-xl border border-dark-600 p-3">
+                <div className="text-sm text-dark-200 mb-1">Orden de compra</div>
+                <div className="font-mono text-white">{pay?.buyOrder || "—"}</div>
               </div>
-              <div className="rounded-md border p-3">
-                <div className="text-sm text-gray-500 mb-1">Monto</div>
-                <div className="font-semibold">{fmtCLP(pay?.amount ?? resv.amount ?? null)}</div>
+              <div className="glass-light rounded-xl border border-dark-600 p-3">
+                <div className="text-sm text-dark-200 mb-1">Monto</div>
+                <div className="font-semibold text-white">{fmtCLP(pay?.amount ?? resv.amount ?? null)}</div>
               </div>
-              <div className="rounded-md border p-3">
-                <div className="text-sm text-gray-500 mb-1">Token</div>
-                <div className="font-mono break-all">{pay?.token || "—"}</div>
+              <div className="glass-light rounded-xl border border-dark-600 p-3">
+                <div className="text-sm text-dark-200 mb-1">Token</div>
+                <div className="font-mono break-all text-white">{pay?.token || "—"}</div>
               </div>
-              <div className="rounded-md border p-3">
-                <div className="text-sm text-gray-500 mb-1">Estado del pago</div>
-                <div className="font-semibold">{paymentLabel}</div>
+              <div className="glass-light rounded-xl border border-dark-600 p-3">
+                <div className="text-sm text-dark-200 mb-1">Estado del pago</div>
+                <div className="font-semibold text-white">{paymentLabel}</div>
               </div>
             </div>
 
@@ -321,23 +329,23 @@ export default function ReservationDetail() {
             <div className="flex flex-wrap gap-3">
               <button
                 onClick={() => navigate("/eventos")}
-                className="px-3 py-2 rounded bg-indigo-600 text-white hover:bg-indigo-700"
+                className="btn-primary px-3 py-2"
               >
                 Ver más eventos
               </button>
-              <button onClick={() => navigate("/")} className="px-3 py-2 rounded border hover:bg-black/5">
+              <button onClick={() => navigate("/")} className="btn-secondary px-3 py-2">
                 Volver al inicio
               </button>
               <button
                 onClick={() => navigate("/mis-entradas")}
-                className="px-3 py-2 rounded border hover:bg-black/5"
+                className="btn-secondary px-3 py-2"
               >
                 Ver mis entradas
               </button>
               <button
                 onClick={refreshPayment}
                 disabled={busy === "pay"}
-                className="px-3 py-2 rounded border hover:bg-black/5 disabled:opacity-60"
+                className="btn-ghost px-3 py-2 disabled:opacity-60"
                 title="Vuelve a consultar el estado del pago en el PSP"
               >
                 {busy === "pay" ? "Actualizando pago…" : "Refrescar estado pago"}
@@ -345,7 +353,7 @@ export default function ReservationDetail() {
               <button
                 onClick={refreshTicket}
                 disabled={busy === "ticket"}
-                className="px-3 py-2 rounded border hover:bg-black/5 disabled:opacity-60"
+                className="btn-ghost px-3 py-2 disabled:opacity-60"
                 title="Vuelve a consultar si el ticket ya fue subido/aprobado"
               >
                 {busy === "ticket" ? "Actualizando ticket…" : "Refrescar estado ticket"}
@@ -354,11 +362,11 @@ export default function ReservationDetail() {
 
             {/* Información técnica opcional */}
             <details className="pt-2">
-              <summary className="cursor-pointer text-sm text-gray-600">Información técnica (opcional)</summary>
+              <summary className="cursor-pointer text-sm text-dark-200">Información técnica (opcional)</summary>
               <div className="mt-3 grid sm:grid-cols-2 gap-3 text-sm">
-                <div className="rounded-md bg-gray-50 p-3">
-                  <div className="text-gray-500">Reserva</div>
-                  <pre className="mt-1 whitespace-pre-wrap text-xs">
+                <div className="glass-light rounded-xl border border-dark-600 p-3">
+                  <div className="text-dark-200">Reserva</div>
+                  <pre className="mt-1 whitespace-pre-wrap text-xs text-dark-100">
                     {JSON.stringify(
                       {
                         id: resv.id,
@@ -376,15 +384,16 @@ export default function ReservationDetail() {
                     )}
                   </pre>
                 </div>
-                <div className="rounded-md bg-gray-50 p-3">
-                  <div className="text-gray-500">Pago</div>
-                  <pre className="mt-1 whitespace-pre-wrap text-xs">{JSON.stringify(pay ?? {}, null, 2)}</pre>
+                <div className="glass-light rounded-xl border border-dark-600 p-3">
+                  <div className="text-dark-200">Pago</div>
+                  <pre className="mt-1 whitespace-pre-wrap text-xs text-dark-100">{JSON.stringify(pay ?? {}, null, 2)}</pre>
                 </div>
               </div>
             </details>
           </div>
         </>
       )}
+      </div>
     </div>
   );
 }
