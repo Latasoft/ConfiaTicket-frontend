@@ -400,7 +400,7 @@ export default function TicketsList({ reservationId, purchaseGroupId, showFullVi
           <li>Presenta el código QR de cada entrada al ingresar al evento</li>
           <li>Cada entrada es individual e intransferible</li>
           <li>Se requiere documento de identidad para validar</li>
-          <li>Puedes reimprimir las entradas accediendo a "Mis Tickets"</li>
+          <li>Puedes reimprimir las entradas accediendo a "Mis Entradas"</li>
         </ul>
       </div>
     </div>

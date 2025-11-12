@@ -135,8 +135,8 @@ export default function NavbarModern() {
             </NavLink>
 
             {user && (
-              <NavLink to="/my-tickets" className={active}>
-                Mis Tickets
+              <NavLink to="/mis-entradas" className={active}>
+                Mis Entradas
               </NavLink>
             )}
 
@@ -162,25 +162,25 @@ export default function NavbarModern() {
                   >
                     <div className="p-2 space-y-1">
                       <Link
-                        to="/organizer/dashboard"
+                        to="/organizador"
                         className="block px-4 py-2 rounded-lg text-dark-100 hover:bg-dark-700/50 hover:text-white transition-colors"
                       >
                         Dashboard
                       </Link>
                       <Link
-                        to="/organizer/events/new"
+                        to="/organizador/eventos/nuevo"
                         className="block px-4 py-2 rounded-lg text-dark-100 hover:bg-dark-700/50 hover:text-white transition-colors"
                       >
                         Crear Evento
                       </Link>
                       <Link
-                        to="/organizer/payouts"
+                        to="/organizador/pagos"
                         className="block px-4 py-2 rounded-lg text-dark-100 hover:bg-dark-700/50 hover:text-white transition-colors"
                       >
                         Pagos
                       </Link>
                       <Link
-                        to="/organizer/validate-ticket"
+                        to="/organizador/validar-tickets"
                         className="block px-4 py-2 rounded-lg text-dark-100 hover:bg-dark-700/50 hover:text-white transition-colors"
                       >
                         Validar Tickets
@@ -213,13 +213,13 @@ export default function NavbarModern() {
                   >
                     <div className="p-2 space-y-1">
                       <Link
-                        to="/admin/events"
+                        to="/admin/eventos"
                         className="block px-4 py-2 rounded-lg text-dark-100 hover:bg-dark-700/50 hover:text-white transition-colors"
                       >
                         Eventos
                       </Link>
                       <Link
-                        to="/admin/users"
+                        to="/admin/usuarios"
                         className="block px-4 py-2 rounded-lg text-dark-100 hover:bg-dark-700/50 hover:text-white transition-colors"
                       >
                         Usuarios
@@ -318,18 +318,18 @@ export default function NavbarModern() {
             </NavLink>
 
             {user && (
-              <NavLink to="/my-tickets" className={active}>
-                Mis Tickets
+              <NavLink to="/mis-entradas" className={active}>
+                Mis Entradas
               </NavLink>
             )}
 
             {isOrganizer && (
               <>
                 <div className="px-4 py-2 text-xs font-semibold text-dark-300 uppercase">Organizador</div>
-                <NavLink to="/organizer/dashboard" className={active}>
+                <NavLink to="/organizador" className={active}>
                   Dashboard
                 </NavLink>
-                <NavLink to="/organizer/events/new" className={active}>
+                <NavLink to="/organizador/eventos/nuevo" className={active}>
                   Crear Evento
                 </NavLink>
               </>
@@ -338,10 +338,10 @@ export default function NavbarModern() {
             {isSuperadmin && (
               <>
                 <div className="px-4 py-2 text-xs font-semibold text-neon-pink uppercase">Admin</div>
-                <NavLink to="/admin/events" className={active}>
+                <NavLink to="/admin/eventos" className={active}>
                   Eventos
                 </NavLink>
-                <NavLink to="/admin/users" className={active}>
+                <NavLink to="/admin/usuarios" className={active}>
                   Usuarios
                 </NavLink>
               </>

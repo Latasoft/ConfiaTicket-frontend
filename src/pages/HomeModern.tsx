@@ -78,7 +78,7 @@ export default function HomeModern() {
               </h1>
 
               <p className="text-xl md:text-2xl text-dark-100 max-w-2xl mx-auto leading-relaxed">
-                Compra tus entradas de forma segura y revende si no puedes asistir.
+                Compra, vende y revende tus entradas de forma segura.
                 <br />
                 <span className="text-neon-green font-semibold">100% verificado y confiable</span>
               </p>
@@ -147,10 +147,10 @@ export default function HomeModern() {
             />
 
             <GradientCard
-              title="Mis Tickets"
-              description="Gestiona todas tus entradas en un solo lugar. Descárgalas, transfiérelas o revéndelas fácilmente."
+              title="Mis Entradas"
+              description="Gestiona tus entradas en un solo lugar. Descárgalas, accede a toda la información de tus reservas y participa en reventas."
               gradient="pink"
-              to={user ? "/my-tickets" : "/login?redirect=/my-tickets"}
+              to={user ? "/mis-entradas" : "/login?redirect=/mis-entradas"}
             />
 
             <GradientCard
@@ -171,9 +171,9 @@ export default function HomeModern() {
               ¿Cómo funciona <span className="text-gradient-cyan">ConfíaTicket</span>?
             </h2>
             <p className="text-xl text-dark-200 max-w-3xl mx-auto leading-relaxed">
-              Compra tus entradas en línea, descárgalas desde "Mis Entradas" y accede sin filas. Revende tus entradas 
-              de forma segura y participa en experiencias exclusivas. ConfíaTicket te conecta con la 
-              emoción de cada evento.
+              Compra tus entradas en línea, descárgalas desde "Mis Entradas" y accede sin filas.
+              Los organizadores pueden crear reventas seguras. ConfíaTicket te conecta con la 
+              emoción de cada evento de forma segura y verificada.
             </p>
           </div>
 
@@ -222,7 +222,7 @@ export default function HomeModern() {
               </div>
               <h3 className="text-xl font-bold text-white">4. Revende seguro</h3>
               <p className="text-dark-200 text-sm">
-                ¿No puedes ir? Revende tu entrada de forma transparente y segura
+                Los organizadores pueden crear reventas de forma transparente y verificada
               </p>
             </GlassCard>
           </div>

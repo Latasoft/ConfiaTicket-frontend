@@ -80,8 +80,8 @@ export default function About() {
               </div>
               <h3 className="text-2xl font-bold text-white">4. Revende de forma segura</h3>
               <p className="text-dark-200">
-                ¿No puedes asistir? Revende tus entradas en la plataforma de forma segura y transparente.
-                Otros fans las comprarán y tú recuperas tu inversión.
+                Los organizadores pueden crear reventas de entradas en la plataforma de forma segura y transparente.
+                Sistema verificado para compradores y vendedores.
               </p>
             </GlassCard>
           </div>

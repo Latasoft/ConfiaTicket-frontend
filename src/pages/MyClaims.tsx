@@ -63,13 +63,13 @@ export default function MyClaims() {
         </div>
       )}
 
-      {/* Botón para ir a Mis Tickets */}
+      {/* Botón para ir a Mis Entradas */}
       <div className="mb-6">
         <Link
-          to="/mis-tickets"
+          to="/mis-entradas"
           className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
         >
-          ← Ver Mis Tickets
+          ← Ver Mis Entradas
         </Link>
       </div>
 
@@ -93,7 +93,7 @@ export default function MyClaims() {
             No tienes reclamos
           </h3>
           <p className="mt-1 text-gray-500">
-            Si tienes algún problema con tu compra, puedes crear un reclamo desde "Mis Tickets"
+            Si tienes algún problema con tu compra, puedes crear un reclamo desde "Mis Entradas"
           </p>
         </div>
       ) : (

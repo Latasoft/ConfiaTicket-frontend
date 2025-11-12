@@ -196,14 +196,14 @@ export default function Help() {
             <GlassCard className="space-y-2">
               <h3 className="text-lg font-bold text-white">¿Cómo compro una entrada?</h3>
               <p className="text-dark-200 text-sm">
-                Busca el evento, selecciona tus entradas, paga con Webpay y recibirás el QR por email.
+                Busca el evento, selecciona tus entradas, paga con Webpay y descarga tus tickets desde "Mis Entradas".
               </p>
             </GlassCard>
 
             <GlassCard className="space-y-2">
               <h3 className="text-lg font-bold text-white">¿Puedo revender mi entrada?</h3>
               <p className="text-dark-200 text-sm">
-                Sí, ingresa a "Mis Tickets" y marca la entrada como "En venta". Otros usuarios podrán comprarla.
+                Sí, los organizadores pueden crear reventas de entradas de forma segura en la plataforma.
               </p>
             </GlassCard>
 
