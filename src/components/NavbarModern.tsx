@@ -109,7 +109,9 @@ export default function NavbarModern() {
   };
 
   const isSuperadmin = user?.role === "superadmin";
-  const isOrganizer = user?.role === "organizer" && (user as { verified?: boolean }).verified;
+  const isOrganizer = user?.role === "organizer";
+  const organizerVerified: boolean =
+    (user as any)?.verifiedOrganizer ?? (user as any)?.isVerified ?? false;
 
   return (
     <nav className="bg-dark-800/95 backdrop-blur-md border-b border-dark-700 sticky top-0 z-50">
@@ -141,7 +143,7 @@ export default function NavbarModern() {
             )}
 
             {/* Organizer Dropdown */}
-            {isOrganizer && (
+            {isOrganizer && organizerVerified && (
               <div className="relative">
                 <button
                   ref={orgBtnRef}
@@ -225,25 +227,19 @@ export default function NavbarModern() {
                         Usuarios
                       </Link>
                       <Link
-                        to="/admin/organizer-applications"
+                        to="/admin/solicitudes-organizador"
                         className="block px-4 py-2 rounded-lg text-dark-100 hover:bg-dark-700/50 hover:text-white transition-colors"
                       >
                         Solicitudes
                       </Link>
                       <Link
-                        to="/admin/tickets"
-                        className="block px-4 py-2 rounded-lg text-dark-100 hover:bg-dark-700/50 hover:text-white transition-colors"
-                      >
-                        Tickets
-                      </Link>
-                      <Link
-                        to="/admin/purchases"
+                        to="/admin/compras"
                         className="block px-4 py-2 rounded-lg text-dark-100 hover:bg-dark-700/50 hover:text-white transition-colors"
                       >
                         Compras
                       </Link>
                       <Link
-                        to="/admin/claims"
+                        to="/admin/reclamos"
                         className="block px-4 py-2 rounded-lg text-dark-100 hover:bg-dark-700/50 hover:text-white transition-colors"
                       >
                         Reclamos
@@ -255,15 +251,35 @@ export default function NavbarModern() {
                         Pagos
                       </Link>
                       <Link
-                        to="/admin/config"
+                        to="/admin/configuracion"
                         className="block px-4 py-2 rounded-lg text-dark-100 hover:bg-dark-700/50 hover:text-white transition-colors"
                       >
-                        Config
+                        Configuración
                       </Link>
                     </div>
                   </div>
                 )}
               </div>
+            )}
+
+            {/* Organizador no verificado */}
+            {isOrganizer && !organizerVerified && (
+              <NavLink to="/organizador/pendiente" className={active}>
+                Pendiente
+              </NavLink>
+            )}
+
+            {/* Solicitar ser organizador */}
+            {user?.role === "buyer" && !(user as any)?.applicationStatus && (
+              <NavLink to="/solicitar-organizador" className={active}>
+                Ser organizador
+              </NavLink>
+            )}
+
+            {user?.role === "buyer" && ((user as any)?.applicationStatus === "PENDING" || (user as any)?.applicationStatus === "REJECTED") && (
+              <NavLink to="/solicitar-organizador" className={active}>
+                Estado de Solicitud
+              </NavLink>
             )}
 
             {/* User Menu */}
@@ -323,7 +339,7 @@ export default function NavbarModern() {
               </NavLink>
             )}
 
-            {isOrganizer && (
+            {isOrganizer && organizerVerified && (
               <>
                 <div className="px-4 py-2 text-xs font-semibold text-dark-300 uppercase">Organizador</div>
                 <NavLink to="/organizador" className={active}>
@@ -344,7 +360,42 @@ export default function NavbarModern() {
                 <NavLink to="/admin/usuarios" className={active}>
                   Usuarios
                 </NavLink>
+                <NavLink to="/admin/solicitudes-organizador" className={active}>
+                  Solicitudes
+                </NavLink>
+                <NavLink to="/admin/compras" className={active}>
+                  Compras
+                </NavLink>
+                <NavLink to="/admin/reclamos" className={active}>
+                  Reclamos
+                </NavLink>
+                <NavLink to="/admin/payouts" className={active}>
+                  Pagos
+                </NavLink>
+                <NavLink to="/admin/configuracion" className={active}>
+                  Configuración
+                </NavLink>
               </>
+            )}
+
+            {/* Organizador no verificado */}
+            {isOrganizer && !organizerVerified && (
+              <NavLink to="/organizador/pendiente" className={active}>
+                Pendiente
+              </NavLink>
+            )}
+
+            {/* Solicitar ser organizador */}
+            {user?.role === "buyer" && !(user as any)?.applicationStatus && (
+              <NavLink to="/solicitar-organizador" className={active}>
+                Ser organizador
+              </NavLink>
+            )}
+
+            {user?.role === "buyer" && ((user as any)?.applicationStatus === "PENDING" || (user as any)?.applicationStatus === "REJECTED") && (
+              <NavLink to="/solicitar-organizador" className={active}>
+                Estado de Solicitud
+              </NavLink>
             )}
 
             {!user && (
