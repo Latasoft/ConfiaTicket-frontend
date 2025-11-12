@@ -51,6 +51,8 @@ import AdminClaims from "@/pages/AdminClaims"; // ← NUEVO
 import AdminClaimDetail from "@/pages/AdminClaimDetail"; // ← NUEVO
 import AdminPurchases from "@/pages/AdminPurchases"; // ← NUEVO
 import AdminPurchaseDetail from "@/pages/AdminPurchaseDetail"; // ← NUEVO
+import AdminTicketValidations from "@/pages/AdminTicketValidations"; // ← NUEVO
+import OrganizerTicketValidations from "@/pages/OrganizerTicketValidations"; // ← NUEVO
 
 // Seguridad de cuenta
 import ChangePassword from "@/pages/ChangePassword";
@@ -274,6 +276,18 @@ export const router = createBrowserRouter([
         ),
       },
 
+      // Historial de validaciones (organizador)
+      {
+        path: "/organizador/validaciones",
+        element: (
+          <RequireAuth>
+            <RequireVerifiedOrganizer>
+              <OrganizerTicketValidations />
+            </RequireVerifiedOrganizer>
+          </RequireAuth>
+        ),
+      },
+
       // Zona Admin (superadmin)
       {
         path: "/admin/eventos",
@@ -368,6 +382,14 @@ export const router = createBrowserRouter([
         element: (
           <RequireSuperadmin>
             <AdminPurchaseDetail />
+          </RequireSuperadmin>
+        ),
+      },
+      {
+        path: "/admin/validaciones",
+        element: (
+          <RequireSuperadmin>
+            <AdminTicketValidations />
           </RequireSuperadmin>
         ),
       },

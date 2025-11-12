@@ -21,6 +21,9 @@ export type AdminEvent = {
   /** Estado activo/inactivo del evento */
   isActive?: boolean;
 
+  /** Tipo de evento */
+  eventType?: "OWN" | "RESALE";
+
   /** Fecha de creación del evento (ISO) */
   createdAt?: string | null;
 

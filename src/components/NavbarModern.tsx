@@ -187,6 +187,12 @@ export default function NavbarModern() {
                       >
                         Validar Tickets
                       </Link>
+                      <Link
+                        to="/organizador/validaciones"
+                        className="block px-4 py-2 rounded-lg text-dark-100 hover:bg-dark-700/50 hover:text-white transition-colors"
+                      >
+                        Historial
+                      </Link>
                     </div>
                   </div>
                 )}
@@ -249,6 +255,12 @@ export default function NavbarModern() {
                         className="block px-4 py-2 rounded-lg text-dark-100 hover:bg-dark-700/50 hover:text-white transition-colors"
                       >
                         Pagos
+                      </Link>
+                      <Link
+                        to="/admin/validaciones"
+                        className="block px-4 py-2 rounded-lg text-dark-100 hover:bg-dark-700/50 hover:text-white transition-colors"
+                      >
+                        Validaciones
                       </Link>
                       <Link
                         to="/admin/configuracion"
@@ -348,6 +360,12 @@ export default function NavbarModern() {
                 <NavLink to="/organizador/eventos/nuevo" className={active}>
                   Crear Evento
                 </NavLink>
+                <NavLink to="/organizador/validar-tickets" className={active}>
+                  Validar Tickets
+                </NavLink>
+                <NavLink to="/organizador/validaciones" className={active}>
+                  Historial
+                </NavLink>
               </>
             )}
 
@@ -371,6 +389,9 @@ export default function NavbarModern() {
                 </NavLink>
                 <NavLink to="/admin/payouts" className={active}>
                   Pagos
+                </NavLink>
+                <NavLink to="/admin/validaciones" className={active}>
+                  Validaciones
                 </NavLink>
                 <NavLink to="/admin/configuracion" className={active}>
                   Configuración
