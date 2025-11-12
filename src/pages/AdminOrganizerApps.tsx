@@ -140,11 +140,11 @@ export default function AdminOrganizerApps() {
   // }
 
   function StatusBadge({ s }: { s: AppStatus }) {
-    const base = "text-xs px-2 py-1 rounded";
+    const base = "text-xs px-3 py-1 rounded-full font-bold border-2";
     const map: Record<AppStatus, string> = {
-      PENDING: "bg-yellow-100 text-yellow-900",
-      APPROVED: "bg-green-100 text-green-800",
-      REJECTED: "bg-red-100 text-red-800",
+      PENDING: "bg-amber-500/20 text-amber-300 border-amber-400/50",
+      APPROVED: "bg-green-500/20 text-green-300 border-green-400/50",
+      REJECTED: "bg-red-500/20 text-red-300 border-red-400/50",
     };
     return <span className={`${base} ${map[s]}`}>{s}</span>;
   }
@@ -164,206 +164,213 @@ export default function AdminOrganizerApps() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto p-4">
-      <div className="flex items-center justify-between mb-2">
-        <h1 className="text-2xl font-bold">
-          Solicitudes de Organizador — Superadmin
-        </h1>
-      </div>
+    <div className="min-h-screen bg-dark-900 p-6">
+      <div className="max-w-7xl mx-auto">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-4xl font-bold text-white">
+            Solicitudes de Organizador
+          </h1>
+        </div>
 
-      <div className="flex gap-4 text-sm mb-4">
-        <NavLink to="/admin/eventos" className="underline hover:text-blue-600">
-          Eventos
-        </NavLink>
-        <NavLink to="/admin/usuarios" className="underline hover:text-blue-600">
-          Usuarios
-        </NavLink>
-        <NavLink
-          to="/admin/solicitudes-organizador"
-          className="underline hover:text-blue-600"
-        >
-          Solicitudes de organizador
-        </NavLink>
-      </div>
+        <div className="flex gap-4 text-sm mb-6">
+          <NavLink to="/admin/eventos" className="text-cyan-400 hover:text-cyan-300 font-bold transition-colors">
+            Eventos
+          </NavLink>
+          <NavLink to="/admin/usuarios" className="text-cyan-400 hover:text-cyan-300 font-bold transition-colors">
+            Usuarios
+          </NavLink>
+          <NavLink
+            to="/admin/solicitudes-organizador"
+            className="text-cyan-400 hover:text-cyan-300 font-bold transition-colors"
+          >
+            Solicitudes de organizador
+          </NavLink>
+        </div>
 
-      {toast && (
-        <div
-          className={
-            "mb-4 rounded border px-3 py-2 text-sm " +
-            (toast.kind === "error"
-              ? "border-red-300 bg-red-50 text-red-800"
-              : toast.kind === "success"
-              ? "border-green-300 bg-green-50 text-green-800"
-              : "border-amber-300 bg-amber-50 text-amber-800")
-          }
-        >
-          <div className="flex items-start justify-between gap-3">
-            <span>{toast.text}</span>
-            <button
-              onClick={() => setToast(null)}
-              className="text-xs px-2 py-1 border rounded hover:bg-black/5"
+        {toast && (
+          <div
+            className={
+              "mb-6 rounded-2xl border-2 px-6 py-4 text-sm shadow-xl " +
+              (toast.kind === "error"
+                ? "border-red-400/50 bg-red-500/20 text-red-300"
+                : toast.kind === "success"
+                ? "border-green-400/50 bg-green-500/20 text-green-300"
+                : "border-amber-400/50 bg-amber-500/20 text-amber-300")
+            }
+          >
+            <div className="flex items-start justify-between gap-3">
+              <span className="font-medium">{toast.text}</span>
+              <button
+                onClick={() => setToast(null)}
+                className="text-xs px-3 py-1 border-2 border-dark-600 rounded-lg hover:bg-dark-700 transition-all font-bold"
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Filtros */}
+        <div className="bg-dark-850 border-2 border-dark-700 rounded-2xl p-6 mb-8 shadow-xl">
+          <div className="grid md:grid-cols-4 gap-4">
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              className="bg-dark-800 border-2 border-dark-600 rounded-xl px-4 py-3 text-white placeholder-dark-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50 transition-all"
+              placeholder="Buscar por nombre/email/RUT…"
+            />
+            <select
+              value={status}
+              onChange={(e) => setStatus(e.target.value as any)}
+              className="bg-dark-800 border-2 border-dark-600 rounded-xl px-4 py-3 text-white focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50 transition-all"
             >
-              Cerrar
+              <option value="">Todas</option>
+              <option value="PENDING">Pendientes</option>
+              <option value="APPROVED">Aprobadas</option>
+              <option value="REJECTED">Rechazadas</option>
+            </select>
+            <button
+              onClick={() => {
+                setQ("");
+                setStatus("PENDING");
+              }}
+              className="bg-purple-500 hover:bg-purple-600 text-white font-bold px-4 py-3 rounded-xl transition-all hover:scale-105 shadow-lg shadow-purple-500/30"
+            >
+              Limpiar
             </button>
           </div>
         </div>
-      )}
 
-      {/* Filtros */}
-      <div className="grid md:grid-cols-4 gap-2 mb-4">
-        <input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          className="border rounded px-3 py-2"
-          placeholder="Buscar por nombre/email/RUT…"
-        />
-        <select
-          value={status}
-          onChange={(e) => setStatus(e.target.value as any)}
-          className="border rounded px-3 py-2"
-        >
-          <option value="">Todas</option>
-          <option value="PENDING">Pendientes</option>
-          <option value="APPROVED">Aprobadas</option>
-          <option value="REJECTED">Rechazadas</option>
-        </select>
-        <button
-          onClick={() => {
-            setQ("");
-            setStatus("PENDING");
-          }}
-          className="border rounded px-3 py-2 hover:bg-black/5"
-        >
-          Limpiar
-        </button>
-      </div>
-
-      {/* Tabla */}
-      <div className="border rounded overflow-x-auto">
-        <table className="min-w-full text-sm">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="text-left p-3">Solicitante</th>
-              <th className="text-left p-3">Fecha de petición</th>
-              <th className="text-left p-3">Nombre</th>
-              <th className="text-left p-3">RUT</th>
-              <th className="text-left p-3">Estado</th>
-              <th className="text-left p-3">Documento</th>
-              <th className="text-right p-3">Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr>
-                <td className="p-6 text-center" colSpan={7}>
-                  Cargando…
-                </td>
-              </tr>
-            ) : rows.length === 0 ? (
-              <tr>
-                <td className="p-6 text-center" colSpan={7}>
-                  Sin resultados.
-                </td>
-              </tr>
-            ) : (
-              rows.map((app) => (
-                <tr key={app.id} className="border-t">
-                  <td className="p-3">
-                    {app.user?.id ? (
-                      <Link 
-                        to={`/admin/usuarios/${app.user.id}`}
-                        className="text-blue-600 hover:text-blue-800 hover:underline font-medium"
-                      >
-                        {app.user.name}
-                      </Link>
-                    ) : (
-                      <span>{app.user?.name}</span>
-                    )}{" "}
-                    <span className="text-gray-500">({app.user?.email})</span>
-                  </td>
-                  <td className="p-3">{fmt(app.createdAt)}</td>
-                  <td className="p-3">{app.legalName}</td>
-                  <td className="p-3">{app.taxId}</td>
-                  <td className="p-3">
-                    <StatusBadge s={app.status} />
-                  </td>
-                  <td className="p-3">
-                    {app.idCardImageUrl ? (
-                      <ProtectedImageModal
-                        imageUrl={app.idCardImageUrl}
-                        imageUrl2={app.idCardImageBackUrl || undefined}
-                        buttonText="📄 Ver cédula"
-                        buttonClassName="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-md hover:from-blue-700 hover:to-blue-800 transition-all duration-200 text-xs font-medium shadow-sm hover:shadow-md"
-                        title={`Cédula de Identidad - ${app.legalName}`}
-                        label1="Cara Frontal"
-                        label2="Cara Trasera"
-                      />
-                    ) : (
-                      <span className="inline-flex items-center gap-1 text-gray-400 text-xs">
-                        <span className="w-1.5 h-1.5 bg-gray-300 rounded-full"></span>
-                        Sin archivo
-                      </span>
-                    )}
-                  </td>
-                  <td className="p-3 text-right">
-                    {app.status === "PENDING" && (
-                      <>
-                        <button
-                          onClick={() => approve(app.id)}
-                          disabled={busyId === app.id}
-                          className="px-2 py-1 mr-2 rounded border hover:bg-green-50 disabled:opacity-50"
-                        >
-                          Aprobar
-                        </button>
-                        <button
-                          onClick={() => reject(app.id)}
-                          disabled={busyId === app.id}
-                          className="px-2 py-1 rounded border hover:bg-red-50 disabled:opacity-50"
-                        >
-                          Rechazar
-                        </button>
-                      </>
-                    )}
-
-                    {(app.status === "APPROVED" ||
-                      app.status === "REJECTED") && (
-                      <button
-                        onClick={() => reopen(app.id)}
-                        disabled={busyId === app.id}
-                        className="px-2 py-1 rounded border hover:bg-yellow-50 disabled:opacity-50"
-                        title="Volver a estado pendiente"
-                      >
-                        Reabrir
-                      </button>
-                    )}
-                  </td>
+        {/* Tabla */}
+        <div className="bg-dark-850 border-2 border-dark-700 rounded-2xl shadow-2xl overflow-hidden mb-8">
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead className="bg-dark-800 border-b-2 border-dark-700">
+                <tr>
+                  <th className="text-left px-6 py-4 text-xs font-bold text-dark-100 uppercase">Solicitante</th>
+                  <th className="text-left px-6 py-4 text-xs font-bold text-dark-100 uppercase">Fecha de petición</th>
+                  <th className="text-left px-6 py-4 text-xs font-bold text-dark-100 uppercase">Nombre</th>
+                  <th className="text-left px-6 py-4 text-xs font-bold text-dark-100 uppercase">RUT</th>
+                  <th className="text-left px-6 py-4 text-xs font-bold text-dark-100 uppercase">Estado</th>
+                  <th className="text-left px-6 py-4 text-xs font-bold text-dark-100 uppercase">Documento</th>
+                  <th className="text-right px-6 py-4 text-xs font-bold text-dark-100 uppercase">Acciones</th>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+              </thead>
+              <tbody className="divide-y divide-dark-700">
+                {loading ? (
+                  <tr>
+                    <td className="p-12 text-center text-cyan-400" colSpan={7}>
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-400 mx-auto mb-4"></div>
+                      Cargando…
+                    </td>
+                  </tr>
+                ) : rows.length === 0 ? (
+                  <tr>
+                    <td className="p-12 text-center text-dark-300" colSpan={7}>
+                      Sin resultados.
+                    </td>
+                  </tr>
+                ) : (
+                  rows.map((app) => (
+                    <tr key={app.id} className="hover:bg-dark-800/50 transition-colors">
+                      <td className="px-6 py-4">
+                        {app.user?.id ? (
+                          <Link 
+                            to={`/admin/usuarios/${app.user.id}`}
+                            className="text-cyan-400 hover:text-cyan-300 font-bold transition-colors"
+                          >
+                            {app.user.name}
+                          </Link>
+                        ) : (
+                          <span className="text-white font-medium">{app.user?.name}</span>
+                        )}{" "}
+                        <span className="text-dark-400">({app.user?.email})</span>
+                      </td>
+                      <td className="px-6 py-4 text-dark-300">{fmt(app.createdAt)}</td>
+                      <td className="px-6 py-4 text-white font-medium">{app.legalName}</td>
+                      <td className="px-6 py-4 text-white font-mono">{app.taxId}</td>
+                      <td className="px-6 py-4">
+                        <StatusBadge s={app.status} />
+                      </td>
+                      <td className="px-6 py-4">
+                        {app.idCardImageUrl ? (
+                          <ProtectedImageModal
+                            imageUrl={app.idCardImageUrl}
+                            imageUrl2={app.idCardImageBackUrl || undefined}
+                            buttonText="Ver cédula"
+                            buttonClassName="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 text-xs font-bold shadow-lg shadow-blue-500/30"
+                            title={`Cédula de Identidad - ${app.legalName}`}
+                            label1="Cara Frontal"
+                            label2="Cara Trasera"
+                          />
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-dark-400 text-xs">
+                            <span className="w-1.5 h-1.5 bg-dark-600 rounded-full"></span>
+                            Sin archivo
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        {app.status === "PENDING" && (
+                          <>
+                            <button
+                              onClick={() => approve(app.id)}
+                              disabled={busyId === app.id}
+                              className="px-3 py-2 mr-2 rounded-lg border-2 border-green-400/50 bg-green-500/20 text-green-300 hover:bg-green-500/30 disabled:opacity-30 transition-all font-bold"
+                            >
+                              Aprobar
+                            </button>
+                            <button
+                              onClick={() => reject(app.id)}
+                              disabled={busyId === app.id}
+                              className="px-3 py-2 rounded-lg border-2 border-red-400/50 bg-red-500/20 text-red-300 hover:bg-red-500/30 disabled:opacity-30 transition-all font-bold"
+                            >
+                              Rechazar
+                            </button>
+                          </>
+                        )}
 
-      {/* Paginación */}
-      <div className="flex items-center justify-between mt-4">
-        <p className="text-sm text-gray-600">
-          Página {page} de {totalPages} — {total} solicitud(es)
-        </p>
-        <div className="flex gap-2">
-          <button
-            disabled={page <= 1 || loading}
-            onClick={() => load(page - 1)}
-            className="px-3 py-2 border rounded disabled:opacity-50 hover:bg-black/5"
-          >
-            Anterior
-          </button>
-          <button
-            disabled={page >= totalPages || loading}
-            onClick={() => load(page + 1)}
-            className="px-3 py-2 border rounded disabled:opacity-50 hover:bg-black/5"
-          >
-            Siguiente
-          </button>
+                        {(app.status === "APPROVED" ||
+                          app.status === "REJECTED") && (
+                          <button
+                            onClick={() => reopen(app.id)}
+                            disabled={busyId === app.id}
+                            className="px-3 py-2 rounded-lg border-2 border-amber-400/50 bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 disabled:opacity-30 transition-all font-bold"
+                            title="Volver a estado pendiente"
+                          >
+                            Reabrir
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Paginación */}
+        <div className="flex items-center justify-between bg-dark-850 border-2 border-dark-700 rounded-2xl p-6 shadow-xl">
+          <p className="text-sm text-dark-200">
+            Página <span className="font-bold text-white">{page}</span> de <span className="font-bold text-white">{totalPages}</span> — <span className="font-bold text-white">{total}</span> solicitud(es)
+          </p>
+          <div className="flex gap-2">
+            <button
+              disabled={page <= 1 || loading}
+              onClick={() => load(page - 1)}
+              className="px-4 py-2 border-2 border-dark-600 rounded-lg disabled:opacity-30 hover:bg-dark-700 text-white font-medium transition-all"
+            >
+              ← Anterior
+            </button>
+            <button
+              disabled={page >= totalPages || loading}
+              onClick={() => load(page + 1)}
+              className="px-4 py-2 border-2 border-dark-600 rounded-lg disabled:opacity-30 hover:bg-dark-700 text-white font-medium transition-all"
+            >
+              Siguiente →
+            </button>
+          </div>
         </div>
       </div>
     </div>

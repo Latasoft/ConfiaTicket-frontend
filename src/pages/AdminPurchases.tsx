@@ -92,16 +92,16 @@ export default function AdminPurchases() {
 
   function getStatusBadge(status: string) {
     const statusConfig: Record<string, { label: string; className: string }> = {
-      SUCCEEDED: { label: 'Completada', className: 'bg-green-100 text-green-800' },
-      PENDING_PAYMENT: { label: 'Pendiente Pago', className: 'bg-yellow-100 text-yellow-800' },
-      EXPIRED: { label: 'Expirada', className: 'bg-gray-100 text-gray-800' },
-      FAILED: { label: 'Fallida', className: 'bg-red-100 text-red-800' },
-      REFUNDED: { label: 'Reembolsada', className: 'bg-purple-100 text-purple-800' },
+      SUCCEEDED: { label: 'Completada', className: 'bg-green-500/20 text-green-300 border-green-400/50' },
+      PENDING_PAYMENT: { label: 'Pendiente Pago', className: 'bg-amber-500/20 text-amber-300 border-amber-400/50' },
+      EXPIRED: { label: 'Expirada', className: 'bg-gray-500/20 text-gray-300 border-gray-400/50' },
+      FAILED: { label: 'Fallida', className: 'bg-red-500/20 text-red-300 border-red-400/50' },
+      REFUNDED: { label: 'Reembolsada', className: 'bg-purple-500/20 text-purple-300 border-purple-400/50' },
     };
 
-    const config = statusConfig[status] || { label: status, className: 'bg-gray-100 text-gray-800' };
+    const config = statusConfig[status] || { label: status, className: 'bg-dark-700 text-dark-200 border-dark-600' };
     return (
-      <span className={`px-2 py-1 rounded-full text-xs font-medium ${config.className}`}>
+      <span className={`px-3 py-1 rounded-full text-xs font-bold border-2 ${config.className}`}>
         {config.label}
       </span>
     );
@@ -109,276 +109,279 @@ export default function AdminPurchases() {
 
   function getEventTypeBadge(eventType: string) {
     const typeConfig: Record<string, { label: string; className: string }> = {
-      OWN: { label: 'Propio', className: 'bg-blue-100 text-blue-800' },
-      RESALE: { label: 'Reventa', className: 'bg-orange-100 text-orange-800' },
+      OWN: { label: 'Propio', className: 'bg-cyan-500/20 text-cyan-300 border-cyan-400/50' },
+      RESALE: { label: 'Reventa', className: 'bg-orange-500/20 text-orange-300 border-orange-400/50' },
     };
 
-    const config = typeConfig[eventType] || { label: eventType, className: 'bg-gray-100 text-gray-800' };
+    const config = typeConfig[eventType] || { label: eventType, className: 'bg-dark-700 text-dark-200 border-dark-600' };
     return (
-      <span className={`px-2 py-1 rounded-full text-xs font-medium ${config.className}`}>
+      <span className={`px-3 py-1 rounded-full text-xs font-bold border-2 ${config.className}`}>
         {config.label}
       </span>
     );
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">Panel de Compras</h1>
+    <div className="min-h-screen bg-dark-900 p-6 md:p-8">
+      <div className="max-w-7xl mx-auto">
+        <h1 className="text-4xl font-bold text-white mb-8">Panel de Compras</h1>
 
-      {/* Metricas */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div className="bg-white p-4 rounded-lg shadow">
-          <div className="text-sm text-gray-600">Total Recaudado</div>
-          <div className="text-2xl font-bold text-gray-900">
-            {formatAmount(metrics.totalAmount)}
+        {/* Metricas */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="bg-gradient-to-br from-green-500/10 to-green-600/10 border-2 border-green-400/50 p-6 rounded-2xl shadow-xl">
+            <div className="text-sm text-green-300 font-medium mb-1">Total Recaudado</div>
+            <div className="text-3xl font-bold text-white">
+              {formatAmount(metrics.totalAmount)}
+            </div>
+          </div>
+          <div className="bg-gradient-to-br from-cyan-500/10 to-cyan-600/10 border-2 border-cyan-400/50 p-6 rounded-2xl shadow-xl">
+            <div className="text-sm text-cyan-300 font-medium mb-1">Compras Exitosas</div>
+            <div className="text-3xl font-bold text-white">
+              {metrics.successfulPurchases}
+            </div>
+          </div>
+          <div className="bg-gradient-to-br from-purple-500/10 to-purple-600/10 border-2 border-purple-400/50 p-6 rounded-2xl shadow-xl">
+            <div className="text-sm text-purple-300 font-medium mb-1">Total Compras</div>
+            <div className="text-3xl font-bold text-white">
+              {metrics.totalPurchases}
+            </div>
           </div>
         </div>
-        <div className="bg-white p-4 rounded-lg shadow">
-          <div className="text-sm text-gray-600">Compras Exitosas</div>
-          <div className="text-2xl font-bold text-green-600">
-            {metrics.successfulPurchases}
-          </div>
-        </div>
-        <div className="bg-white p-4 rounded-lg shadow">
-          <div className="text-sm text-gray-600">Total Compras</div>
-          <div className="text-2xl font-bold text-gray-900">
-            {metrics.totalPurchases}
-          </div>
-        </div>
-      </div>
 
-      {/* Filtros */}
-      <div className="bg-white p-4 rounded-lg shadow mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Buscar
-            </label>
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && applyFilters()}
-              placeholder="ID, email o nombre..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-md"
-            />
+        {/* Filtros */}
+        <div className="bg-dark-850 border-2 border-dark-700 p-6 rounded-2xl shadow-xl mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-dark-100 mb-2">
+                Buscar
+              </label>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && applyFilters()}
+                placeholder="ID, email o nombre..."
+                className="w-full px-4 py-2.5 bg-dark-800 border-2 border-dark-600 rounded-lg text-white placeholder-dark-500 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50 transition-all"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-dark-100 mb-2">
+                Estado
+              </label>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="w-full px-4 py-2.5 bg-dark-800 border-2 border-dark-600 rounded-lg text-white focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50 transition-all"
+              >
+                <option value="" className="bg-dark-800">Todos</option>
+                <option value="SUCCEEDED" className="bg-dark-800">Completada</option>
+                <option value="PENDING_PAYMENT" className="bg-dark-800">Pendiente Pago</option>
+                <option value="EXPIRED" className="bg-dark-800">Expirada</option>
+                <option value="FAILED" className="bg-dark-800">Fallida</option>
+                <option value="REFUNDED" className="bg-dark-800">Reembolsada</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-dark-100 mb-2">
+                Tipo Evento
+              </label>
+              <select
+                value={eventTypeFilter}
+                onChange={(e) => setEventTypeFilter(e.target.value)}
+                className="w-full px-4 py-2.5 bg-dark-800 border-2 border-dark-600 rounded-lg text-white focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50 transition-all"
+              >
+                <option value="" className="bg-dark-800">Todos</option>
+                <option value="OWN" className="bg-dark-800">Propio</option>
+                <option value="RESALE" className="bg-dark-800">Reventa</option>
+              </select>
+            </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Estado
-            </label>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+          <div className="flex gap-3 mt-4">
+            <button
+              onClick={applyFilters}
+              className="px-6 py-2.5 bg-cyan-500 text-white font-bold rounded-lg hover:bg-cyan-600 shadow-lg shadow-cyan-500/30 transition-all transform hover:scale-105"
             >
-              <option value="">Todos</option>
-              <option value="SUCCEEDED">Completada</option>
-              <option value="PENDING_PAYMENT">Pendiente Pago</option>
-              <option value="EXPIRED">Expirada</option>
-              <option value="FAILED">Fallida</option>
-              <option value="REFUNDED">Reembolsada</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Tipo Evento
-            </label>
-            <select
-              value={eventTypeFilter}
-              onChange={(e) => setEventTypeFilter(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              🔍 Aplicar Filtros
+            </button>
+            <button
+              onClick={clearFilters}
+              className="px-6 py-2.5 bg-purple-500 text-white font-bold rounded-lg hover:bg-purple-600 shadow-lg shadow-purple-500/30 transition-all transform hover:scale-105"
             >
-              <option value="">Todos</option>
-              <option value="OWN">Propio</option>
-              <option value="RESALE">Reventa</option>
-            </select>
+              Limpiar
+            </button>
+            <button
+              onClick={fetchPurchases}
+              className="px-6 py-2.5 bg-dark-700 border-2 border-dark-600 text-white font-bold rounded-lg hover:bg-dark-600 transition-all ml-auto"
+            >
+              ↻ Actualizar
+            </button>
           </div>
         </div>
 
-        <div className="flex gap-2 mt-4">
-          <button
-            onClick={applyFilters}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-          >
-            Aplicar Filtros
-          </button>
-          <button
-            onClick={clearFilters}
-            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
-          >
-            Limpiar
-          </button>
-          <button
-            onClick={fetchPurchases}
-            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 ml-auto"
-          >
-            Actualizar
-          </button>
-        </div>
-      </div>
+        {/* Error */}
+        {error && (
+          <div className="bg-red-500/20 border-2 border-red-400/50 text-red-200 px-6 py-4 rounded-xl mb-6 font-medium">
+            {error}
+          </div>
+        )}
 
-      {/* Error */}
-      {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
-          {error}
-        </div>
-      )}
+        {/* Loading */}
+        {loading && (
+          <div className="text-center py-16 text-dark-200">
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-400 mb-4"></div>
+            <p className="text-lg">Cargando compras...</p>
+          </div>
+        )}
 
-      {/* Loading */}
-      {loading && (
-        <div className="text-center py-8 text-gray-600">
-          Cargando compras...
-        </div>
-      )}
+        {/* Tabla */}
+        {!loading && purchases.length === 0 && (
+          <div className="text-center py-16 bg-dark-850 border-2 border-dark-700 rounded-2xl">
+            <p className="text-xl text-dark-300">No se encontraron compras</p>
+          </div>
+        )}
 
-      {/* Tabla */}
-      {!loading && purchases.length === 0 && (
-        <div className="text-center py-8 text-gray-600">
-          No se encontraron compras
-        </div>
-      )}
-
-      {!loading && purchases.length > 0 && (
-        <>
-          <div className="bg-white rounded-lg shadow overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      ID
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      Comprador
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      Evento
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      Tipo
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      Cantidad
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      Monto
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      Estado
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      Fecha
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      Acciones
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {purchases.map((purchase) => (
-                    <tr key={purchase.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        #{purchase.id}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">
-                          {purchase.buyer.name}
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          {purchase.buyer.email}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-gray-900">
-                          {purchase.event.title}
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          {new Date(purchase.event.date).toLocaleDateString('es-CL')}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {getEventTypeBadge(purchase.event.eventType)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {purchase.quantity} tickets
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {formatAmount(purchase.amount)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {getStatusBadge(purchase.status)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {formatDate(purchase.createdAt)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <a
-                          href={`/admin/compras/${purchase.id}`}
-                          className="text-blue-600 hover:text-blue-800 font-medium"
-                        >
-                          Ver Detalle
-                        </a>
-                      </td>
+        {!loading && purchases.length > 0 && (
+          <>
+            <div className="bg-dark-850 border-2 border-dark-700 rounded-2xl shadow-2xl overflow-hidden mb-8">
+              <div className="overflow-x-auto">
+                <table className="min-w-full">
+                  <thead className="bg-dark-800 border-b-2 border-dark-700">
+                    <tr>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-dark-100 uppercase">
+                        ID
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-dark-100 uppercase">
+                        Comprador
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-dark-100 uppercase">
+                        Evento
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-dark-100 uppercase">
+                        Tipo
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-dark-100 uppercase">
+                        Cantidad
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-dark-100 uppercase">
+                        Monto
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-dark-100 uppercase">
+                        Estado
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-dark-100 uppercase">
+                        Fecha
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-dark-100 uppercase">
+                        Acciones
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-dark-700">
+                    {purchases.map((purchase) => (
+                      <tr key={purchase.id} className="hover:bg-dark-800/50 transition-colors">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-bold font-mono text-cyan-400">
+                          #{purchase.id}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-white">
+                            {purchase.buyer.name}
+                          </div>
+                          <div className="text-sm text-dark-400">
+                            {purchase.buyer.email}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="text-sm text-white font-medium">
+                            {purchase.event.title}
+                          </div>
+                          <div className="text-sm text-dark-400">
+                            {new Date(purchase.event.date).toLocaleDateString('es-CL')}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {getEventTypeBadge(purchase.event.eventType)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-white font-bold">
+                          {purchase.quantity} tickets
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-green-400 text-lg">
+                          {formatAmount(purchase.amount)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {getStatusBadge(purchase.status)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-dark-300">
+                          {formatDate(purchase.createdAt)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          <a
+                            href={`/admin/compras/${purchase.id}`}
+                            className="text-cyan-400 hover:text-cyan-300 font-bold transition-colors"
+                          >
+                            Ver Detalle →
+                          </a>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
 
-          {/* Paginacion */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between mt-6">
-              <div className="text-sm text-gray-700">
-                Mostrando {(page - 1) * pageSize + 1} a {Math.min(page * pageSize, total)} de {total} compras
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => handlePageChange(page - 1)}
-                  disabled={page === 1}
-                  className="px-3 py-2 border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-                >
-                  Anterior
-                </button>
-                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                  let pageNum = i + 1;
-                  if (totalPages > 5) {
-                    if (page > 3) {
-                      pageNum = page - 2 + i;
+            {/* Paginacion */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between bg-dark-850 border-2 border-dark-700 rounded-2xl p-6">
+                <div className="text-sm text-dark-200">
+                  Mostrando <span className="font-bold text-white">{(page - 1) * pageSize + 1}</span> a <span className="font-bold text-white">{Math.min(page * pageSize, total)}</span> de <span className="font-bold text-white">{total}</span> compras
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handlePageChange(page - 1)}
+                    disabled={page === 1}
+                    className="px-4 py-2 border-2 border-dark-600 rounded-lg disabled:opacity-30 disabled:cursor-not-allowed hover:bg-dark-700 text-white font-medium transition-all"
+                  >
+                    ← Anterior
+                  </button>
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let pageNum = i + 1;
+                    if (totalPages > 5) {
+                      if (page > 3) {
+                        pageNum = page - 2 + i;
+                      }
+                      if (pageNum > totalPages) {
+                        pageNum = totalPages - 4 + i;
+                      }
                     }
-                    if (pageNum > totalPages) {
-                      pageNum = totalPages - 4 + i;
-                    }
-                  }
-                  return (
-                    <button
-                      key={pageNum}
-                      onClick={() => handlePageChange(pageNum)}
-                      className={`px-3 py-2 border rounded-md ${
-                        page === pageNum
-                          ? 'bg-blue-600 text-white border-blue-600'
-                          : 'border-gray-300 hover:bg-gray-50'
-                      }`}
-                    >
-                      {pageNum}
-                    </button>
-                  );
-                })}
-                <button
-                  onClick={() => handlePageChange(page + 1)}
-                  disabled={page === totalPages}
-                  className="px-3 py-2 border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-                >
-                  Siguiente
-                </button>
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => handlePageChange(pageNum)}
+                        className={`px-4 py-2 border-2 rounded-lg font-bold transition-all ${
+                          page === pageNum
+                            ? 'bg-cyan-500 text-white border-cyan-400 shadow-lg shadow-cyan-500/30'
+                            : 'border-dark-600 text-white hover:bg-dark-700'
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  })}
+                  <button
+                    onClick={() => handlePageChange(page + 1)}
+                    disabled={page === totalPages}
+                    className="px-4 py-2 border-2 border-dark-600 rounded-lg disabled:opacity-30 disabled:cursor-not-allowed hover:bg-dark-700 text-white font-medium transition-all"
+                  >
+                    Siguiente →
+                  </button>
+                </div>
               </div>
-            </div>
-          )}
-        </>
-      )}
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 }

@@ -102,10 +102,10 @@ export default function AdminEventDetail() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="min-h-screen bg-dark-900 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Cargando evento...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-400 mx-auto"></div>
+          <p className="mt-4 text-cyan-400 font-medium">Cargando evento...</p>
         </div>
       </div>
     );
@@ -113,13 +113,15 @@ export default function AdminEventDetail() {
 
   if (!event) {
     return (
-      <div className="p-6">
-        <div className="bg-red-50 border border-red-200 rounded p-4 text-red-800">
-          No se encontró el evento
+      <div className="min-h-screen bg-dark-900 p-6">
+        <div className="max-w-5xl mx-auto">
+          <div className="bg-red-500/20 border-2 border-red-400/50 rounded-2xl p-6 text-red-300">
+            No se encontró el evento
+          </div>
+          <Link to="/admin/eventos" className="mt-4 inline-block text-cyan-400 hover:text-cyan-300 font-bold transition-colors">
+            ← Volver a eventos
+          </Link>
         </div>
-        <Link to="/admin/eventos" className="mt-4 inline-block text-blue-600 hover:underline">
-          ← Volver a eventos
-        </Link>
       </div>
     );
   }
@@ -136,329 +138,330 @@ export default function AdminEventDetail() {
   };
 
   return (
-    <div className="p-6 max-w-5xl mx-auto">
-      {/* Toast */}
-      {toast && (
-        <div
-          className={`fixed top-4 right-4 z-50 px-4 py-3 rounded shadow-lg ${
-            toast.kind === "success"
-              ? "bg-green-100 text-green-800"
-              : toast.kind === "error"
-              ? "bg-red-100 text-red-800"
-              : "bg-blue-100 text-blue-800"
-          }`}
-        >
-          {toast.text}
-        </div>
-      )}
-
-      {/* Header */}
-      <div className="mb-6">
-        <Link to="/admin/eventos" className="text-blue-600 hover:underline mb-4 inline-block">
-          ← Volver a eventos
-        </Link>
-        <h1 className="text-3xl font-bold text-gray-900">{event.title}</h1>
-        <div className="mt-2 flex items-center gap-3">
-          <span
-            className={`px-3 py-1 rounded-full text-sm font-medium ${
-              event.status === "approved"
-                ? "bg-green-100 text-green-800"
-                : "bg-yellow-100 text-yellow-800"
+    <div className="min-h-screen bg-dark-900 p-6">
+      <div className="max-w-5xl mx-auto">
+        {/* Toast */}
+        {toast && (
+          <div
+            className={`fixed top-4 right-4 z-50 px-6 py-4 rounded-2xl shadow-2xl border-2 ${
+              toast.kind === "success"
+                ? "bg-green-500/20 text-green-300 border-green-400/50"
+                : toast.kind === "error"
+                ? "bg-red-500/20 text-red-300 border-red-400/50"
+                : "bg-blue-500/20 text-blue-300 border-blue-400/50"
             }`}
           >
-            {event.status === "approved" ? "Aprobado" : "Pendiente"}
-          </span>
-          {event.organizerDeletedOrInactive && (
-            <span className="px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
-              Organizador inactivo
+            {toast.text}
+          </div>
+        )}
+
+        {/* Header */}
+        <div className="mb-8">
+          <Link to="/admin/eventos" className="text-cyan-400 hover:text-cyan-300 font-bold mb-4 inline-block transition-colors">
+            ← Volver a eventos
+          </Link>
+          <h1 className="text-4xl font-bold text-white">{event.title}</h1>
+          <div className="mt-4 flex items-center gap-3">
+            <span
+              className={`px-3 py-1 rounded-full text-sm font-bold border-2 ${
+                event.status === "approved"
+                  ? "bg-green-500/20 text-green-300 border-green-400/50"
+                  : "bg-amber-500/20 text-amber-300 border-amber-400/50"
+              }`}
+            >
+              {event.status === "approved" ? "Aprobado" : "Pendiente"}
             </span>
-          )}
-        </div>
-      </div>
-
-      {/* Imagen de portada */}
-      {event.coverImageUrl && (
-        <div className="mb-6">
-          <img
-            src={event.coverImageUrl}
-            alt={event.title}
-            className="w-full h-96 object-cover rounded-lg shadow-md"
-          />
-        </div>
-      )}
-
-      {/* Información principal */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        <div className="bg-white border rounded-lg p-6 shadow-sm">
-          <h2 className="text-lg font-semibold mb-4">Detalles del evento</h2>
-          
-          <div className="space-y-3">
-            <div>
-              <span className="text-gray-600 text-sm">Fecha y hora</span>
-              <p className="font-medium">{formatDate(event.startAt)}</p>
-            </div>
-
-            <div>
-              <span className="text-gray-600 text-sm">Lugar</span>
-              <p className="font-medium">{event.venue}</p>
-            </div>
-
-            {event.city && (
-              <div>
-                <span className="text-gray-600 text-sm">Ciudad</span>
-                <p className="font-medium">{event.city}</p>
-              </div>
-            )}
-
-            {event.commune && (
-              <div>
-                <span className="text-gray-600 text-sm">Comuna</span>
-                <p className="font-medium">{event.commune}</p>
-              </div>
-            )}
-
-            <div>
-              <span className="text-gray-600 text-sm">Capacidad</span>
-              <p className="font-medium">{event.capacity} personas</p>
-            </div>
-
-            {event.price !== undefined && (
-              <div>
-                <span className="text-gray-600 text-sm">Precio</span>
-                <p className="font-medium">${event.price.toLocaleString("es-CL")}</p>
-              </div>
-            )}
-
-            {event.createdAt && (
-              <div>
-                <span className="text-gray-600 text-sm">Creado el</span>
-                <p className="font-medium">{formatDate(event.createdAt)}</p>
-              </div>
+            {event.organizerDeletedOrInactive && (
+              <span className="px-3 py-1 rounded-full text-sm font-bold bg-red-500/20 text-red-300 border-2 border-red-400/50">
+                Organizador inactivo
+              </span>
             )}
           </div>
         </div>
 
-        <div className="bg-white border rounded-lg p-6 shadow-sm">
-          <h2 className="text-lg font-semibold mb-4">Organizador</h2>
-          
-          {event.organizer ? (
-            <div className="space-y-3">
+        {/* Imagen de portada */}
+        {event.coverImageUrl && (
+          <div className="mb-8">
+            <img
+              src={event.coverImageUrl}
+              alt={event.title}
+              className="w-full h-96 object-cover rounded-2xl shadow-2xl border-2 border-dark-700"
+            />
+          </div>
+        )}
+
+        {/* Información principal */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <div className="bg-gradient-to-br from-cyan-500/10 to-cyan-600/10 border-2 border-cyan-400/50 rounded-2xl p-6 shadow-xl">
+            <h2 className="text-2xl font-bold mb-6 text-white">Detalles del evento</h2>
+            
+            <div className="space-y-4">
               <div>
-                <span className="text-gray-600 text-sm">Nombre</span>
-                <p className="font-medium">{event.organizer.name}</p>
+                <span className="text-dark-100 text-sm font-bold">Fecha y hora</span>
+                <p className="font-medium text-white">{formatDate(event.startAt)}</p>
               </div>
 
-              {event.organizer.legalName && (
+              <div>
+                <span className="text-dark-100 text-sm font-bold">Lugar</span>
+                <p className="font-medium text-white">{event.venue}</p>
+              </div>
+
+              {event.city && (
                 <div>
-                  <span className="text-gray-600 text-sm">Razón social</span>
-                  <p className="font-medium">{event.organizer.legalName}</p>
+                  <span className="text-dark-100 text-sm font-bold">Ciudad</span>
+                  <p className="font-medium text-white">{event.city}</p>
+                </div>
+              )}
+
+              {event.commune && (
+                <div>
+                  <span className="text-dark-100 text-sm font-bold">Comuna</span>
+                  <p className="font-medium text-white">{event.commune}</p>
                 </div>
               )}
 
               <div>
-                <span className="text-gray-600 text-sm">Email</span>
-                <p className="font-medium">{event.organizer.email}</p>
+                <span className="text-dark-100 text-sm font-bold">Capacidad</span>
+                <p className="font-medium text-white">{event.capacity} personas</p>
               </div>
 
-              {event.organizer.rut && (
+              {event.price !== undefined && (
                 <div>
-                  <span className="text-gray-600 text-sm">RUT</span>
-                  <p className="font-medium">{event.organizer.rut}</p>
+                  <span className="text-dark-100 text-sm font-bold">Precio</span>
+                  <p className="font-medium text-green-400 text-lg">${event.price.toLocaleString("es-CL")}</p>
                 </div>
               )}
 
-              {event.organizer.phone && (
+              {event.createdAt && (
                 <div>
-                  <span className="text-gray-600 text-sm">Teléfono</span>
-                  <p className="font-medium">{event.organizer.phone}</p>
+                  <span className="text-dark-100 text-sm font-bold">Creado el</span>
+                  <p className="font-medium text-dark-300">{formatDate(event.createdAt)}</p>
                 </div>
               )}
+            </div>
+          </div>
 
-              <div>
-                <span className="text-gray-600 text-sm">ID</span>
-                <p className="font-medium">#{event.organizer.id}</p>
+          <div className="bg-gradient-to-br from-purple-500/10 to-purple-600/10 border-2 border-purple-400/50 rounded-2xl p-6 shadow-xl">
+            <h2 className="text-2xl font-bold mb-6 text-white">Organizador</h2>
+            
+            {event.organizer ? (
+              <div className="space-y-4">
+                <div>
+                  <span className="text-dark-100 text-sm font-bold">Nombre</span>
+                  <p className="font-medium text-white">{event.organizer.name}</p>
+                </div>
+
+                {event.organizer.legalName && (
+                  <div>
+                    <span className="text-dark-100 text-sm font-bold">Razón social</span>
+                    <p className="font-medium text-white">{event.organizer.legalName}</p>
+                  </div>
+                )}
+
+                <div>
+                  <span className="text-dark-100 text-sm font-bold">Email</span>
+                  <p className="font-medium text-white">{event.organizer.email}</p>
+                </div>
+
+                {event.organizer.rut && (
+                  <div>
+                    <span className="text-dark-100 text-sm font-bold">RUT</span>
+                    <p className="font-medium text-white">{event.organizer.rut}</p>
+                  </div>
+                )}
+
+                {event.organizer.phone && (
+                  <div>
+                    <span className="text-dark-100 text-sm font-bold">Teléfono</span>
+                    <p className="font-medium text-white">{event.organizer.phone}</p>
+                  </div>
+                )}
+
+                <div>
+                  <span className="text-dark-100 text-sm font-bold">ID</span>
+                  <p className="font-medium text-white">#{event.organizer.id}</p>
+                </div>
+
+                <div>
+                  <span className="text-dark-100 text-sm font-bold">Estado</span>
+                  <p className="font-medium">
+                    {event.organizer.isActive ? (
+                      <span className="text-green-400 font-bold">Activo</span>
+                    ) : (
+                      <span className="text-red-400 font-bold">Inactivo</span>
+                    )}
+                  </p>
+                </div>
+
+                <Link
+                  to={`/admin/usuarios/${event.organizer.id}`}
+                  className="inline-block mt-2 text-cyan-400 hover:text-cyan-300 text-sm font-bold transition-colors"
+                >
+                  Ver perfil del organizador →
+                </Link>
+              </div>
+            ) : (
+              <p className="text-dark-400">No hay información del organizador</p>
+            )}
+          </div>
+        </div>
+
+        {/* Descripción */}
+        {event.description && (
+          <div className="bg-dark-850 border-2 border-dark-700 rounded-2xl p-6 shadow-xl mb-8">
+            <h2 className="text-2xl font-bold mb-4 text-white">Descripción</h2>
+            <p className="text-dark-200 whitespace-pre-wrap">{event.description}</p>
+          </div>
+        )}
+
+        {/* Estadísticas de ventas */}
+        {event.stats && (
+          <div className="bg-dark-850 border-2 border-dark-700 rounded-2xl p-6 shadow-xl mb-8">
+            <h2 className="text-2xl font-bold mb-6 text-white">Estadísticas de ventas</h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="bg-gradient-to-br from-blue-500/10 to-blue-600/10 border-2 border-blue-400/50 p-6 rounded-2xl">
+                <p className="text-sm text-dark-100 mb-2 font-bold">Entradas vendidas</p>
+                <p className="text-3xl font-bold text-blue-400">{event.stats.ticketsSold}</p>
+                <p className="text-xs text-dark-400 mt-2">de {event.capacity} capacidad</p>
               </div>
 
-              <div>
-                <span className="text-gray-600 text-sm">Estado</span>
-                <p className="font-medium">
-                  {event.organizer.isActive ? (
-                    <span className="text-green-600">Activo</span>
-                  ) : (
-                    <span className="text-red-600">Inactivo</span>
-                  )}
+              <div className="bg-gradient-to-br from-green-500/10 to-green-600/10 border-2 border-green-400/50 p-6 rounded-2xl">
+                <p className="text-sm text-dark-100 mb-2 font-bold">Entradas disponibles</p>
+                <p className="text-3xl font-bold text-green-400">{event.stats.availableTickets}</p>
+                <p className="text-xs text-dark-400 mt-2">libres para vender</p>
+              </div>
+
+              <div className="bg-gradient-to-br from-amber-500/10 to-amber-600/10 border-2 border-amber-400/50 p-6 rounded-2xl">
+                <p className="text-sm text-dark-100 mb-2 font-bold">Ingresos totales</p>
+                <p className="text-3xl font-bold text-amber-400">
+                  ${event.stats.totalRevenue.toLocaleString("es-CL")}
                 </p>
+                <p className="text-xs text-dark-400 mt-2">ventas confirmadas</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Información bancaria del evento (legacy) */}
+        {event.eventBankingInfo && (
+          <div className="bg-dark-850 border-2 border-dark-700 rounded-2xl p-6 shadow-xl mb-8">
+            <h2 className="text-2xl font-bold mb-6 text-white">Información bancaria (legacy del evento)</h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <span className="text-dark-100 text-sm font-bold">Banco</span>
+                <p className="font-medium text-white">{event.eventBankingInfo.bankName}</p>
               </div>
 
-              <Link
-                to={`/admin/usuarios/${event.organizer.id}`}
-                className="inline-block mt-2 text-blue-600 hover:underline text-sm"
+              <div>
+                <span className="text-dark-100 text-sm font-bold">Tipo de cuenta</span>
+                <p className="font-medium text-white">{event.eventBankingInfo.accountType}</p>
+              </div>
+
+              <div>
+                <span className="text-dark-100 text-sm font-bold">Número de cuenta</span>
+                <p className="font-medium text-white">{event.eventBankingInfo.accountNumber}</p>
+              </div>
+
+              <div>
+                <span className="text-dark-100 text-sm font-bold">Titular</span>
+                <p className="font-medium text-white">{event.eventBankingInfo.holderName}</p>
+              </div>
+
+              <div>
+                <span className="text-dark-100 text-sm font-bold">RUT del titular</span>
+                <p className="font-medium text-white">{event.eventBankingInfo.holderRut}</p>
+              </div>
+            </div>
+
+            <div className="mt-6 p-4 bg-amber-500/20 border-2 border-amber-400/50 rounded-xl text-sm text-amber-300">
+              Esta información bancaria es específica de este evento (sistema legacy). 
+              Para configuración bancaria actual del organizador, ver su perfil.
+            </div>
+          </div>
+        )}
+
+        {/* Acciones */}
+        <div className="bg-dark-850 border-2 border-dark-700 rounded-2xl p-6 shadow-xl">
+          <h2 className="text-2xl font-bold mb-6 text-white">Acciones</h2>
+          <div className="flex gap-3 flex-wrap">
+            {event.status === "pending" ? (
+              <button
+                onClick={() => handleStatusChange("approved")}
+                disabled={actionLoading || event.organizerDeletedOrInactive}
+                className="px-6 py-3 bg-green-500/20 text-green-300 border-2 border-green-400/50 rounded-xl hover:bg-green-500/30 disabled:opacity-30 disabled:cursor-not-allowed font-bold transition-all shadow-lg shadow-green-500/20"
               >
-                Ver perfil del organizador →
-              </Link>
-            </div>
-          ) : (
-            <p className="text-gray-500">No hay información del organizador</p>
-          )}
-        </div>
-      </div>
-
-      {/* Descripción */}
-      {event.description && (
-        <div className="bg-white border rounded-lg p-6 shadow-sm mb-6">
-          <h2 className="text-lg font-semibold mb-3">Descripción</h2>
-          <p className="text-gray-700 whitespace-pre-wrap">{event.description}</p>
-        </div>
-      )}
-
-      {/* Estadísticas de ventas */}
-      {event.stats && (
-        <div className="bg-white border rounded-lg p-6 shadow-sm mb-6">
-          <h2 className="text-lg font-semibold mb-4">Estadísticas de ventas</h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <p className="text-sm text-gray-600 mb-1">Entradas vendidas</p>
-              <p className="text-2xl font-bold text-blue-600">{event.stats.ticketsSold}</p>
-              <p className="text-xs text-gray-500 mt-1">de {event.capacity} capacidad</p>
-            </div>
-
-            <div className="bg-green-50 p-4 rounded-lg">
-              <p className="text-sm text-gray-600 mb-1">Entradas disponibles</p>
-              <p className="text-2xl font-bold text-green-600">{event.stats.availableTickets}</p>
-              <p className="text-xs text-gray-500 mt-1">libres para vender</p>
-            </div>
-
-            <div className="bg-yellow-50 p-4 rounded-lg">
-              <p className="text-sm text-gray-600 mb-1">Ingresos totales</p>
-              <p className="text-2xl font-bold text-yellow-600">
-                ${event.stats.totalRevenue.toLocaleString("es-CL")}
-              </p>
-              <p className="text-xs text-gray-500 mt-1">ventas confirmadas</p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Información bancaria del evento (legacy) */}
-      {event.eventBankingInfo && (
-        <div className="bg-white border rounded-lg p-6 shadow-sm mb-6">
-          <h2 className="text-lg font-semibold mb-4">🏦 Información bancaria (legacy del evento)</h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <span className="text-gray-600 text-sm">Banco</span>
-              <p className="font-medium">{event.eventBankingInfo.bankName}</p>
-            </div>
-
-            <div>
-              <span className="text-gray-600 text-sm">Tipo de cuenta</span>
-              <p className="font-medium">{event.eventBankingInfo.accountType}</p>
-            </div>
-
-            <div>
-              <span className="text-gray-600 text-sm">Número de cuenta</span>
-              <p className="font-medium">{event.eventBankingInfo.accountNumber}</p>
-            </div>
-
-            <div>
-              <span className="text-gray-600 text-sm">Titular</span>
-              <p className="font-medium">{event.eventBankingInfo.holderName}</p>
-            </div>
-
-            <div>
-              <span className="text-gray-600 text-sm">RUT del titular</span>
-              <p className="font-medium">{event.eventBankingInfo.holderRut}</p>
-            </div>
-          </div>
-
-          <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-800">
-            Esta información bancaria es específica de este evento (sistema legacy). 
-            Para configuración bancaria actual del organizador, ver su perfil.
-          </div>
-        </div>
-      )}
-
-      {/* Acciones */}
-      <div className="bg-white border rounded-lg p-6 shadow-sm">
-        <h2 className="text-lg font-semibold mb-4">Acciones</h2>
-        <div className="flex gap-3 flex-wrap">
-          {event.status === "pending" ? (
+                {actionLoading ? "Procesando..." : "Aprobar evento"}
+              </button>
+            ) : (
+              <button
+                onClick={() => handleStatusChange("pending")}
+                disabled={actionLoading}
+                className="px-6 py-3 bg-amber-500/20 text-amber-300 border-2 border-amber-400/50 rounded-xl hover:bg-amber-500/30 disabled:opacity-30 font-bold transition-all shadow-lg shadow-amber-500/20"
+              >
+                {actionLoading ? "Procesando..." : "Marcar como pendiente"}
+              </button>
+            )}
+            
             <button
-              onClick={() => handleStatusChange("approved")}
-              disabled={actionLoading || event.organizerDeletedOrInactive}
-              className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {actionLoading ? "Procesando..." : "Aprobar evento"}
-            </button>
-          ) : (
-            <button
-              onClick={() => handleStatusChange("pending")}
+              onClick={() => setShowDeleteModal(true)}
               disabled={actionLoading}
-              className="px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700 disabled:opacity-50"
+              className="px-6 py-3 bg-red-500/20 text-red-300 border-2 border-red-400/50 rounded-xl hover:bg-red-500/30 disabled:opacity-30 disabled:cursor-not-allowed font-bold transition-all shadow-lg shadow-red-500/20"
             >
-              {actionLoading ? "Procesando..." : "Marcar como pendiente"}
+              Eliminar evento
             </button>
-          )}
+            
+            {event.organizerDeletedOrInactive && (
+              <p className="text-sm text-red-300 flex items-center w-full mt-2 font-medium">
+                El organizador está inactivo o eliminado
+              </p>
+            )}
+          </div>
           
-          {/* Botón de eliminación */}
-          <button
-            onClick={() => setShowDeleteModal(true)}
-            disabled={actionLoading}
-            className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            🗑️ Eliminar evento
-          </button>
-          
-          {event.organizerDeletedOrInactive && (
-            <p className="text-sm text-red-600 flex items-center w-full mt-2">
-              ⚠️ El organizador está inactivo o eliminado
-            </p>
-          )}
-        </div>
-        
-        <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded text-sm text-blue-800">
-          <strong>Nota:</strong> Solo se pueden eliminar eventos sin reservas ni tickets asociados. 
-          Esta función es útil para limpiar eventos antiguos del sistema LEGACY.
-        </div>
-      </div>
-
-      {/* Modal de confirmación de eliminación */}
-      {showDeleteModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-            <h3 className="text-xl font-bold text-gray-900 mb-4">
-              ⚠️ Confirmar eliminación
-            </h3>
-            
-            <p className="text-gray-700 mb-6">
-              ¿Estás seguro de que quieres eliminar el evento <strong>"{event.title}"</strong>?
-            </p>
-            
-            <div className="bg-yellow-50 border border-yellow-200 rounded p-3 mb-6 text-sm text-yellow-800">
-              <strong>Advertencia:</strong> Esta acción no se puede deshacer. El evento solo se eliminará 
-              si no tiene reservas ni tickets asociados.
-            </div>
-            
-            <div className="flex gap-3 justify-end">
-              <button
-                onClick={() => setShowDeleteModal(false)}
-                disabled={actionLoading}
-                className="px-4 py-2 border border-gray-300 text-gray-700 rounded hover:bg-gray-50 disabled:opacity-50"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handleDeleteEvent}
-                disabled={actionLoading}
-                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50"
-              >
-                {actionLoading ? "Eliminando..." : "Eliminar evento"}
-              </button>
-            </div>
+          <div className="mt-6 p-4 bg-blue-500/20 border-2 border-blue-400/50 rounded-xl text-sm text-blue-300">
+            <strong>Nota:</strong> Solo se pueden eliminar eventos sin reservas ni tickets asociados. 
+            Esta función es útil para limpiar eventos antiguos del sistema LEGACY.
           </div>
         </div>
-      )}
+
+        {/* Modal de confirmación de eliminación */}
+        {showDeleteModal && (
+          <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4">
+            <div className="bg-dark-850 border-2 border-dark-700 rounded-2xl shadow-2xl max-w-md w-full p-8">
+              <h3 className="text-2xl font-bold text-white mb-6">
+                Confirmar eliminación
+              </h3>
+              
+              <p className="text-dark-200 mb-6">
+                ¿Estás seguro de que quieres eliminar el evento <strong className="text-white">"{event.title}"</strong>?
+              </p>
+              
+              <div className="bg-amber-500/20 border-2 border-amber-400/50 rounded-xl p-4 mb-6 text-sm text-amber-300">
+                <strong>Advertencia:</strong> Esta acción no se puede deshacer. El evento solo se eliminará 
+                si no tiene reservas ni tickets asociados.
+              </div>
+              
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={() => setShowDeleteModal(false)}
+                  disabled={actionLoading}
+                  className="px-6 py-3 border-2 border-dark-600 text-white rounded-xl hover:bg-dark-700 disabled:opacity-30 font-bold transition-all"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleDeleteEvent}
+                  disabled={actionLoading}
+                  className="px-6 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl disabled:opacity-30 font-bold transition-all shadow-lg shadow-red-500/30"
+                >
+                  {actionLoading ? "Eliminando..." : "Eliminar evento"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

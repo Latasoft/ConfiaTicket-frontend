@@ -33,21 +33,21 @@ function formatDateTime(iso?: string | null) {
 
 function SolicitudBadge({ s }: { s: AdminUser["latestOrganizerAppStatus"] }) {
   const map = {
-    APPROVED: { label: "ACEPTADO", cls: "bg-green-100 text-green-800" },
-    PENDING:  { label: "PENDIENTE", cls: "bg-yellow-100 text-yellow-900" },
-    REJECTED: { label: "RECHAZADO", cls: "bg-red-100 text-red-800" },
-    NULL:     { label: "—",        cls: "bg-gray-100 text-gray-700" },
+    APPROVED: { label: "ACEPTADO", cls: "bg-green-500/20 text-green-300 border-2 border-green-400/50" },
+    PENDING:  { label: "PENDIENTE", cls: "bg-amber-500/20 text-amber-300 border-2 border-amber-400/50" },
+    REJECTED: { label: "RECHAZADO", cls: "bg-red-500/20 text-red-300 border-2 border-red-400/50" },
+    NULL:     { label: "—",        cls: "bg-gray-500/20 text-gray-400 border-2 border-gray-400/50" },
   } as const;
   const key = (s ?? "NULL") as keyof typeof map;
   const { label, cls } = map[key];
-  return <span className={`text-xs px-2 py-1 rounded ${cls}`}>{label}</span>;
+  return <span className={`text-xs px-3 py-1 rounded-full font-bold ${cls}`}>{label}</span>;
 }
 
 function ActiveBadge({ u }: { u: AdminUser }) {
   if (u.deletedAt) {
     return (
       <span
-        className="text-xs px-2 py-1 rounded bg-red-100 text-red-800"
+        className="text-xs px-3 py-1 rounded-full font-bold bg-red-500/20 text-red-300 border-2 border-red-400/50"
         title={`Eliminado el ${formatDateTime(u.deletedAt)}`}
       >
         Eliminado
@@ -55,9 +55,9 @@ function ActiveBadge({ u }: { u: AdminUser }) {
     );
   }
   return u.isActive ? (
-    <span className="text-xs px-2 py-1 rounded bg-green-100 text-green-800">Activo</span>
+    <span className="text-xs px-3 py-1 rounded-full font-bold bg-green-500/20 text-green-300 border-2 border-green-400/50">Activo</span>
   ) : (
-    <span className="text-xs px-2 py-1 rounded bg-gray-200 text-gray-700">Inactivo</span>
+    <span className="text-xs px-3 py-1 rounded-full font-bold bg-gray-500/20 text-gray-400 border-2 border-gray-400/50">Inactivo</span>
   );
 }
 
@@ -178,220 +178,227 @@ export default function AdminUsers() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto p-4">
-      <div className="flex items-center justify-between mb-2">
-        <h1 className="text-2xl font-bold">Usuarios — Superadmin</h1>
-      </div>
+    <div className="min-h-screen bg-dark-900 p-6">
+      <div className="max-w-7xl mx-auto">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-4xl font-bold text-white">Usuarios</h1>
+        </div>
 
-      {/* Atajos */}
-      <div className="flex gap-4 text-sm mb-4">
-        <NavLink to="/admin/eventos" className="underline hover:text-blue-600">
-          Eventos
-        </NavLink>
-        <NavLink to="/admin/usuarios" className="underline hover:text-blue-600">
-          Usuarios
-        </NavLink>
-        <NavLink
-          to="/admin/solicitudes-organizador"
-          className="underline hover:text-blue-600"
-        >
-          Solicitudes de organizador
-        </NavLink>
-      </div>
+        {/* Atajos */}
+        <div className="flex gap-4 text-sm mb-6">
+          <NavLink to="/admin/eventos" className="text-cyan-400 hover:text-cyan-300 font-bold transition-colors">
+            Eventos
+          </NavLink>
+          <NavLink to="/admin/usuarios" className="text-cyan-400 hover:text-cyan-300 font-bold transition-colors">
+            Usuarios
+          </NavLink>
+          <NavLink
+            to="/admin/solicitudes-organizador"
+            className="text-cyan-400 hover:text-cyan-300 font-bold transition-colors"
+          >
+            Solicitudes de organizador
+          </NavLink>
+        </div>
 
-      {/* Filtros */}
-      <div className="grid md:grid-cols-4 gap-2 mb-4">
-        <input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          className="border rounded px-3 py-2"
-          placeholder="Buscar por nombre/email…"
-        />
-        <select
-          value={role}
-          onChange={(e) => setRole(e.target.value as any)}
-          className="border rounded px-3 py-2"
-        >
-          <option value="">Todos los roles</option>
-          <option value="superadmin">Superadmin</option>
-          <option value="organizer">Organizer</option>
-          <option value="buyer">Buyer</option>
-        </select>
-        <select
-          value={canSell}
-          onChange={(e) => setCanSell(e.target.value as any)}
-          className="border rounded px-3 py-2"
-        >
-          <option value="">Puede vender?</option>
-          <option value="true">Sí</option>
-          <option value="false">No</option>
-        </select>
-        <button
-          onClick={() => {
-            setQ("");
-            setRole("");
-            setCanSell("");
-          }}
-          className="border rounded px-3 py-2 hover:bg-black/5"
-        >
-          Limpiar
-        </button>
-      </div>
+        {/* Filtros */}
+        <div className="bg-dark-850 border-2 border-dark-700 rounded-2xl p-6 mb-8 shadow-xl">
+          <div className="grid md:grid-cols-4 gap-4">
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              className="bg-dark-800 border-2 border-dark-600 rounded-xl px-4 py-3 text-white placeholder-dark-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50 transition-all"
+              placeholder="Buscar por nombre/email…"
+            />
+            <select
+              value={role}
+              onChange={(e) => setRole(e.target.value as any)}
+              className="bg-dark-800 border-2 border-dark-600 rounded-xl px-4 py-3 text-white focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50 transition-all"
+            >
+              <option value="">Todos los roles</option>
+              <option value="superadmin">Superadmin</option>
+              <option value="organizer">Organizer</option>
+              <option value="buyer">Buyer</option>
+            </select>
+            <select
+              value={canSell}
+              onChange={(e) => setCanSell(e.target.value as any)}
+              className="bg-dark-800 border-2 border-dark-600 rounded-xl px-4 py-3 text-white focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50 transition-all"
+            >
+              <option value="">Puede vender?</option>
+              <option value="true">Sí</option>
+              <option value="false">No</option>
+            </select>
+            <button
+              onClick={() => {
+                setQ("");
+                setRole("");
+                setCanSell("");
+              }}
+              className="bg-purple-500 hover:bg-purple-600 text-white font-bold px-4 py-3 rounded-xl transition-all hover:scale-105 shadow-lg shadow-purple-500/30"
+            >
+              Limpiar
+            </button>
+          </div>
+        </div>
 
-      {/* Tabla */}
-      <div className="border rounded overflow-x-auto">
-        <table className="min-w-full text-sm">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="text-left p-3">Nombre</th>
-              <th className="text-left p-3">Email</th>
-              <th className="text-left p-3">Creado</th>
-              <th className="text-left p-3">Rol</th>
-              <th className="text-left p-3">Solicitud</th>
-              <th className="text-left p-3">Acción Solicitud</th>
-              <th className="text-left p-3">Estado</th>
-              <th className="text-left p-3">Puede vender</th>
-              <th className="text-right p-3">Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr>
-                <td className="p-6 text-center" colSpan={9}>
-                  Cargando…
-                </td>
-              </tr>
-            ) : rows.length === 0 ? (
-              <tr>
-                <td className="p-6 text-center" colSpan={9}>
-                  Sin resultados.
-                </td>
-              </tr>
-            ) : (
-              rows.map((u) => {
-                const isOrganizer = u.role === "organizer";
-                const deleted = Boolean(u.deletedAt);
-
-                return (
-                  <tr key={u.id} className={`border-t ${deleted ? "opacity-60" : ""}`}>
-                    <td className="p-3">
-                      <Link 
-                        to={`/admin/usuarios/${u.id}`}
-                        className="text-blue-600 hover:text-blue-800 hover:underline font-medium"
-                      >
-                        {u.name}
-                      </Link>
-                    </td>
-                    <td className="p-3">{u.email}</td>
-                    <td className="p-3">{formatDateTime(u.createdAt)}</td>
-                    <td className="p-3">{u.role}</td>
-
-                    <td className="p-3">
-                      <SolicitudBadge s={u.latestOrganizerAppStatus} />
-                    </td>
-
-                    {/* Nueva columna: Acción Solicitud */}
-                    <td className="p-3">
-                      {u.latestOrganizerAppStatus === "PENDING" && u.applicationId ? (
-                        <div className="flex gap-1">
-                          <button
-                            onClick={() => approveApplication(u.applicationId!, u.name)}
-                            className="px-2 py-1 rounded text-xs bg-green-600 text-white hover:bg-green-700"
-                            title="Aprobar solicitud"
-                          >
-                            ✓ Aprobar
-                          </button>
-                          <button
-                            onClick={() => rejectApplication(u.applicationId!, u.name)}
-                            className="px-2 py-1 rounded text-xs bg-red-600 text-white hover:bg-red-700"
-                            title="Rechazar solicitud"
-                          >
-                            ✗ Rechazar
-                          </button>
-                        </div>
-                      ) : (
-                        <span className="text-gray-400 text-xs">—</span>
-                      )}
-                    </td>
-
-                    <td className="p-3">
-                      <ActiveBadge u={u} />
-                    </td>
-
-                    <td className="p-3">{computeCanSell(u) ? "Sí" : "No"}</td>
-
-                    <td className="p-3 text-right">
-                      {/* Venta */}
-                      <button
-                        onClick={() => isOrganizer && !deleted && toggleCanSell(u)}
-                        disabled={!isOrganizer || deleted}
-                        className="px-2 py-1 mr-4 rounded border disabled:opacity-40 hover:bg-black/5"
-                        title={
-                          isOrganizer
-                            ? deleted
-                              ? "Cuenta eliminada"
-                              : ""
-                            : "Requiere rol organizer"
-                        }
-                      >
-                        {u.canSell ? "Deshabilitar venta" : "Habilitar venta"}
-                      </button>
-
-                      {/* Activar / Desactivar */}
-                      {!deleted && u.isActive ? (
-                        <button
-                          onClick={() => deactivate(u)}
-                          className="px-2 py-1 mr-2 rounded border hover:bg-black/5"
-                        >
-                          Desactivar
-                        </button>
-                      ) : !deleted ? (
-                        <button
-                          onClick={() => activate(u)}
-                          className="px-2 py-1 mr-2 rounded border hover:bg-black/5"
-                        >
-                          Activar
-                        </button>
-                      ) : null}
-
-                      {/* Soft-delete */}
-                      {!deleted && (
-                        <button
-                          onClick={() => softDelete(u)}
-                          className="px-2 py-1 rounded border hover:bg-red-50"
-                        >
-                          Eliminar
-                        </button>
-                      )}
+        {/* Tabla */}
+        <div className="bg-dark-850 border-2 border-dark-700 rounded-2xl shadow-2xl overflow-hidden mb-8">
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead className="bg-dark-800 border-b-2 border-dark-700">
+                <tr>
+                  <th className="text-left px-6 py-4 text-xs font-bold text-dark-100 uppercase">Nombre</th>
+                  <th className="text-left px-6 py-4 text-xs font-bold text-dark-100 uppercase">Email</th>
+                  <th className="text-left px-6 py-4 text-xs font-bold text-dark-100 uppercase">Creado</th>
+                  <th className="text-left px-6 py-4 text-xs font-bold text-dark-100 uppercase">Rol</th>
+                  <th className="text-left px-6 py-4 text-xs font-bold text-dark-100 uppercase">Solicitud</th>
+                  <th className="text-left px-6 py-4 text-xs font-bold text-dark-100 uppercase">Acción Solicitud</th>
+                  <th className="text-left px-6 py-4 text-xs font-bold text-dark-100 uppercase">Estado</th>
+                  <th className="text-left px-6 py-4 text-xs font-bold text-dark-100 uppercase">Puede vender</th>
+                  <th className="text-right px-6 py-4 text-xs font-bold text-dark-100 uppercase">Acciones</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-dark-700">
+                {loading ? (
+                  <tr>
+                    <td className="p-12 text-center text-cyan-400" colSpan={9}>
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-400 mx-auto mb-4"></div>
+                      Cargando…
                     </td>
                   </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
-      </div>
+                ) : rows.length === 0 ? (
+                  <tr>
+                    <td className="p-12 text-center text-dark-300" colSpan={9}>
+                      Sin resultados.
+                    </td>
+                  </tr>
+                ) : (
+                  rows.map((u) => {
+                    const isOrganizer = u.role === "organizer";
+                    const deleted = Boolean(u.deletedAt);
 
-      {/* Paginación */}
-      <div className="flex items-center justify-between mt-4">
-        <p className="text-sm text-gray-600">
-          Página {page} de {totalPages} — {total} usuario(s)
-        </p>
-        <div className="flex gap-2">
-          <button
-            disabled={page <= 1 || loading}
-            onClick={() => load(page - 1)}
-            className="px-3 py-2 border rounded disabled:opacity-50 hover:bg-black/5"
-          >
-            Anterior
-          </button>
-          <button
-            disabled={page >= totalPages || loading}
-            onClick={() => load(page + 1)}
-            className="px-3 py-2 border rounded disabled:opacity-50 hover:bg-black/5"
-          >
-            Siguiente
-          </button>
+                    return (
+                      <tr key={u.id} className={`hover:bg-dark-800/50 transition-colors ${deleted ? "opacity-60" : ""}`}>
+                        <td className="px-6 py-4">
+                          <Link 
+                            to={`/admin/usuarios/${u.id}`}
+                            className="text-cyan-400 hover:text-cyan-300 font-bold transition-colors"
+                          >
+                            {u.name}
+                          </Link>
+                        </td>
+                        <td className="px-6 py-4 text-dark-300">{u.email}</td>
+                        <td className="px-6 py-4 text-dark-300">{formatDateTime(u.createdAt)}</td>
+                        <td className="px-6 py-4 text-white font-medium">{u.role}</td>
+
+                        <td className="px-6 py-4">
+                          <SolicitudBadge s={u.latestOrganizerAppStatus} />
+                        </td>
+
+                        {/* Nueva columna: Acción Solicitud */}
+                        <td className="px-6 py-4">
+                          {u.latestOrganizerAppStatus === "PENDING" && u.applicationId ? (
+                            <div className="flex gap-1">
+                              <button
+                                onClick={() => approveApplication(u.applicationId!, u.name)}
+                                className="px-3 py-1.5 rounded-lg text-xs bg-green-500/20 text-green-300 border-2 border-green-400/50 hover:bg-green-500/30 font-bold transition-all"
+                                title="Aprobar solicitud"
+                              >
+                                Aprobar
+                              </button>
+                              <button
+                                onClick={() => rejectApplication(u.applicationId!, u.name)}
+                                className="px-3 py-1.5 rounded-lg text-xs bg-red-500/20 text-red-300 border-2 border-red-400/50 hover:bg-red-500/30 font-bold transition-all"
+                                title="Rechazar solicitud"
+                              >
+                                Rechazar
+                              </button>
+                            </div>
+                          ) : (
+                            <span className="text-dark-400 text-xs">—</span>
+                          )}
+                        </td>
+
+                        <td className="px-6 py-4">
+                          <ActiveBadge u={u} />
+                        </td>
+
+                        <td className="px-6 py-4 text-white font-bold">{computeCanSell(u) ? "Sí" : "No"}</td>
+
+                        <td className="px-6 py-4 text-right">
+                          {/* Venta */}
+                          <button
+                            onClick={() => isOrganizer && !deleted && toggleCanSell(u)}
+                            disabled={!isOrganizer || deleted}
+                            className="px-3 py-2 mr-2 rounded-lg border-2 border-cyan-400/50 bg-cyan-500/20 text-cyan-300 disabled:opacity-30 hover:bg-cyan-500/30 transition-all font-bold"
+                            title={
+                              isOrganizer
+                                ? deleted
+                                  ? "Cuenta eliminada"
+                                  : ""
+                                : "Requiere rol organizer"
+                            }
+                          >
+                            {u.canSell ? "Deshabilitar venta" : "Habilitar venta"}
+                          </button>
+
+                          {/* Activar / Desactivar */}
+                          {!deleted && u.isActive ? (
+                            <button
+                              onClick={() => deactivate(u)}
+                              className="px-3 py-2 mr-2 rounded-lg border-2 border-amber-400/50 bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 transition-all font-bold"
+                            >
+                              Desactivar
+                            </button>
+                          ) : !deleted ? (
+                            <button
+                              onClick={() => activate(u)}
+                              className="px-3 py-2 mr-2 rounded-lg border-2 border-green-400/50 bg-green-500/20 text-green-300 hover:bg-green-500/30 transition-all font-bold"
+                            >
+                              Activar
+                            </button>
+                          ) : null}
+
+                          {/* Soft-delete */}
+                          {!deleted && (
+                            <button
+                              onClick={() => softDelete(u)}
+                              className="px-3 py-2 rounded-lg border-2 border-red-400/50 bg-red-500/20 text-red-300 hover:bg-red-500/30 transition-all font-bold"
+                            >
+                              Eliminar
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Paginación */}
+        <div className="flex items-center justify-between bg-dark-850 border-2 border-dark-700 rounded-2xl p-6 shadow-xl">
+          <p className="text-sm text-dark-200">
+            Página <span className="font-bold text-white">{page}</span> de <span className="font-bold text-white">{totalPages}</span> — <span className="font-bold text-white">{total}</span> usuario(s)
+          </p>
+          <div className="flex gap-2">
+            <button
+              disabled={page <= 1 || loading}
+              onClick={() => load(page - 1)}
+              className="px-4 py-2 border-2 border-dark-600 rounded-lg disabled:opacity-30 hover:bg-dark-700 text-white font-medium transition-all"
+            >
+              ← Anterior
+            </button>
+            <button
+              disabled={page >= totalPages || loading}
+              onClick={() => load(page + 1)}
+              className="px-4 py-2 border-2 border-dark-600 rounded-lg disabled:opacity-30 hover:bg-dark-700 text-white font-medium transition-all"
+            >
+              Siguiente →
+            </button>
+          </div>
         </div>
       </div>
     </div>

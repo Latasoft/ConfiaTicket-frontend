@@ -80,16 +80,16 @@ function StatusPill({ s }: { s: string }) {
   const U = String(s || "").toUpperCase();
   const color =
     U === "PAID"
-      ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+      ? "bg-green-500/20 text-green-300 border-green-400/50"
       : U === "PENDING"
-      ? "bg-amber-50 text-amber-800 border-amber-200"
+      ? "bg-amber-500/20 text-amber-300 border-amber-400/50"
       : U === "IN_TRANSIT" || U === "SCHEDULED"
-      ? "bg-blue-50 text-blue-700 border-blue-200"
+      ? "bg-cyan-500/20 text-cyan-300 border-cyan-400/50"
       : U === "FAILED" || U === "CANCELED"
-      ? "bg-rose-50 text-rose-700 border-rose-200"
-      : "bg-gray-50 text-gray-700 border-gray-200";
+      ? "bg-red-500/20 text-red-300 border-red-400/50"
+      : "bg-dark-700 text-dark-200 border-dark-600";
   return (
-    <span className={`px-2 py-0.5 text-xs rounded-full border ${color}`}>
+    <span className={`px-3 py-1 text-xs rounded-full border font-medium ${color}`}>
       {statusLabelEs(U)}
     </span>
   );
@@ -253,303 +253,312 @@ export default function AdminPayouts() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-6">
-      <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">Pagos a organizadores (Admin)</h1>
-          <p className="text-sm text-gray-600">
-            Revisa y gestiona los pagos generados a los organizadores.
-          </p>
+    <div className="min-h-screen bg-dark-900 px-4 md:px-8 py-6">
+      <div className="max-w-7xl mx-auto">
+        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h1 className="text-4xl font-bold text-white mb-2">
+              Pagos a organizadores
+            </h1>
+            <p className="text-dark-200 text-lg">
+              Revisa y gestiona los pagos generados a los organizadores.
+            </p>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+            <div className="flex items-center gap-2 bg-dark-850 border border-dark-700 rounded-lg px-3 py-2">
+              <label className="text-xs text-dark-300 whitespace-nowrap">Límite de lote</label>
+              <input
+                value={runLimit}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  if (/^\d*$/.test(v)) setRunLimit(v);
+                }}
+                placeholder="p. ej. 50"
+                className="px-2 py-1 bg-dark-800 border border-dark-600 rounded-md w-24 text-white placeholder-dark-500 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50 transition-all"
+                inputMode="numeric"
+              />
+            </div>
+            <button
+              onClick={fetchList}
+              disabled={loading || runLoading}
+              className="rounded-xl border-2 border-cyan-500/50 px-4 py-2.5 text-sm font-medium text-cyan-300 hover:bg-cyan-500/10 disabled:opacity-50 transition-all"
+            >
+              {loading ? "Actualizando…" : "Refrescar"}
+            </button>
+            <button
+              onClick={runPayoutsNow}
+              disabled={loading || runLoading}
+              className="rounded-xl bg-purple-500 px-4 py-2.5 text-sm font-bold text-white hover:bg-purple-600 disabled:opacity-50 shadow-lg shadow-purple-500/30 transition-all transform hover:scale-105"
+            >
+              {runLoading ? "Ejecutando…" : "⚡ Ejecutar pagos ahora"}
+            </button>
+          </div>
         </div>
-        <div className="flex gap-2 items-center">
-          <div className="hidden sm:flex items-center gap-2">
-            <label className="text-xs text-gray-600">Límite de lote</label>
+
+        {/* Filtros */}
+        <form
+          onSubmit={onSubmitFilters}
+          className="mb-6 bg-dark-850 border-2 border-dark-700 rounded-2xl p-6 grid grid-cols-1 md:grid-cols-5 gap-4"
+        >
+          <div className="flex flex-col">
+            <label className="text-xs text-dark-300 mb-2 font-medium">Buscar</label>
             <input
-              value={runLimit}
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="orden, evento, ID, email…"
+              className="px-4 py-2.5 bg-dark-800 border-2 border-dark-600 rounded-lg text-white placeholder-dark-500 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50 transition-all"
+            />
+          </div>
+
+          <div className="flex flex-col">
+            <label className="text-xs text-dark-300 mb-2 font-medium">Estado</label>
+            <select
+              value={status}
+              onChange={(e) => setStatus(e.target.value as any)}
+              className="px-4 py-2.5 bg-dark-800 border-2 border-dark-600 rounded-lg text-white focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50 transition-all"
+            >
+              {STATUS_OPTIONS.map((opt) => (
+                <option key={opt || "ALL"} value={opt} className="bg-dark-800">
+                  {opt ? statusLabelEs(opt) : "Todos"}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex flex-col">
+            <label className="text-xs text-dark-300 mb-2 font-medium">ID organizador</label>
+            <input
+              value={organizerId}
               onChange={(e) => {
                 const v = e.target.value;
-                if (/^\d*$/.test(v)) setRunLimit(v);
+                if (/^\d*$/.test(v)) setOrganizerId(v);
               }}
-              placeholder="p. ej. 50"
-              className="px-2 py-1 border rounded-md w-24"
+              placeholder="ID organizador"
+              className="px-4 py-2.5 bg-dark-800 border-2 border-dark-600 rounded-lg text-white placeholder-dark-500 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50 transition-all"
               inputMode="numeric"
             />
           </div>
-          <button
-            onClick={fetchList}
-            disabled={loading || runLoading}
-            className="rounded-md border px-3 py-2 text-sm hover:bg-gray-50 disabled:opacity-50"
-          >
-            {loading ? "Actualizando…" : "Refrescar"}
-          </button>
-          <button
-            onClick={runPayoutsNow}
-            disabled={loading || runLoading}
-            className="rounded-md bg-indigo-600 px-3 py-2 text-sm text-white hover:bg-indigo-700 disabled:opacity-50"
-          >
-            {runLoading ? "Ejecutando…" : "Ejecutar pagos ahora (simulación)"}
-          </button>
-        </div>
-      </div>
 
-      {/* Filtros */}
-      <form
-        onSubmit={onSubmitFilters}
-        className="mb-4 grid grid-cols-1 md:grid-cols-5 gap-3"
-      >
-        <div className="flex flex-col">
-          <label className="text-xs text-gray-600 mb-1">Buscar</label>
-          <input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="orden de compra, evento, ID de payout, email…"
-            className="px-3 py-2 border rounded-md"
-          />
-        </div>
+          <div className="flex flex-col">
+            <label className="text-xs text-dark-300 mb-2 font-medium">ID evento</label>
+            <input
+              value={eventId}
+              onChange={(e) => {
+                const v = e.target.value;
+                if (/^\d*$/.test(v)) setEventId(v);
+              }}
+              placeholder="ID evento"
+              className="px-4 py-2.5 bg-dark-800 border-2 border-dark-600 rounded-lg text-white placeholder-dark-500 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50 transition-all"
+              inputMode="numeric"
+            />
+          </div>
 
-        <div className="flex flex-col">
-          <label className="text-xs text-gray-600 mb-1">Estado</label>
-          <select
-            value={status}
-            onChange={(e) => setStatus(e.target.value as any)}
-            className="px-3 py-2 border rounded-md"
-          >
-            {STATUS_OPTIONS.map((opt) => (
-              <option key={opt || "ALL"} value={opt}>
-                {opt ? statusLabelEs(opt) : "Todos"}
-              </option>
-            ))}
-          </select>
-        </div>
+          <div className="flex items-end">
+            <button
+              type="submit"
+              className="px-4 py-2.5 bg-cyan-500 hover:bg-cyan-600 rounded-lg text-white font-bold w-full shadow-lg shadow-cyan-500/30 transition-all transform hover:scale-105 disabled:opacity-50"
+              disabled={loading}
+            >
+              {loading ? "Buscando…" : "🔍 Aplicar"}
+            </button>
+          </div>
+        </form>
 
-        <div className="flex flex-col">
-          <label className="text-xs text-gray-600 mb-1">ID usuario organizador</label>
-          <input
-            value={organizerId}
-            onChange={(e) => {
-              const v = e.target.value;
-              if (/^\d*$/.test(v)) setOrganizerId(v);
-            }}
-            placeholder="ID usuario organizador"
-            className="px-3 py-2 border rounded-md"
-            inputMode="numeric"
-          />
-        </div>
-
-        <div className="flex flex-col">
-          <label className="text-xs text-gray-600 mb-1">ID evento</label>
-          <input
-            value={eventId}
-            onChange={(e) => {
-              const v = e.target.value;
-              if (/^\d*$/.test(v)) setEventId(v);
-            }}
-            placeholder="ID evento"
-            className="px-3 py-2 border rounded-md"
-            inputMode="numeric"
-          />
-        </div>
-
-        <div className="flex items-end">
-          <button
-            type="submit"
-            className="px-3 py-2 border rounded-md hover:bg-black/5 w-full"
-            disabled={loading}
-          >
-            {loading ? "Buscando…" : "Aplicar"}
-          </button>
-        </div>
-      </form>
-
-      {/* Tabla */}
-      <div className="rounded-xl border bg-white shadow-sm overflow-hidden">
-        <div className="min-w-full overflow-x-auto">
-          <table className="min-w-full text-sm">
-            <thead className="bg-gray-50 text-gray-700">
-              <tr>
-                <th className="px-3 py-2 text-left font-medium">#</th>
-                <th className="px-3 py-2 text-left font-medium">Fecha</th>
-                <th className="px-3 py-2 text-left font-medium">Evento</th>
-                <th className="px-3 py-2 text-left font-medium">Organizador</th>
-                <th className="px-3 py-2 text-left font-medium">Orden</th>
-                <th className="px-3 py-2 text-left font-medium">Monto</th>
-                <th className="px-3 py-2 text-left font-medium">Estado</th>
-                <th className="px-3 py-2 text-left font-medium">Pagado el</th>
-                <th className="px-3 py-2 text-right font-medium">Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
+        {/* Tabla */}
+        <div className="rounded-2xl border-2 border-dark-700 bg-dark-850 shadow-2xl overflow-hidden">
+          <div className="min-w-full overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead className="bg-dark-800 text-dark-100 border-b-2 border-dark-700">
                 <tr>
-                  <td colSpan={9} className="px-3 py-6 text-center text-gray-500">
-                    Cargando…
-                  </td>
+                  <th className="px-4 py-3 text-left font-bold">#</th>
+                  <th className="px-4 py-3 text-left font-bold">Fecha</th>
+                  <th className="px-4 py-3 text-left font-bold">Evento</th>
+                  <th className="px-4 py-3 text-left font-bold">Organizador</th>
+                  <th className="px-4 py-3 text-left font-bold">Orden</th>
+                  <th className="px-4 py-3 text-left font-bold">Monto</th>
+                  <th className="px-4 py-3 text-left font-bold">Estado</th>
+                  <th className="px-4 py-3 text-left font-bold">Pagado el</th>
+                  <th className="px-4 py-3 text-right font-bold">Acciones</th>
                 </tr>
-              ) : rows.length === 0 ? (
-                <tr>
-                  <td colSpan={9} className="px-3 py-10 text-center text-gray-600">
-                    No hay resultados para los filtros seleccionados.
-                  </td>
-                </tr>
-              ) : (
-                rows.map((p) => {
-                  const d = primaryDate(p);
-                  return (
-                    <tr key={p.id} className="border-t">
-                      <td className="px-3 py-2 align-top">#{p.id}</td>
-                      <td className="px-3 py-2 align-top">
-                        <div className="font-medium">{fmtDate(d.value)}</div>
-                        {d.label && (
-                          <div className="text-xs text-gray-500">{d.label}</div>
-                        )}
-                      </td>
-                      <td className="px-3 py-2 align-top">
-                        <div className="font-medium">
-                          {p.event?.title ?? "—"}
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          {p.event?.date ? fmtDate(p.event.date) : ""}
-                        </div>
-                      </td>
-                      <td className="px-3 py-2 align-top">
-                        <div className="text-sm">
-                          {p.organizer?.name ?? "—"}
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          {p.organizer?.email ?? ""}
-                        </div>
-                      </td>
-                      <td className="px-3 py-2 align-top">
-                        <div className="text-xs text-gray-600">
-                          {p.paymentId ? spanishizeTechText(`payment #${p.paymentId}`) : "—"}
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          {p.buyOrder ? spanishizeTechText(`buyOrder: ${p.buyOrder}`) : ""}
-                        </div>
-                        <div className="text-xs text-gray-400">
-                          {p.pspPayoutId ? (
-                            <button
-                              type="button"
-                              onClick={() =>
-                                navigator.clipboard?.writeText(p.pspPayoutId!)
-                              }
-                              title="Copiar ID del PSP"
-                              className="underline hover:no-underline"
-                            >
-                              {spanishizeTechText(`psp: ${p.pspPayoutId}`)}
-                            </button>
-                          ) : (
-                            ""
+              </thead>
+              <tbody>
+                {loading ? (
+                  <tr>
+                    <td colSpan={9} className="px-4 py-12 text-center text-dark-300">
+                      <div className="flex justify-center items-center gap-3">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-400"></div>
+                        <span className="text-lg">Cargando…</span>
+                      </div>
+                    </td>
+                  </tr>
+                ) : rows.length === 0 ? (
+                  <tr>
+                    <td colSpan={9} className="px-4 py-16 text-center text-dark-300">
+                      <div className="text-lg">No hay resultados para los filtros seleccionados.</div>
+                    </td>
+                  </tr>
+                ) : (
+                  rows.map((p) => {
+                    const d = primaryDate(p);
+                    return (
+                      <tr key={p.id} className="border-t border-dark-700 hover:bg-dark-800/50 transition-colors">
+                        <td className="px-4 py-3 align-top">
+                          <span className="text-cyan-400 font-mono font-bold">#{p.id}</span>
+                        </td>
+                        <td className="px-4 py-3 align-top">
+                          <div className="font-medium text-white">{fmtDate(d.value)}</div>
+                          {d.label && (
+                            <div className="text-xs text-dark-400">{d.label}</div>
                           )}
-                        </div>
-                      </td>
-                      <td className="px-3 py-2 align-top">
-                        <div className="font-medium">
-                          {fmtMoneyCLP(p.amount, p.currency || "CLP")}
-                        </div>
-                        {typeof p.netAmount === "number" && (
-                          <div className="text-xs text-gray-500">
-                            Neto: {fmtMoneyCLP(p.netAmount, p.currency || "CLP")}
+                        </td>
+                        <td className="px-4 py-3 align-top">
+                          <div className="font-medium text-white">
+                            {p.event?.title ?? "—"}
                           </div>
-                        )}
-                      </td>
-                      <td className="px-3 py-2 align-top">
-                        <StatusPill s={String(p.status)} />
-                        <div className="text-[11px] text-gray-500 mt-0.5">
-                          {p.status === "SCHEDULED" && p.scheduledFor
-                            ? `Programado: ${fmtDate(p.scheduledFor)}`
-                            : p.status === "IN_TRANSIT"
-                            ? "En tránsito"
-                            : p.status === "FAILED" && p.failureMessage
-                            ? `Error: ${p.failureMessage}`
-                            : ""}
-                        </div>
-                      </td>
-                      <td className="px-3 py-2 align-top">{fmtDate(p.paidAt)}</td>
-                      <td className="px-3 py-2 align-top text-right">
-                        <div className="inline-flex gap-2">
-                          <button
-                            onClick={() => markAsPaid(p.id)}
-                            disabled={
-                              rowLoading === p.id ||
-                              p.status === "PAID" ||
-                              p.status === "FAILED" ||
-                              p.status === "CANCELED"
-                            }
-                            className="rounded-md bg-emerald-600 px-3 py-1.5 text-white hover:bg-emerald-700 disabled:opacity-50"
-                          >
-                            {rowLoading === p.id ? "Marcando…" : "Marcar pagado"}
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
+                          <div className="text-xs text-dark-400">
+                            {p.event?.date ? fmtDate(p.event.date) : ""}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 align-top">
+                          <div className="text-sm text-white">
+                            {p.organizer?.name ?? "—"}
+                          </div>
+                          <div className="text-xs text-dark-400">
+                            {p.organizer?.email ?? ""}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 align-top">
+                          <div className="text-xs text-dark-300 font-mono">
+                            {p.paymentId ? spanishizeTechText(`payment #${p.paymentId}`) : "—"}
+                          </div>
+                          <div className="text-xs text-dark-400 font-mono">
+                            {p.buyOrder ? spanishizeTechText(`buyOrder: ${p.buyOrder}`) : ""}
+                          </div>
+                          <div className="text-xs text-dark-500 font-mono">
+                            {p.pspPayoutId ? (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  navigator.clipboard?.writeText(p.pspPayoutId!)
+                                }
+                                title="Copiar ID del PSP"
+                                className="underline hover:text-cyan-400 transition-colors"
+                              >
+                                {spanishizeTechText(`psp: ${p.pspPayoutId}`)}
+                              </button>
+                            ) : (
+                              ""
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 align-top">
+                          <div className="font-bold text-green-400 text-lg">
+                            {fmtMoneyCLP(p.amount, p.currency || "CLP")}
+                          </div>
+                          {typeof p.netAmount === "number" && (
+                            <div className="text-xs text-dark-400">
+                              Neto: {fmtMoneyCLP(p.netAmount, p.currency || "CLP")}
+                            </div>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 align-top">
+                          <StatusPill s={String(p.status)} />
+                          <div className="text-[11px] text-dark-400 mt-1">
+                            {p.status === "SCHEDULED" && p.scheduledFor
+                              ? `Programado: ${fmtDate(p.scheduledFor)}`
+                              : p.status === "IN_TRANSIT"
+                              ? "En tránsito"
+                              : p.status === "FAILED" && p.failureMessage
+                              ? `Error: ${p.failureMessage}`
+                              : ""}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 align-top text-white">{fmtDate(p.paidAt)}</td>
+                        <td className="px-4 py-3 align-top text-right">
+                          <div className="inline-flex gap-2">
+                            <button
+                              onClick={() => markAsPaid(p.id)}
+                              disabled={
+                                rowLoading === p.id ||
+                                p.status === "PAID" ||
+                                p.status === "FAILED" ||
+                                p.status === "CANCELED"
+                              }
+                              className="rounded-lg bg-green-500 px-4 py-2 text-white font-medium hover:bg-green-600 disabled:opacity-30 disabled:cursor-not-allowed shadow-lg shadow-green-500/30 transition-all transform hover:scale-105 disabled:transform-none"
+                            >
+                              {rowLoading === p.id ? "Marcando…" : "Marcar pagado"}
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Footer: paginación */}
+          <div className="flex items-center justify-between border-t-2 border-dark-700 bg-dark-800 px-4 py-4 text-sm">
+            <div className="text-dark-200">
+              {total > 0 ? (
+                <>
+                  Mostrando{" "}
+                  <span className="font-bold text-white">
+                    {Math.min((page - 1) * pageSize + 1, total)}–{Math.min(page * pageSize, total)}
+                  </span>{" "}
+                  de <span className="font-bold text-white">{total}</span>
+                </>
+              ) : (
+                <>Sin resultados</>
               )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Footer: paginación */}
-        <div className="flex items-center justify-between border-t bg-white px-3 py-2 text-sm">
-          <div className="text-gray-600">
-            {total > 0 ? (
-              <>
-                Mostrando{" "}
-                <span className="font-medium">
-                  {Math.min((page - 1) * pageSize + 1, total)}–{Math.min(page * pageSize, total)}
-                </span>{" "}
-                de {total}
-              </>
-            ) : (
-              <>Sin resultados</>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="hidden sm:flex items-center gap-2 mr-2">
-              <label className="text-xs text-gray-600">Por página</label>
-              <select
-                value={pageSize}
-                onChange={(e) => {
-                  setPageSize(parseInt(e.target.value, 10) || 20);
-                  setPage(1);
-                }}
-                className="px-2 py-1 border rounded-md"
-              >
-                {[10, 20, 50, 100].map((n) => (
-                  <option key={n} value={n}>
-                    {n}
-                  </option>
-                ))}
-              </select>
             </div>
-            <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page <= 1 || loading}
-              className="rounded-md border px-3 py-1.5 hover:bg-gray-50 disabled:opacity-50"
-            >
-              Anterior
-            </button>
-            <span className="text-gray-700">
-              Página {page} {total ? `de ${totalPages}` : ""}
-            </span>
-            <button
-              onClick={() => setPage((p) => (total ? Math.min(totalPages, p + 1) : p + 1))}
-              disabled={(total ? page >= totalPages : false) || loading}
-              className="rounded-md border px-3 py-1.5 hover:bg-gray-50 disabled:opacity-50"
-            >
-              Siguiente
-            </button>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                <label className="text-xs text-dark-300">Por página</label>
+                <select
+                  value={pageSize}
+                  onChange={(e) => {
+                    setPageSize(parseInt(e.target.value, 10) || 20);
+                    setPage(1);
+                  }}
+                  className="px-3 py-1.5 bg-dark-700 border-2 border-dark-600 rounded-lg text-white text-sm focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50 transition-all"
+                >
+                  {[10, 20, 50, 100].map((n) => (
+                    <option key={n} value={n} className="bg-dark-800">
+                      {n}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <button
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page <= 1 || loading}
+                className="rounded-lg border-2 border-dark-600 px-4 py-2 hover:bg-dark-700 disabled:opacity-30 disabled:cursor-not-allowed text-white font-medium transition-all"
+              >
+                ← Anterior
+              </button>
+              <span className="text-white font-medium">
+                Página <span className="text-cyan-400">{page}</span> {total ? `de ${totalPages}` : ""}
+              </span>
+              <button
+                onClick={() => setPage((p) => (total ? Math.min(totalPages, p + 1) : p + 1))}
+                disabled={(total ? page >= totalPages : false) || loading}
+                className="rounded-lg border-2 border-dark-600 px-4 py-2 hover:bg-dark-700 disabled:opacity-30 disabled:cursor-not-allowed text-white font-medium transition-all"
+              >
+                Siguiente →
+              </button>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Errores */}
-      {error && (
-        <div className="mt-3 rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-700">
-          {error}
-        </div>
-      )}
+        {/* Errores */}
+        {error && (
+          <div className="mt-4 rounded-xl bg-red-500/20 border-2 border-red-400/50 px-4 py-3 text-red-200 font-medium">
+            {error}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
