@@ -2,8 +2,11 @@
 import axios from "axios";
 
 // Base URL: usa VITE_API_URL si está definida; si no, cae a "/api"
-const rawBase = import.meta.env.VITE_API_URL || "/api";
-const baseURL = rawBase.replace(/\/+$/, "") + "/api"; // agrega /api al final
+const rawBase = import.meta.env.VITE_API_URL || "";
+// Si rawBase ya termina en /api, no agregamos nada más
+const baseURL = rawBase.endsWith("/api") 
+  ? rawBase.replace(/\/+$/, "") 
+  : rawBase.replace(/\/+$/, "") + "/api";
 
 const api = axios.create({
   baseURL,

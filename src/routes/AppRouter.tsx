@@ -5,11 +5,13 @@ import { createBrowserRouter } from "react-router-dom";
 import AppLayout from "@/layout/AppLayout";
 
 // Páginas públicas
-import Home from "@/pages/Home";
+import HomeModern from "@/pages/HomeModern"; // ← NUEVO diseño moderno
 import Eventos from "@/pages/Eventos";
 import EventoDetalle from "@/pages/EventoDetalle";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
+import About from "@/pages/About"; // ← NUEVO
+import Help from "@/pages/Help"; // ← NUEVO
 // Resultado Webpay
 import PaymentResult from "@/pages/PaymentResult";
 
@@ -71,11 +73,13 @@ export const router = createBrowserRouter([
     errorElement: <RouteError />,
     children: [
       // Públicas
-      { path: "/", element: <Home /> },
+      { path: "/", element: <HomeModern /> },
       { path: "/eventos", element: <Eventos /> },
       { path: "/eventos/:id", element: <EventoDetalle /> },
       { path: "/registro", element: <Register /> },
       { path: "/login", element: <Login /> },
+      { path: "/about", element: <About /> },
+      { path: "/help", element: <Help /> },
 
       // Resultado Webpay (ruta oficial)
       { path: "/pago/resultado", element: <PaymentResult /> },

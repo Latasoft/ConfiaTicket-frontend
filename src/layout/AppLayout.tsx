@@ -1,8 +1,8 @@
 // src/layout/AppLayout.tsx
 import { Outlet, useLocation, Link } from "react-router-dom";
-import Navbar from "@/components/Navbar";
+import NavbarModern from "@/components/NavbarModern"; // ← NUEVO navbar moderno
+import Footer from "@/components/Footer";
 import { useEffect, useRef, useState } from "react";
-import FAQChatbot from "@/components/FAQChatbot";
 import paymentsService from "@/services/paymentsService";
 
 function messageFromReason(reason?: string) {
@@ -92,35 +92,35 @@ export default function AppLayout() {
   }, [location.pathname]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-white">
-      <Navbar />
+    <div className="min-h-screen flex flex-col bg-dark-900">
+      <NavbarModern />
       <main className="flex-1">
         {/* Aviso para organizadores si pagos no están listos */}
         {payoutNotice && (
           <div className="mx-auto max-w-6xl px-4 pt-4">
-            <div className="rounded-md border border-sky-200 bg-sky-50 text-sky-900 p-3 flex flex-wrap items-center justify-between gap-3">
-              <div className="flex items-start gap-2">
-                <span aria-hidden>💳</span>
-                <div className="text-sm">
+            <div className="rounded-xl glass border border-neon-cyan/30 p-4 flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-start gap-3">
+                <span className="text-2xl" aria-hidden>💳</span>
+                <div className="text-sm text-dark-100">
                   {payoutNotice === "disabled" ? (
                     <>
-                      <strong className="font-medium">Importante:</strong>{" "}
-                      tus pagos están <span className="font-semibold">deshabilitados</span>. Configura tu{" "}
-                      <span className="font-semibold">cuenta de cobro</span> para que podamos
+                      <strong className="font-bold text-white">Importante:</strong>{" "}
+                      tus pagos están <span className="font-semibold text-neon-cyan">deshabilitados</span>. Configura tu{" "}
+                      <span className="font-semibold text-neon-cyan">cuenta de cobro</span> para que podamos
                       programar depósitos cuando el admin apruebe tus ventas.
                     </>
                   ) : (
                     <>
-                      <strong className="font-medium">Atención:</strong>{" "}
-                      tu <span className="font-semibold">cuenta de cobro</span> tiene datos{" "}
-                      <span className="font-semibold">incompletos</span>. Complétala para habilitar pagos y recibir transferencias.
+                      <strong className="font-bold text-white">Atención:</strong>{" "}
+                      tu <span className="font-semibold text-neon-cyan">cuenta de cobro</span> tiene datos{" "}
+                      <span className="font-semibold text-neon-cyan">incompletos</span>. Complétala para habilitar pagos y recibir transferencias.
                     </>
                   )}
                 </div>
               </div>
               <Link
                 to="/organizador/cuenta-cobro"
-                className="inline-flex items-center rounded-md bg-sky-600 px-3 py-2 text-white text-sm hover:bg-sky-700"
+                className="btn-primary shrink-0"
               >
                 Configurar ahora
               </Link>
@@ -131,15 +131,17 @@ export default function AppLayout() {
         <Outlet />
       </main>
 
+      <Footer />
+
       {/* Toast superior (logout / auth) */}
       {banner && (
-        <div className="fixed top-16 left-1/2 -translate-x-1/2 z-[60] px-4">
-          <div className="max-w-[680px] w-full rounded-md border shadow bg-amber-50 text-amber-900 p-3 flex items-start gap-3">
-            <span aria-hidden>⚠️</span>
-            <div className="flex-1">{banner}</div>
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[60] px-4 animate-slide-down">
+          <div className="max-w-[680px] w-full rounded-xl glass-light border border-neon-yellow/50 p-4 flex items-start gap-3 shadow-2xl">
+            <span className="text-2xl" aria-hidden>⚠️</span>
+            <div className="flex-1 text-white font-medium">{banner}</div>
             <button
               type="button"
-              className="px-2 text-amber-900/70 hover:text-amber-900"
+              className="px-2 text-white/70 hover:text-white text-xl"
               onClick={() => setBanner(null)}
               aria-label="Cerrar aviso"
               title="Cerrar"
@@ -149,9 +151,6 @@ export default function AppLayout() {
           </div>
         </div>
       )}
-
-      {/* Widget global de FAQ/Chat (flotante) */}
-      <FAQChatbot theme="indigo" />
     </div>
   );
 }

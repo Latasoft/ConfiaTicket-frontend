@@ -323,13 +323,16 @@ export default function Register() {
   }
 
   return (
-    <div className="max-w-md mx-auto p-6">
-      <h1 className="text-2xl font-semibold mb-4">Crear cuenta</h1>
+    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center py-12 px-4">
+      <div className="w-full max-w-md glass-light rounded-2xl p-8 border border-dark-700">
+        <h1 className="text-3xl font-bold mb-6 text-center bg-gradient-to-r from-neon-cyan to-neon-purple bg-clip-text text-transparent">
+          Crear cuenta
+        </h1>
 
       {msg && (
         <div
-          className={`mb-4 rounded-md p-3 ${
-            msg.type === "ok" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+          className={`mb-4 rounded-lg glass border p-3 ${
+            msg.type === "ok" ? "border-neon-green/50 text-white" : "border-red-500/50 text-white"
           }`}
         >
           {msg.text}
@@ -339,14 +342,14 @@ export default function Register() {
       <form onSubmit={onSubmit} className="space-y-4">
         {/* RUT */}
         <div>
-          <label className="block text-sm mb-1">RUT *</label>
+          <label className="block text-sm mb-1 text-dark-100">RUT *</label>
           <input
             name="rut"
             value={form.rut}
             onChange={onChange}
             onBlur={onRutBlur}
             onKeyDown={(e) => { if (e.key === " ") e.preventDefault(); }}
-            className={`w-full border rounded-md px-3 py-2 ${rutErr ? "border-red-400" : ""}`}
+            className={`input-modern w-full ${rutErr ? "border-red-400" : ""}`}
             placeholder="12345678-9"
             title="Ingresa 7 u 8 dígitos, guion y dígito verificador (0-9 o K)"
             pattern="[0-9Kk\-\.]*"
@@ -357,19 +360,19 @@ export default function Register() {
             aria-invalid={Boolean(rutErr)}
             required
           />
-          <p className="text-xs text-gray-600 mt-1">
+          <p className="text-xs text-dark-200 mt-1">
             Formato: 12345678-9 (DV puede ser 0-9 o K).
           </p>
           {rutErr && <p className="text-xs text-red-600 mt-1">{rutErr}</p>}
         </div>
 
         <div>
-          <label className="block text-sm mb-1">Nombre</label>
+          <label className="block text-sm mb-1 text-dark-100">Nombre</label>
           <input
             name="name"
             value={form.name}
             onChange={onChange}
-            className="w-full border rounded-md px-3 py-2"
+            className="input-modern w-full"
             placeholder="Tu nombre"
             autoComplete="name"
             maxLength={LIMITS.NAME}
@@ -378,13 +381,13 @@ export default function Register() {
         </div>
 
         <div>
-          <label className="block text-sm mb-1">Email</label>
+          <label className="block text-sm mb-1 text-dark-100">Email</label>
           <input
             name="email"
             type="email"
             value={form.email}
             onChange={onChange}
-            className="w-full border rounded-md px-3 py-2"
+            className="input-modern w-full"
             placeholder="tucorreo@ejemplo.com"
             autoComplete="email"
             autoCapitalize="off"
@@ -392,14 +395,14 @@ export default function Register() {
             maxLength={LIMITS.EMAIL}
             required
           />
-          <p className="text-xs text-gray-600 mt-1">
+          <p className="text-xs text-dark-200 mt-1">
             Podrás iniciar sesión con tu <strong>RUT</strong> o con tu <strong>email</strong>.
           </p>
         </div>
 
         {/* Fecha de nacimiento: Selects */}
         <div>
-          <label className="block text-sm mb-1">Fecha de nacimiento *</label>
+          <label className="block text-sm mb-1 text-dark-100">Fecha de nacimiento *</label>
           <div className="grid grid-cols-3 gap-2">
             {/* Año */}
             <select
@@ -416,7 +419,7 @@ export default function Register() {
                   return { ...s, y, d: d ? String(d).padStart(2, "0") : s.d };
                 });
               }}
-              className="border rounded-md px-2 py-2"
+              className="input-modern"
               required
             >
               <option value="">Año</option>
@@ -441,7 +444,7 @@ export default function Register() {
                   return { ...s, m, d: d ? String(d).padStart(2, "0") : s.d };
                 });
               }}
-              className="border rounded-md px-2 py-2"
+              className="input-modern"
               required
             >
               <option value="">Mes</option>
@@ -454,7 +457,7 @@ export default function Register() {
             <select
               value={dob.d}
               onChange={(e) => setDob((s) => ({ ...s, d: e.target.value }))}
-              className="border rounded-md px-2 py-2"
+              className="input-modern"
               required
             >
               <option value="">Día</option>
@@ -463,20 +466,20 @@ export default function Register() {
               ))}
             </select>
           </div>
-          <p className="text-xs text-gray-600 mt-1">
+          <p className="text-xs text-dark-200 mt-1">
             Debes tener al menos {MIN_AGE} años. Rango permitido: {MIN_DOB_STR} – {MAX_DOB_STR}.
             Los años recientes aparecen deshabilitados porque corresponden a menores de edad.
           </p>
         </div>
 
         <div>
-          <label className="block text-sm mb-1">Contraseña</label>
+          <label className="block text-sm mb-1 text-dark-100">Contraseña</label>
           <input
             name="password"
             type="password"
             value={form.password}
             onChange={onChange}
-            className="w-full border rounded-md px-3 py-2"
+            className="input-modern w-full"
             placeholder="Mínimo 8 caracteres"
             autoComplete="new-password"
             maxLength={LIMITS.PASSWORD}
@@ -492,13 +495,13 @@ export default function Register() {
             </div>
             <p className={`mt-1 text-sm ${scoreClass}`}>Fortaleza: {scoreLabel}</p>
 
-            <ul className="text-xs text-gray-600 list-disc pl-5 mt-1 space-y-1">
+            <ul className="text-xs text-dark-200 list-disc pl-5 mt-1 space-y-1">
               <li>Mínimo 8 caracteres.</li>
               <li>Incluye al menos 3 de: minúsculas, mayúsculas, números y símbolos.</li>
               <li>No incluyas tu nombre ni tu email.</li>
             </ul>
 
-            <ul className="text-xs text-gray-600 list-disc pl-5 mt-2 space-y-1">
+            <ul className="text-xs text-dark-200 list-disc pl-5 mt-2 space-y-1">
               {feedback.warning ? <li>{feedback.warning}</li> : null}
               {feedback.suggestions?.map((s, i) => (
                 <li key={i}>{s}</li>
@@ -508,13 +511,13 @@ export default function Register() {
         </div>
 
         <div>
-          <label className="block text-sm mb-1">Repetir contraseña</label>
+          <label className="block text-sm mb-1 text-dark-100">Repetir contraseña</label>
           <input
             name="confirm"
             type="password"
             value={form.confirm}
             onChange={onChange}
-            className="w-full border rounded-md px-3 py-2"
+            className="input-modern w-full"
             placeholder="Repite tu contraseña"
             autoComplete="new-password"
             maxLength={LIMITS.PASSWORD}
@@ -525,18 +528,19 @@ export default function Register() {
         <button
           type="submit"
           disabled={loading || Boolean(rutErr)}
-          className="w-full px-4 py-2 rounded-md bg-blue-600 text-white disabled:opacity-60"
+          className="btn-primary w-full disabled:opacity-60"
         >
           {loading ? "Creando..." : "Crear cuenta"}
         </button>
       </form>
 
-      <p className="text-sm text-gray-600 mt-4">
+      <p className="text-sm text-dark-200 mt-6 text-center">
         ¿Ya tienes cuenta?{" "}
-        <Link to="/login" className="text-blue-600 underline">
+        <Link to="/login" className="text-neon-cyan hover:text-neon-cyan/80 underline">
           Ingresar
         </Link>
       </p>
+      </div>
     </div>
   );
 }
