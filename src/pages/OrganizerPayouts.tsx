@@ -217,21 +217,21 @@ export default function OrganizerPayouts() {
         className="mb-4 flex flex-wrap items-end gap-3"
       >
         <div className="flex flex-col">
-          <label className="text-xs text-gray-600 mb-1">Buscar</label>
+          <label className="text-xs text-dark-300 mb-1">Buscar</label>
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Evento, buyOrder, ID…"
-            className="px-3 py-2 border rounded-md w-64"
+            className="input-modern w-64"
           />
         </div>
 
         <div className="flex flex-col">
-          <label className="text-xs text-gray-600 mb-1">Estado</label>
+          <label className="text-xs text-dark-300 mb-1">Estado</label>
           <select
             value={status}
             onChange={(e) => setStatus(e.target.value as any)}
-            className="px-3 py-2 border rounded-md"
+            className="input-modern"
           >
             {STATUS_OPTIONS.map((opt) => (
               <option key={opt || "ALL"} value={opt}>
@@ -242,14 +242,14 @@ export default function OrganizerPayouts() {
         </div>
 
         <div className="flex flex-col">
-          <label className="text-xs text-gray-600 mb-1">Por página</label>
+          <label className="text-xs text-dark-300 mb-1">Por página</label>
           <select
             value={pageSize}
             onChange={(e) => {
               setPageSize(parseInt(e.target.value, 10) || 10);
               setPage(1);
             }}
-            className="px-3 py-2 border rounded-md"
+            className="input-modern"
           >
             {[10, 20, 50].map((n) => (
               <option key={n} value={n}>
@@ -261,7 +261,7 @@ export default function OrganizerPayouts() {
 
         <button
           type="submit"
-          className="px-3 py-2 border rounded-md hover:bg-black/5"
+          className="btn-ghost px-3 py-2"
           disabled={loading}
         >
           {loading ? "Buscando…" : "Aplicar"}

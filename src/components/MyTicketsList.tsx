@@ -107,7 +107,10 @@ export default function MyTicketsList() {
   if (loading) {
     return (
       <div className="flex justify-center items-center py-20">
-        <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600"></div>
+        <div className="relative">
+          <div className="animate-spin rounded-full h-16 w-16 border-4 border-dark-700 border-t-neon-cyan"></div>
+          <div className="absolute inset-0 rounded-full bg-neon-cyan/10 blur-xl animate-pulse"></div>
+        </div>
       </div>
     );
   }
@@ -115,12 +118,12 @@ export default function MyTicketsList() {
   if (error) {
     return (
       <div className="max-w-2xl mx-auto mt-8">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-          <p className="text-red-800 font-medium mb-2">Error</p>
-          <p className="text-red-700">{error}</p>
+        <div className="glass-panel-error p-6 text-center rounded-lg border border-red-500/20">
+          <p className="text-red-400 font-medium mb-2">Error</p>
+          <p className="text-red-300">{error}</p>
           <button
             onClick={loadTickets}
-            className="mt-4 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition"
+            className="mt-4 btn-secondary px-4 py-2 rounded-lg transition"
           >
             Reintentar
           </button>
@@ -132,15 +135,15 @@ export default function MyTicketsList() {
   if (reservations.length === 0) {
     return (
       <div className="max-w-2xl mx-auto mt-8">
-        <div className="bg-gradient-to-br from-blue-50 to-purple-50 border-2 border-blue-200 rounded-xl p-12 text-center">
-          <svg className="w-24 h-24 mx-auto mb-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="glass-panel-accent p-12 text-center rounded-xl border border-neon-purple/30">
+          <svg className="w-24 h-24 mx-auto mb-4 text-neon-purple opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
           </svg>
-          <p className="text-2xl font-bold text-gray-800 mb-2">No tienes entradas aún</p>
-          <p className="text-gray-600 mb-6">Compra tu primera entrada y aparecerá aquí</p>
+          <p className="text-2xl font-bold text-dark-50 mb-2">No tienes entradas aún</p>
+          <p className="text-dark-400 mb-6">Compra tu primera entrada y aparecerá aquí</p>
           <a
             href="/eventos"
-            className="inline-block bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg transition font-semibold shadow-md hover:shadow-lg transform hover:scale-105"
+            className="inline-block btn-primary px-8 py-3 rounded-lg transition font-semibold shadow-md hover:shadow-glow-cyan transform hover:scale-105"
           >
             Explorar Eventos
           </a>
@@ -151,9 +154,11 @@ export default function MyTicketsList() {
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-6 text-white shadow-lg">
-        <h2 className="text-3xl font-bold mb-2">Mis Entradas</h2>
-        <p className="text-blue-100">
+      <div className="glass-panel-accent rounded-xl p-6 border border-neon-cyan/30 shadow-glow-cyan">
+        <h2 className="text-3xl font-bold text-transparent bg-gradient-to-r from-neon-cyan to-neon-purple bg-clip-text mb-2">
+          Mis Entradas
+        </h2>
+        <p className="text-dark-300">
           {reservations.length} {reservations.length === 1 ? 'compra realizada' : 'compras realizadas'}
         </p>
       </div>
@@ -167,33 +172,33 @@ export default function MyTicketsList() {
           return (
             <div
               key={reservation.id}
-              className="bg-white border-2 border-gray-200 rounded-xl overflow-hidden hover:shadow-lg transition-all duration-200"
+              className="glass-panel border border-dark-700 rounded-xl overflow-hidden hover:border-neon-purple/50 hover:shadow-glow-purple transition-all duration-200"
             >
               {/* Header de la reserva */}
               <div
-                className="p-6 bg-gradient-to-r from-gray-50 to-gray-100 cursor-pointer hover:from-gray-100 hover:to-gray-150 transition-colors"
+                className="p-6 bg-dark-850/50 cursor-pointer hover:bg-dark-800/80 transition-colors"
                 onClick={() => setExpandedReservation(isExpanded ? null : reservation.id)}
               >
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                   <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
+                    <div className="flex items-center gap-3 mb-2 flex-wrap">
                       <span
                         className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold ${
                           isOwnEvent
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-purple-100 text-purple-800'
+                            ? 'bg-neon-green/20 text-neon-green border border-neon-green/30'
+                            : 'bg-neon-purple/20 text-neon-purple border border-neon-purple/30'
                         }`}
                       >
                         {isOwnEvent ? 'EVENTO PROPIO' : 'REVENTA'}
                       </span>
-                      <span className="text-sm text-gray-500">Código: {reservation.code}</span>
+                      <span className="text-sm text-dark-500">Código: {reservation.code}</span>
                     </div>
 
-                                        <h3 className="font-bold text-xl text-gray-900 mb-2">
+                    <h3 className="font-bold text-xl text-dark-50 mb-2">
                       {reservation.event?.title || `Evento #${reservation.eventId}`}
                     </h3>
 
-                    <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
+                    <div className="flex flex-wrap items-center gap-4 text-sm text-dark-400">
                       {reservation.event?.date && (
                         <span className="flex items-center gap-1">
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -223,23 +228,23 @@ export default function MyTicketsList() {
 
                   <div className="flex items-center gap-4">
                     <div className="text-right">
-                      <div className="text-sm text-gray-500">Total</div>
-                      <div className="text-2xl font-bold text-gray-900">
+                      <div className="text-sm text-dark-500">Total</div>
+                      <div className="text-2xl font-bold text-neon-cyan">
                         ${new Intl.NumberFormat('es-CL').format(reservation.amount)}
                       </div>
                       {reservation.paidAt && (
-                        <div className="text-xs text-gray-500 mt-1">
+                        <div className="text-xs text-dark-500 mt-1">
                           Pagado: {new Date(reservation.paidAt).toLocaleDateString('es-CL')}
                         </div>
                       )}
                     </div>
 
                     <button
-                      className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-200 hover:bg-gray-300 transition-colors"
+                      className="flex items-center justify-center w-10 h-10 rounded-full glass-panel border border-dark-700 hover:border-neon-cyan/50 transition-all"
                       aria-label={isExpanded ? 'Contraer' : 'Expandir'}
                     >
                       <svg
-                        className={`w-5 h-5 text-gray-700 transition-transform ${
+                        className={`w-5 h-5 text-dark-400 transition-transform ${
                           isExpanded ? 'rotate-180' : ''
                         }`}
                         fill="none"
@@ -255,33 +260,33 @@ export default function MyTicketsList() {
 
               {/* Contenido expandible */}
               {isExpanded && (
-                <div className="p-6 border-t-2 border-gray-100 bg-white">
+                <div className="p-6 border-t border-dark-700 bg-dark-900/50">
                   {generatedTickets.length > 0 && (
                     // Mostrar tickets generados individuales
                     <div className="mb-6">
-                      <h4 className="font-bold text-lg text-gray-900 mb-4">
+                      <h4 className="font-bold text-lg text-dark-50 mb-4">
                         {isOwnEvent ? 'Entradas Individuales' : 'Tus Entradas de Reventa'}
                       </h4>
                       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                         {generatedTickets.map((ticket) => (
-                          <div key={ticket.id} className="border-2 border-gray-200 rounded-lg p-4 hover:border-blue-300 hover:shadow-md transition-all">
+                          <div key={ticket.id} className="glass-panel border border-dark-700 rounded-lg p-4 hover:border-neon-cyan/50 hover:shadow-glow-cyan transition-all">
                             <div className="flex justify-between items-start mb-3">
                               <div>
-                                <p className="font-semibold text-gray-900">Entrada #{ticket.ticketNumber}</p>
+                                <p className="font-semibold text-dark-50">Entrada #{ticket.ticketNumber}</p>
                                 {ticket.seatNumber && (
-                                  <p className="text-sm text-gray-600">Asiento: {ticket.seatNumber}</p>
+                                  <p className="text-sm text-dark-400">Asiento: {ticket.seatNumber}</p>
                                 )}
                               </div>
                               {ticket.scanned && (
-                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-neon-purple/20 text-neon-purple border border-neon-purple/30">
                                   ✓ Escaneado
                                 </span>
                               )}
                             </div>
 
                             {/* QR Code */}
-                            <div className="bg-gray-50 rounded-lg p-3 mb-3 text-center">
-                              <div className="bg-white p-2 inline-block rounded shadow-sm">
+                            <div className="bg-dark-850 rounded-lg p-3 mb-3 text-center border border-dark-700">
+                              <div className="bg-white p-2 inline-block rounded shadow-lg">
                                 <QRCodeSVG 
                                   value={ticket.qrCode} 
                                   size={120}
@@ -289,17 +294,17 @@ export default function MyTicketsList() {
                                   includeMargin={false}
                                 />
                               </div>
-                              <p className="text-xs text-gray-400 mt-2">ID: {ticket.qrCode.slice(0, 8)}...</p>
+                              <p className="text-xs text-dark-500 mt-2 font-mono">ID: {ticket.qrCode.slice(0, 8)}...</p>
                             </div>
 
                             <button
                               onClick={() => handleDownload(reservation, ticket.id)}
                               disabled={downloadingId === ticket.id}
-                              className="w-full py-2 px-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all hover:scale-105 transform disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm font-medium"
+                              className="w-full py-2 px-3 btn-primary rounded-lg transition-all hover:scale-105 transform disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm font-medium"
                             >
                               {downloadingId === ticket.id ? (
                                 <>
-                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-dark-800 border-t-white"></div>
                                   Descargando...
                                 </>
                               ) : (
@@ -319,31 +324,36 @@ export default function MyTicketsList() {
 
                   {!isOwnEvent && reservation.ticket && (
                     // Información del ticket original de reventa
-                    <div className="bg-purple-50 border-2 border-purple-200 rounded-lg p-6">
-                      <h4 className="font-bold text-lg text-purple-900 mb-4">Información del Ticket Original</h4>
+                    <div className="glass-panel-accent border border-neon-purple/30 rounded-lg p-6">
+                      <h4 className="font-bold text-lg text-neon-purple mb-4 flex items-center gap-2">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Información del Ticket Original
+                      </h4>
                       <div className="grid md:grid-cols-2 gap-4">
                         <div>
-                          <p className="text-sm text-gray-600 mb-1">Ubicación Original</p>
-                          <p className="font-semibold text-gray-900">
+                          <p className="text-sm text-dark-400 mb-1">Ubicación Original</p>
+                          <p className="font-semibold text-dark-50">
                             Fila {reservation.ticket.row} - Asiento {reservation.ticket.seat}
                           </p>
                           {reservation.ticket.zone && (
                             <>
-                              <p className="text-sm text-gray-600 mt-2 mb-1">Zona</p>
-                              <p className="font-semibold text-gray-900">{reservation.ticket.zone}</p>
+                              <p className="text-sm text-dark-400 mt-2 mb-1">Zona</p>
+                              <p className="font-semibold text-dark-50">{reservation.ticket.zone}</p>
                             </>
                           )}
                           {reservation.ticket.level && (
                             <>
-                              <p className="text-sm text-gray-600 mt-2 mb-1">Nivel</p>
-                              <p className="font-semibold text-gray-900">{reservation.ticket.level}</p>
+                              <p className="text-sm text-dark-400 mt-2 mb-1">Nivel</p>
+                              <p className="font-semibold text-dark-50">{reservation.ticket.level}</p>
                             </>
                           )}
                         </div>
                         <div className="flex items-center justify-center">
-                          <div className="text-center p-4 bg-white rounded-lg border border-purple-300">
-                            <p className="text-xs text-gray-600 mb-2">Código Original</p>
-                            <p className="font-mono text-sm font-bold text-purple-900">{reservation.ticket.ticketCode}</p>
+                          <div className="text-center p-4 glass-panel rounded-lg border border-neon-purple/30">
+                            <p className="text-xs text-dark-400 mb-2">Código Original</p>
+                            <p className="font-mono text-sm font-bold text-neon-purple">{reservation.ticket.ticketCode}</p>
                           </div>
                         </div>
                       </div>
@@ -351,23 +361,23 @@ export default function MyTicketsList() {
                   )}
 
                   {generatedTickets.length === 0 && !reservation.ticket && (
-                    <div className="text-center py-8 text-gray-500">
+                    <div className="text-center py-8 text-dark-500">
                       <p>No hay información de entradas disponible</p>
                     </div>
                   )}
 
                   {/* Botón de Crear Reclamo */}
-                  <div className="mt-6 pt-6 border-t-2 border-gray-100">
+                  <div className="mt-6 pt-6 border-t border-dark-700">
                     <button
                       onClick={() => handleOpenClaimModal(reservation)}
-                      className="w-full md:w-auto px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-all transform hover:scale-105 flex items-center justify-center gap-2 font-medium shadow-md hover:shadow-lg"
+                      className="w-full md:w-auto px-6 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-lg hover:from-orange-600 hover:to-red-600 transition-all transform hover:scale-105 flex items-center justify-center gap-2 font-medium shadow-md hover:shadow-glow-orange"
                     >
                       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                       </svg>
                       Crear Reclamo
                     </button>
-                    <p className="text-xs text-gray-500 mt-2 text-center md:text-left">
+                    <p className="text-xs text-dark-500 mt-2 text-center md:text-left">
                       ¿Tienes algún problema con tu compra? Crea un reclamo y te ayudaremos.
                     </p>
                   </div>

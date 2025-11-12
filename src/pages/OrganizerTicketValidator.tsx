@@ -262,8 +262,8 @@ export default function OrganizerTicketValidator() {
         </div>
 
         {/* Selector de evento */}
-        <div className="card-modern p-4 mb-6">
-          <label className="block text-sm font-medium text-white mb-2">
+        <div className="glass-panel border border-dark-700 p-4 mb-6 rounded-lg">
+          <label className="block text-sm font-medium text-dark-200 mb-2">
             Evento seleccionado
           </label>
           <select
@@ -284,34 +284,34 @@ export default function OrganizerTicketValidator() {
 
         {/* Estadísticas para eventos OWN */}
         {stats && selectedEvent?.eventType !== 'RESALE' && (
-          <div className="card-gradient-cyan p-6 mb-6">
-            <h2 className="text-xl font-bold text-white mb-4">Estadísticas del evento</h2>
+          <div className="glass-panel-accent border border-neon-cyan/30 p-6 mb-6 rounded-xl shadow-glow-cyan">
+            <h2 className="text-xl font-bold text-dark-50 mb-4">Estadísticas del evento</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="glass-light rounded-xl border border-dark-600 p-4 text-center">
+              <div className="glass-panel rounded-xl border border-dark-600 p-4 text-center">
                 <div className="text-2xl font-bold text-neon-cyan">{stats.capacity}</div>
                 <div className="text-sm text-dark-200">Capacidad</div>
               </div>
-              <div className="glass-light rounded-xl border border-dark-600 p-4 text-center">
+              <div className="glass-panel rounded-xl border border-dark-600 p-4 text-center">
                 <div className="text-2xl font-bold text-neon-green">{stats.totalTickets}</div>
                 <div className="text-sm text-dark-200">Vendidos</div>
               </div>
-              <div className="glass-light rounded-xl border border-dark-600 p-4 text-center">
+              <div className="glass-panel rounded-xl border border-dark-600 p-4 text-center">
                 <div className="text-2xl font-bold text-neon-purple">{stats.scannedTickets}</div>
                 <div className="text-sm text-dark-200">Validados</div>
               </div>
-              <div className="glass-light rounded-xl border border-dark-600 p-4 text-center">
-                <div className="text-2xl font-bold text-neon-orange">{stats.pendingTickets}</div>
+              <div className="glass-panel rounded-xl border border-dark-600 p-4 text-center">
+                <div className="text-2xl font-bold text-yellow-400">{stats.pendingTickets}</div>
                 <div className="text-sm text-dark-200">Pendientes</div>
               </div>
             </div>
             <div className="mt-4">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-white">Progreso de validación</span>
+                <span className="text-sm font-medium text-dark-50">Progreso de validación</span>
                 <span className="text-sm font-semibold text-neon-cyan">{stats.scanProgress}%</span>
               </div>
-              <div className="w-full bg-dark-700 rounded-full h-3">
+              <div className="w-full bg-dark-700 rounded-full h-3 overflow-hidden">
                 <div 
-                  className="bg-gradient-to-r from-neon-cyan to-neon-purple h-3 rounded-full transition-all duration-300"
+                  className="bg-gradient-to-r from-neon-cyan to-neon-purple h-3 rounded-full transition-all duration-300 shadow-glow-cyan"
                   style={{ width: `${stats.scanProgress}%` }}
                 ></div>
               </div>
@@ -321,67 +321,67 @@ export default function OrganizerTicketValidator() {
 
       {/* Dashboard de estadísticas para eventos RESALE */}
       {resaleStats && selectedEvent?.eventType === 'RESALE' && (
-        <div className="bg-gradient-to-br from-orange-50 to-amber-50 border-2 border-orange-200 rounded-lg p-6 mb-6">
+        <div className="glass-panel-warning border border-yellow-500/30 rounded-xl p-6 mb-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-gray-900">Dashboard de Reventa</h2>
-            <span className="px-3 py-1 bg-orange-100 text-orange-800 text-sm font-medium rounded-full">
+            <h2 className="text-xl font-bold text-dark-50">Dashboard de Reventa</h2>
+            <span className="px-3 py-1 glass-panel-accent border border-yellow-500/30 text-yellow-400 text-sm font-medium rounded-full">
               Evento de Reventa
             </span>
           </div>
           
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <div className="bg-white rounded-lg p-4 text-center">
-              <div className="text-2xl font-bold text-orange-600">{resaleStats.summary.totalTickets}</div>
-              <div className="text-sm text-gray-600">Total Tickets</div>
+            <div className="glass-panel border border-dark-700 rounded-lg p-4 text-center">
+              <div className="text-2xl font-bold text-yellow-400">{resaleStats.summary.totalTickets}</div>
+              <div className="text-sm text-dark-400">Total Tickets</div>
             </div>
-            <div className="bg-white rounded-lg p-4 text-center">
-              <div className="text-2xl font-bold text-green-600">{resaleStats.summary.soldTickets}</div>
-              <div className="text-sm text-gray-600">Vendidos</div>
+            <div className="glass-panel border border-dark-700 rounded-lg p-4 text-center">
+              <div className="text-2xl font-bold text-neon-green">{resaleStats.summary.soldTickets}</div>
+              <div className="text-sm text-dark-400">Vendidos</div>
             </div>
-            <div className="bg-white rounded-lg p-4 text-center">
-              <div className="text-2xl font-bold text-purple-600">{resaleStats.summary.scannedTickets}</div>
-              <div className="text-sm text-gray-600">Escaneados</div>
+            <div className="glass-panel border border-dark-700 rounded-lg p-4 text-center">
+              <div className="text-2xl font-bold text-neon-purple">{resaleStats.summary.scannedTickets}</div>
+              <div className="text-sm text-dark-400">Escaneados</div>
             </div>
-            <div className="bg-white rounded-lg p-4 text-center">
-              <div className="text-2xl font-bold text-blue-600">{resaleStats.summary.totalScans}</div>
-              <div className="text-sm text-gray-600">Total Escaneos</div>
+            <div className="glass-panel border border-dark-700 rounded-lg p-4 text-center">
+              <div className="text-2xl font-bold text-neon-cyan">{resaleStats.summary.totalScans}</div>
+              <div className="text-sm text-dark-400">Total Escaneos</div>
             </div>
           </div>
 
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
-            <p className="text-sm text-amber-800">
-              <strong>ℹNota:</strong> Los tickets de reventa se validan automáticamente cuando los compradores escanean el QR proxy. 
+          <div className="glass-panel-warning border border-yellow-500/30 rounded-lg p-4 mb-4">
+            <p className="text-sm text-yellow-300">
+              <strong>ℹ Nota:</strong> Los tickets de reventa se validan automáticamente cuando los compradores escanean el QR proxy. 
               No necesitas validarlos manualmente desde aquí.
             </p>
           </div>
 
           {/* Lista de tickets escaneados */}
           {resaleStats.tickets.filter(t => t.scannedCount > 0).length > 0 && (
-            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-              <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
-                <h3 className="font-semibold text-gray-900">Tickets Escaneados</h3>
+            <div className="glass-panel border border-dark-700 rounded-lg overflow-hidden">
+              <div className="px-4 py-3 bg-dark-850 border-b border-dark-700">
+                <h3 className="font-semibold text-dark-50">Tickets Escaneados</h3>
               </div>
-              <div className="divide-y divide-gray-200 max-h-96 overflow-y-auto">
+              <div className="divide-y divide-dark-700 max-h-96 overflow-y-auto">
                 {resaleStats.tickets
                   .filter(t => t.scannedCount > 0)
                   .sort((a, b) => new Date(b.lastScannedAt || 0).getTime() - new Date(a.lastScannedAt || 0).getTime())
                   .map((ticket) => (
-                    <div key={ticket.id} className="px-4 py-3 hover:bg-gray-50">
+                    <div key={ticket.id} className="px-4 py-3 hover:bg-dark-850 transition">
                       <div className="flex items-center justify-between mb-2">
                         <div>
-                          <div className="font-medium text-gray-900">
+                          <div className="font-medium text-dark-50">
                             Asiento: {ticket.seat}
-                            {ticket.zone && <span className="text-gray-500 ml-2">({ticket.zone})</span>}
+                            {ticket.zone && <span className="text-dark-500 ml-2">({ticket.zone})</span>}
                           </div>
-                          <div className="text-sm text-gray-500">Código: {ticket.ticketCode}</div>
+                          <div className="text-sm text-dark-500">Código: {ticket.ticketCode}</div>
                         </div>
                         <div className="text-right">
-                          <div className="text-lg font-bold text-purple-600">{ticket.scannedCount}</div>
-                          <div className="text-xs text-gray-500">escaneos</div>
+                          <div className="text-lg font-bold text-neon-purple">{ticket.scannedCount}</div>
+                          <div className="text-xs text-dark-500">escaneos</div>
                         </div>
                       </div>
                       {ticket.lastScannedAt && (
-                        <div className="text-xs text-gray-500">
+                        <div className="text-xs text-dark-500">
                           Último escaneo: {new Date(ticket.lastScannedAt).toLocaleString('es-CL')}
                         </div>
                       )}
@@ -395,7 +395,7 @@ export default function OrganizerTicketValidator() {
 
       {/* Selector de modo - Solo para eventos OWN */}
       {selectedEvent?.eventType !== 'RESALE' && (
-      <div className="bg-white border rounded-lg p-4 mb-6">
+      <div className="glass-panel border border-dark-700 rounded-lg p-4 mb-6">
         <div className="flex gap-2 mb-4">
           <button
             onClick={() => {
@@ -403,10 +403,10 @@ export default function OrganizerTicketValidator() {
               setSelectedImage(null); // Limpiar imagen
               if (scanning) stopCameraScanner();
             }}
-            className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
+            className={`flex-1 px-4 py-2 rounded-lg font-medium transition-all ${
               scanMode === 'manual'
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                ? 'bg-neon-cyan text-dark-900 shadow-glow-cyan'
+                : 'glass-panel text-dark-300 hover:bg-dark-800 border border-dark-700'
             }`}
           >
             Modo Manual
@@ -416,10 +416,10 @@ export default function OrganizerTicketValidator() {
               setScanMode('camera');
               setSelectedImage(null); // Limpiar imagen
             }}
-            className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
+            className={`flex-1 px-4 py-2 rounded-lg font-medium transition-all ${
               scanMode === 'camera'
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                ? 'bg-neon-cyan text-dark-900 shadow-glow-cyan'
+                : 'glass-panel text-dark-300 hover:bg-dark-800 border border-dark-700'
             }`}
           >
             Modo Cámara
@@ -430,10 +430,10 @@ export default function OrganizerTicketValidator() {
               setSelectedImage(null); // Limpiar imagen
               if (scanning) stopCameraScanner();
             }}
-            className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
+            className={`flex-1 px-4 py-2 rounded-lg font-medium transition-all ${
               scanMode === 'image'
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                ? 'bg-neon-cyan text-dark-900 shadow-glow-cyan'
+                : 'glass-panel text-dark-300 hover:bg-dark-800 border border-dark-700'
             }`}
           >
             Modo Imagen
@@ -442,7 +442,7 @@ export default function OrganizerTicketValidator() {
 
         {scanMode === 'manual' && (
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-dark-200 mb-2">
               Código QR del ticket
             </label>
             <div className="flex gap-2">
@@ -456,13 +456,13 @@ export default function OrganizerTicketValidator() {
                   }
                 }}
                 placeholder="Ingresa o pega el código del ticket"
-                className="flex-1 border rounded-lg px-3 py-2"
+                className="flex-1 input-modern"
                 autoFocus
               />
               <button
                 onClick={() => handleValidate(manualCode)}
                 disabled={validating || !manualCode.trim()}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-6 py-2 btn-primary rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {validating ? 'Validando...' : 'Validar'}
               </button>
@@ -473,7 +473,7 @@ export default function OrganizerTicketValidator() {
         {scanMode === 'camera' && (
           <div>
             {cameraError && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-800 text-sm">
+              <div className="mb-4 p-3 glass-panel-error border border-red-500/20 rounded-lg text-red-300 text-sm">
                 {cameraError}
               </div>
             )}
@@ -484,14 +484,14 @@ export default function OrganizerTicketValidator() {
               {!scanning ? (
                 <button
                   onClick={startCameraScanner}
-                  className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700"
+                  className="flex-1 px-4 py-2 bg-neon-green text-dark-900 rounded-lg font-medium hover:brightness-110 shadow-glow-green"
                 >
                   Iniciar Escáner
                 </button>
               ) : (
                 <button
                   onClick={stopCameraScanner}
-                  className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700"
+                  className="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600"
                 >
                   Detener Escáner
                 </button>
@@ -502,31 +502,31 @@ export default function OrganizerTicketValidator() {
 
         {scanMode === 'image' && (
           <div>
-            <p className="text-sm text-gray-600 mb-3">
+            <p className="text-sm text-dark-400 mb-3">
               Sube una imagen con un código QR para escanearlo sin usar la cámara
             </p>
             
             <div className="mb-4">
               <label className="block">
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 hover:bg-blue-50 transition-colors cursor-pointer">
+                <div className="border-2 border-dashed border-dark-700 rounded-lg p-6 text-center hover:border-neon-cyan/50 hover:bg-dark-850/50 transition-all cursor-pointer glass-panel">
                   <div className="mb-2">
-                    <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="mx-auto h-12 w-12 text-dark-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                   </div>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-dark-400">
                     {scanningImage ? (
-                      <span className="text-blue-600 font-medium">Escaneando imagen...</span>
+                      <span className="text-neon-cyan font-medium">Escaneando imagen...</span>
                     ) : selectedImage ? (
-                      <span className="text-gray-500 font-medium">Imagen cargada - Click para cambiar</span>
+                      <span className="text-dark-300 font-medium">Imagen cargada - Click para cambiar</span>
                     ) : (
                       <>
-                        <span className="text-blue-600 font-medium">Click para seleccionar imagen</span>
+                        <span className="text-neon-cyan font-medium">Click para seleccionar imagen</span>
                         {' '}o arrastra aquí
                       </>
                     )}
                   </p>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-dark-500 mt-1">
                     PNG, JPG, JPEG (hasta 10MB)
                   </p>
                 </div>
@@ -541,26 +541,26 @@ export default function OrganizerTicketValidator() {
             </div>
             
             {selectedImage && (
-              <div className="border rounded-lg p-4 bg-gray-50 mb-4">
-                <p className="text-sm font-medium text-gray-700 mb-3">
+              <div className="glass-panel border border-dark-700 rounded-lg p-4 mb-4">
+                <p className="text-sm font-medium text-dark-200 mb-3">
                   Imagen seleccionada:
                 </p>
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-16 h-16 bg-gray-200 rounded flex items-center justify-center flex-shrink-0">
-                    <svg className="h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="w-16 h-16 bg-dark-800 rounded flex items-center justify-center flex-shrink-0">
+                    <svg className="h-8 w-8 text-dark-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-900">{selectedImage.name}</p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-sm font-medium text-dark-50">{selectedImage.name}</p>
+                    <p className="text-xs text-dark-500">
                       {(selectedImage.size / 1024).toFixed(1)} KB
                     </p>
                   </div>
                   <button
                     onClick={() => setSelectedImage(null)}
                     disabled={scanningImage}
-                    className="px-3 py-1 text-sm text-red-600 hover:bg-red-50 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-3 py-1 text-sm text-red-400 hover:bg-red-500/20 rounded disabled:opacity-50 disabled:cursor-not-allowed transition"
                   >
                     Eliminar
                   </button>
@@ -570,24 +570,24 @@ export default function OrganizerTicketValidator() {
                 <button
                   onClick={() => handleImageScan(selectedImage)}
                   disabled={scanningImage || validating}
-                  className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full btn-primary px-4 py-2 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {scanningImage ? 'Escaneando...' : validating ? 'Validando...' : 'Escanear código QR'}
                 </button>
               </div>
             )}
             
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-              <p className="text-sm text-blue-800 font-medium mb-2">
+            <div className="glass-panel-accent border border-neon-cyan/30 rounded-lg p-3">
+              <p className="text-sm text-neon-cyan font-medium mb-2">
                 Cómo generar una imagen QR de prueba:
               </p>
-              <ol className="text-xs text-blue-700 space-y-1 ml-4 list-decimal">
+              <ol className="text-xs text-dark-300 space-y-1 ml-4 list-decimal">
                 <li>Descarga el PDF de un ticket desde "Mis entradas"</li>
                 <li>Toma un screenshot del código QR</li>
                 <li>Guarda como PNG o JPG</li>
                 <li>Sube la imagen aquí</li>
               </ol>
-              <p className="text-xs text-blue-600 mt-2">
+              <p className="text-xs text-dark-400 mt-2">
                 También puedes usar un generador online (qr-code-generator.com) con un código de la base de datos
               </p>
             </div>
@@ -600,15 +600,15 @@ export default function OrganizerTicketValidator() {
       {selectedEvent?.eventType !== 'RESALE' && lastResult && (
         <div className={`border-2 rounded-lg p-6 mb-6 ${
           lastResult.valid 
-            ? 'bg-green-50 border-green-400' 
-            : 'bg-red-50 border-red-400'
+            ? 'glass-panel-accent border-neon-green/50 shadow-glow-green' 
+            : 'glass-panel-error border-red-500/50'
         }`}>
           <div className="flex items-start gap-4">
             <div className={`flex-shrink-0 w-16 h-16 rounded-full flex items-center justify-center ${
-              lastResult.valid ? 'bg-green-600' : 'bg-red-600'
+              lastResult.valid ? 'bg-neon-green shadow-glow-green' : 'bg-red-500'
             }`}>
               {lastResult.valid ? (
-                <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-10 h-10 text-dark-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                 </svg>
               ) : (
@@ -620,29 +620,29 @@ export default function OrganizerTicketValidator() {
             
             <div className="flex-1">
               <h3 className={`text-xl font-bold mb-2 ${
-                lastResult.valid ? 'text-green-900' : 'text-red-900'
+                lastResult.valid ? 'text-neon-green' : 'text-red-400'
               }`}>
                 {lastResult.valid ? 'Ticket Válido - Admisión Permitida' : 'Ticket Inválido'}
               </h3>
               
               {lastResult.valid && lastResult.buyer && (
-                <div className="space-y-1 text-sm text-gray-700">
-                  <p><strong>Comprador:</strong> {lastResult.buyer.name}</p>
-                  <p><strong>Email:</strong> {lastResult.buyer.email}</p>
+                <div className="space-y-1 text-sm text-dark-200">
+                  <p><strong className="text-dark-50">Comprador:</strong> {lastResult.buyer.name}</p>
+                  <p><strong className="text-dark-50">Email:</strong> {lastResult.buyer.email}</p>
                   {lastResult.ticket?.seatNumber && (
-                    <p><strong>Asiento:</strong> {lastResult.ticket.seatNumber}</p>
+                    <p><strong className="text-dark-50">Asiento:</strong> {lastResult.ticket.seatNumber}</p>
                   )}
                   {lastResult.ticket && (
-                    <p><strong>Ticket:</strong> {lastResult.ticket.ticketNumber} de {lastResult.reservation?.totalTickets}</p>
+                    <p><strong className="text-dark-50">Ticket:</strong> {lastResult.ticket.ticketNumber} de {lastResult.reservation?.totalTickets}</p>
                   )}
                   {lastResult.event && (
-                    <p><strong>Evento:</strong> {lastResult.event.title}</p>
+                    <p><strong className="text-dark-50">Evento:</strong> {lastResult.event.title}</p>
                   )}
                 </div>
               )}
               
               {!lastResult.valid && (
-                <div className="text-red-800">
+                <div className="text-red-300">
                   <p className="font-medium">{lastResult.error}</p>
                   {lastResult.reason === 'already_scanned' && lastResult.scannedAt && (
                     <p className="text-sm mt-1">
@@ -655,8 +655,8 @@ export default function OrganizerTicketValidator() {
                     </p>
                   )}
                   {lastResult.reason === 'wrong_event' && lastResult.ticketEvent && (
-                    <p className="text-sm mt-1 bg-yellow-100 border border-yellow-300 rounded p-2">
-                      ⚠️ Este ticket pertenece al evento: <strong>{lastResult.ticketEvent.title}</strong>
+                    <p className="text-sm mt-1 glass-panel-warning border border-yellow-500/30 rounded p-2">
+                      ⚠️ Este ticket pertenece al evento: <strong className="text-yellow-400">{lastResult.ticketEvent.title}</strong>
                     </p>
                   )}
                 </div>
@@ -668,32 +668,32 @@ export default function OrganizerTicketValidator() {
 
       {/* Historial de escaneos - Solo para eventos OWN */}
       {selectedEvent?.eventType !== 'RESALE' && scanHistory.length > 0 && (
-        <div className="bg-white border rounded-lg p-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Historial de validaciones</h2>
+        <div className="glass-panel border border-dark-700 rounded-lg p-6">
+          <h2 className="text-xl font-bold text-dark-50 mb-4">Historial de validaciones</h2>
           <div className="space-y-2">
             {scanHistory.map((scan, index) => (
               <div 
                 key={index}
                 className={`flex items-center justify-between p-3 rounded-lg border ${
-                  scan.valid ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
+                  scan.valid ? 'glass-panel-accent border-neon-green/30' : 'glass-panel-error border-red-500/30'
                 }`}
               >
                 <div className="flex items-center gap-3">
                   <div className={`w-3 h-3 rounded-full ${
-                    scan.valid ? 'bg-green-600' : 'bg-red-600'
+                    scan.valid ? 'bg-neon-green shadow-glow-green' : 'bg-red-500'
                   }`}></div>
                   <div>
                     <div className={`font-medium ${
-                      scan.valid ? 'text-green-900' : 'text-red-900'
+                      scan.valid ? 'text-neon-green' : 'text-red-400'
                     }`}>
                       {scan.valid ? scan.buyer?.name || 'Ticket válido' : scan.error || 'Error'}
                     </div>
                     {scan.valid && scan.ticket?.seatNumber && (
-                      <div className="text-sm text-gray-600">Asiento: {scan.ticket.seatNumber}</div>
+                      <div className="text-sm text-dark-400">Asiento: {scan.ticket.seatNumber}</div>
                     )}
                   </div>
                 </div>
-                <div className="text-sm text-dark-200">
+                <div className="text-sm text-dark-400">
                   {formatTimestamp(scan.timestamp)}
                 </div>
               </div>

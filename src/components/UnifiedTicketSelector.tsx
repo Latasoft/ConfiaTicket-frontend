@@ -111,15 +111,18 @@ export default function UnifiedTicketSelector({ eventId, eventType, onSelections
   if (loading) {
     return (
       <div className="flex justify-center items-center py-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="relative">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-dark-700 border-t-neon-cyan"></div>
+          <div className="absolute inset-0 rounded-full bg-neon-cyan/10 blur-xl animate-pulse"></div>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-        <p className="text-red-800">{error}</p>
+      <div className="glass-panel-error p-4 rounded-lg border border-red-500/20">
+        <p className="text-red-400">{error}</p>
       </div>
     );
   }
@@ -128,7 +131,7 @@ export default function UnifiedTicketSelector({ eventId, eventType, onSelections
     <div className="space-y-6">
       {/* Lista de opciones disponibles */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-gray-900">
+        <h3 className="text-lg font-semibold text-dark-50">
           {eventType === 'OWN' ? 'Selecciona tu sección' : 'Entradas disponibles'}
         </h3>
 
@@ -136,12 +139,12 @@ export default function UnifiedTicketSelector({ eventId, eventType, onSelections
           // Render sections for OWN events
           <div className="space-y-3">
             {sections.length === 0 ? (
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
+              <div className="glass-panel-warning p-6 text-center rounded-lg border border-yellow-500/20">
                 <svg className="mx-auto h-12 w-12 text-yellow-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
-                <h4 className="text-lg font-semibold text-yellow-900 mb-2">No hay secciones configuradas</h4>
-                <p className="text-yellow-800 text-sm">
+                <h4 className="text-lg font-semibold text-yellow-300 mb-2">No hay secciones configuradas</h4>
+                <p className="text-dark-300 text-sm">
                   El organizador aún no ha configurado las secciones para este evento.
                 </p>
               </div>
@@ -165,12 +168,12 @@ export default function UnifiedTicketSelector({ eventId, eventType, onSelections
           // Render tickets for RESALE events in unified style  
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
             {resaleTickets.length === 0 ? (
-              <div className="col-span-full bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
-                <svg className="mx-auto h-12 w-12 text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="col-span-full glass-panel p-6 text-center rounded-lg border border-dark-700">
+                <svg className="mx-auto h-12 w-12 text-dark-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
                 </svg>
-                <h4 className="text-lg font-semibold text-gray-900 mb-2">No hay entradas disponibles</h4>
-                <p className="text-gray-600 text-sm">
+                <h4 className="text-lg font-semibold text-dark-100 mb-2">No hay entradas disponibles</h4>
+                <p className="text-dark-400 text-sm">
                   Actualmente no hay tickets en reventa para este evento.
                 </p>
               </div>
@@ -194,28 +197,33 @@ export default function UnifiedTicketSelector({ eventId, eventType, onSelections
       {cart.length > 0 && (
         <div 
           id="cart-section"
-          className="bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-300 rounded-lg p-4 shadow-lg animate-fade-in"
+          className="glass-panel-accent p-4 rounded-lg border border-neon-cyan/30 shadow-glow-cyan animate-fade-in"
         >
-          <h4 className="font-semibold text-blue-900 mb-3">Tu selección:</h4>
+          <h4 className="font-semibold text-neon-cyan mb-3 flex items-center gap-2">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+            </svg>
+            Tu selección:
+          </h4>
           <div className="space-y-2">
             {cart.map((item, index) => (
               <div
                 key={index}
-                className="flex items-center justify-between bg-white rounded p-3 shadow-sm transition-all duration-200 hover:shadow-md animate-slide-in"
+                className="flex items-center justify-between glass-panel p-3 rounded border border-dark-700 transition-all duration-200 hover:border-neon-cyan/50 animate-slide-in"
                 style={{ animationDelay: `${index * 50}ms` }}
               >
                 <div className="flex-1">
                   {item.isResale ? (
                     <div>
-                      <p className="font-medium">Entrada - Fila {(item.section as ResaleTicket).row}, Asiento {(item.section as ResaleTicket).seat}</p>
+                      <p className="font-medium text-dark-50">Entrada - Fila {(item.section as ResaleTicket).row}, Asiento {(item.section as ResaleTicket).seat}</p>
                       {(item.section as ResaleTicket).zone && (
-                        <p className="text-sm text-gray-600">Zona: {(item.section as ResaleTicket).zone}</p>
+                        <p className="text-sm text-dark-400">Zona: {(item.section as ResaleTicket).zone}</p>
                       )}
                     </div>
                   ) : (
                     <div>
-                      <p className="font-medium">{(item.section as EventSection).name}</p>
-                      <p className="text-sm text-gray-600">
+                      <p className="font-medium text-dark-50">{(item.section as EventSection).name}</p>
+                      <p className="text-sm text-dark-400">
                         {item.quantity} {item.quantity === 1 ? 'entrada' : 'entradas'}
                         {item.seats.length > 0 && ` - Asientos: ${item.seats.join(', ')}`}
                       </p>
@@ -224,7 +232,7 @@ export default function UnifiedTicketSelector({ eventId, eventType, onSelections
                 </div>
                 <button
                   onClick={() => handleRemoveFromCart(index)}
-                  className="ml-4 text-red-600 hover:text-red-800 transition-colors duration-150 hover:scale-110 transform"
+                  className="ml-4 text-red-400 hover:text-red-300 transition-colors duration-150 hover:scale-110 transform"
                   aria-label="Eliminar del carrito"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -353,41 +361,41 @@ function OwnSectionCard({
   const isSoldOut = section.available !== undefined && section.available === 0;
 
   return (
-    <div className={`border rounded-lg overflow-hidden shadow-sm transition-shadow duration-200 ${
-      isSoldOut ? 'bg-gray-100 opacity-60' : 'bg-white hover:shadow-md'
+    <div className={`glass-panel rounded-lg overflow-hidden border transition-all duration-200 ${
+      isSoldOut ? 'opacity-60 border-dark-700' : 'border-dark-700 hover:border-neon-cyan/50 hover:shadow-glow-cyan'
     }`}>
       <button
         onClick={() => !isSoldOut && setExpanded(!expanded)}
         disabled={isSoldOut}
         className={`w-full p-4 text-left transition-all duration-200 flex items-center justify-between ${
-          isSoldOut ? 'cursor-not-allowed' : 'hover:bg-gray-50'
+          isSoldOut ? 'cursor-not-allowed' : 'hover:bg-dark-800/50'
         }`}
       >
         <div className="flex-1">
-          <h4 className="font-semibold text-gray-900">{section.name}</h4>
-          <div className="flex items-center gap-3 text-sm text-gray-600">
+          <h4 className="font-semibold text-dark-50">{section.name}</h4>
+          <div className="flex items-center gap-3 text-sm text-dark-400">
             <span>Capacidad total: {section.totalCapacity}</span>
             {section.available !== undefined && (
               <>
-                <span className="text-gray-400">•</span>
-                <span className={section.available > 0 ? 'text-green-600 font-medium' : 'text-red-600 font-medium'}>
+                <span className="text-dark-600">•</span>
+                <span className={section.available > 0 ? 'text-neon-green font-medium' : 'text-red-400 font-medium'}>
                   {section.available > 0 ? `${section.available} disponibles` : 'Agotado'}
                 </span>
               </>
             )}
           </div>
           {section.description && (
-            <p className="text-sm text-gray-500 mt-1">{section.description}</p>
+            <p className="text-sm text-dark-500 mt-1">{section.description}</p>
           )}
         </div>
         <div className="flex items-center gap-2">
           {isInCart && (
-            <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full animate-pulse-subtle">
+            <span className="px-2 py-1 bg-neon-cyan/20 text-neon-cyan text-xs rounded-full animate-pulse-subtle border border-neon-cyan/30">
               En carrito
             </span>
           )}
           <svg
-            className={`w-5 h-5 text-gray-400 transition-transform ${
+            className={`w-5 h-5 text-dark-400 transition-transform ${
               expanded ? 'rotate-180' : ''
             }`}
             fill="none"
@@ -400,27 +408,27 @@ function OwnSectionCard({
       </button>
 
       {expanded && (
-        <div className="p-4 bg-gray-50 border-t space-y-4">
+        <div className="p-4 bg-dark-850 border-t border-dark-700 space-y-4">
           {/* Selector de cantidad */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-dark-200 mb-2">
               Cantidad de entradas:
             </label>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => handleQuantityChange(Math.max(1, quantity - 1))}
-                className="px-3 py-1 border rounded hover:bg-gray-100"
+                className="px-3 py-1 glass-panel border border-dark-700 rounded hover:border-neon-cyan/50 text-dark-200 transition"
               >
                 -
               </button>
-              <span className="px-4 py-1 border rounded bg-white">{quantity}</span>
+              <span className="px-4 py-1 glass-panel border border-dark-700 rounded text-dark-50">{quantity}</span>
               <button
                 onClick={() => handleQuantityChange(quantity + 1)}
-                className="px-3 py-1 border rounded hover:bg-gray-100"
+                className="px-3 py-1 glass-panel border border-dark-700 rounded hover:border-neon-cyan/50 text-dark-200 transition"
               >
                 +
               </button>
-              <span className="text-xs text-gray-500 ml-2">
+              <span className="text-xs text-dark-500 ml-2">
                 (Sin límite)
               </span>
             </div>
@@ -429,10 +437,10 @@ function OwnSectionCard({
           {/* Selector de asientos (con tabla de filas y columnas) */}
           {hasSeats && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-dark-200 mb-2">
                 Selecciona {quantity} asiento{quantity > 1 ? 's' : ''}
                 {selectedSeats.length > 0 && (
-                  <span className="ml-2 text-xs text-green-600 font-semibold">
+                  <span className="ml-2 text-xs text-neon-green font-semibold">
                     ({selectedSeats.length}/{quantity})
                   </span>
                 )}
@@ -441,26 +449,26 @@ function OwnSectionCard({
               {/* Leyenda de colores */}
               <div className="flex gap-4 mb-3 text-xs">
                 <div className="flex items-center gap-1">
-                  <div className="w-4 h-4 bg-green-100 border border-gray-300 rounded"></div>
-                  <span className="text-gray-600">Disponible</span>
+                  <div className="w-4 h-4 bg-dark-700 border border-dark-600 rounded"></div>
+                  <span className="text-dark-400">Disponible</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <div className="w-4 h-4 bg-blue-500 rounded"></div>
-                  <span className="text-gray-600">Seleccionado</span>
+                  <div className="w-4 h-4 bg-neon-cyan rounded shadow-glow-cyan"></div>
+                  <span className="text-dark-400">Seleccionado</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <div className="w-4 h-4 bg-red-500 rounded"></div>
-                  <span className="text-gray-600">Ocupado</span>
+                  <span className="text-dark-400">Ocupado</span>
                 </div>
               </div>
               
-              <div className="bg-white rounded-lg border p-3 max-h-64 overflow-auto">
+              <div className="glass-panel rounded-lg border border-dark-700 p-3 max-h-64 overflow-auto">
                 <table className="w-full border-collapse text-xs">
-                  <thead className="sticky top-0 bg-blue-500 z-10">
+                  <thead className="sticky top-0 bg-dark-800 z-10">
                     <tr>
-                      <th className="border border-blue-400 p-2 font-semibold text-white">Fila</th>
+                      <th className="border border-dark-700 p-2 font-semibold text-neon-cyan">Fila</th>
                       {[...Array(seatsPerRow)].map((_, idx) => (
-                        <th key={idx} className="border border-blue-400 p-2 font-semibold text-white">
+                        <th key={idx} className="border border-dark-700 p-2 font-semibold text-neon-cyan">
                           {idx + 1}
                         </th>
                       ))}
@@ -469,7 +477,7 @@ function OwnSectionCard({
                   <tbody>
                     {rows.map((row) => (
                       <tr key={row}>
-                        <td className="border p-2 font-bold bg-gray-50 text-center text-gray-700">
+                        <td className="border border-dark-700 p-2 font-bold bg-dark-850 text-center text-dark-200">
                           {row}
                         </td>
                         {[...Array(seatsPerRow)].map((_, seatIdx) => {
@@ -479,7 +487,7 @@ function OwnSectionCard({
                           const canSelectSeat = !isOccupied && (selectedSeats.length < quantity || isSelectedSeat);
                           
                           return (
-                            <td key={seatId} className="border p-1">
+                            <td key={seatId} className="border border-dark-700 p-1">
                               <button
                                 type="button"
                                 onClick={(e) => {
@@ -491,10 +499,10 @@ function OwnSectionCard({
                                   isOccupied
                                     ? 'bg-red-500 text-white cursor-not-allowed opacity-75'
                                     : isSelectedSeat 
-                                    ? 'bg-blue-500 text-white scale-105 shadow-md' 
+                                    ? 'bg-neon-cyan text-dark-900 scale-105 shadow-glow-cyan' 
                                     : canSelectSeat
-                                    ? 'bg-green-100 hover:bg-green-200 text-gray-700 hover:scale-105'
-                                    : 'bg-gray-50 text-gray-400 cursor-not-allowed'
+                                    ? 'bg-dark-700 hover:bg-dark-600 text-dark-200 hover:scale-105 border border-dark-600'
+                                    : 'bg-dark-850 text-dark-700 cursor-not-allowed'
                                 }`}
                                 title={isOccupied ? 'Asiento ocupado' : isSelectedSeat ? 'Seleccionado' : 'Disponible'}
                               >
@@ -510,9 +518,9 @@ function OwnSectionCard({
               </div>
               
               {selectedSeats.length > 0 && (
-                <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-xs">
-                  <span className="font-semibold text-blue-900">Asientos seleccionados:</span>
-                  <span className="ml-2 text-blue-700">{selectedSeats.join(', ')}</span>
+                <div className="mt-2 p-2 glass-panel-accent border border-neon-cyan/30 rounded text-xs">
+                  <span className="font-semibold text-neon-cyan">Asientos seleccionados:</span>
+                  <span className="ml-2 text-dark-200">{selectedSeats.join(', ')}</span>
                 </div>
               )}
             </div>
@@ -521,13 +529,13 @@ function OwnSectionCard({
           <button
             onClick={handleAddToCart}
             disabled={!canConfirm}
-            className="w-full py-2 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed hover:scale-105 transform shadow-md hover:shadow-lg"
+            className="w-full py-2 px-4 btn-primary rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 transform shadow-md hover:shadow-glow-cyan"
           >
             {isInCart ? 'Actualizar Selección' : 'Agregar al Carrito'}
           </button>
           
           {!canConfirm && hasSeats && (
-            <p className="text-xs text-orange-600 text-center font-medium">
+            <p className="text-xs text-yellow-400 text-center font-medium">
               Debes seleccionar exactamente {quantity} asiento{quantity > 1 ? 's' : ''}
             </p>
           )}
@@ -549,17 +557,17 @@ function ResaleTicketCard({
 }) {
   return (
     <div
-      className={`border rounded-lg p-3 transition-all duration-200 cursor-pointer ${
+      className={`glass-panel rounded-lg p-3 border transition-all duration-200 cursor-pointer ${
         isSelected
-          ? 'border-blue-500 bg-blue-50 shadow-md ring-2 ring-blue-300 scale-105'
-          : 'border-gray-300 hover:border-blue-300 hover:shadow-sm hover:scale-102'
+          ? 'border-neon-cyan shadow-glow-cyan bg-neon-cyan/10 scale-105'
+          : 'border-dark-700 hover:border-neon-purple/50 hover:shadow-glow-purple hover:scale-102'
       }`}
       onClick={() => onSelect(ticket)}
     >
       <div className="flex items-start justify-between mb-2">
         <div className="flex-1">
           <div className="flex items-center gap-1.5 mb-1.5">
-            <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 text-neon-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -567,18 +575,18 @@ function ResaleTicketCard({
                 d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"
               />
             </svg>
-            <h4 className="font-semibold text-sm text-gray-900">Ticket Original</h4>
+            <h4 className="font-semibold text-sm text-dark-50">Ticket Original</h4>
           </div>
           
-          <div className="space-y-0.5 text-xs text-gray-600">
+          <div className="space-y-0.5 text-xs text-dark-400">
             <p className="flex items-center gap-1">
-              <span className="font-medium">Fila:</span> {ticket.row}
+              <span className="font-medium text-dark-300">Fila:</span> {ticket.row}
               <span className="mx-1">•</span>
-              <span className="font-medium">Asiento:</span> {ticket.seat}
+              <span className="font-medium text-dark-300">Asiento:</span> {ticket.seat}
             </p>
             {ticket.zone && (
               <p>
-                <span className="font-medium">Zona:</span> {ticket.zone}
+                <span className="font-medium text-dark-300">Zona:</span> {ticket.zone}
               </p>
             )}
           </div>
@@ -586,8 +594,8 @@ function ResaleTicketCard({
 
         {isSelected && (
           <div className="flex-shrink-0">
-            <div className="w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center">
-              <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-5 h-5 bg-neon-cyan rounded-full flex items-center justify-center shadow-glow-cyan">
+              <svg className="w-3 h-3 text-dark-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
             </div>
@@ -596,10 +604,10 @@ function ResaleTicketCard({
       </div>
 
       <button
-        className={`w-full py-1.5 px-3 rounded-lg font-medium text-sm transition-colors ${
+        className={`w-full py-1.5 px-3 rounded-lg font-medium text-sm transition-all ${
           isSelected
-            ? 'bg-blue-600 text-white'
-            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            ? 'bg-neon-cyan text-dark-900 shadow-glow-cyan'
+            : 'bg-dark-800 text-dark-200 hover:bg-dark-700 border border-dark-700'
         }`}
       >
         {isSelected ? 'Seleccionado ✓' : 'Seleccionar'}
