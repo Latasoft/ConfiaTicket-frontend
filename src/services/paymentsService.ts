@@ -336,7 +336,7 @@ export type AdminPayoutListParams = {
 export async function adminListPayouts(
   params?: AdminPayoutListParams
 ): Promise<PayoutListResponse> {
-  const { data } = await api.get("/payments/admin/payouts", { params });
+  const { data } = await api.get("/admin/payouts", { params });
   if (Array.isArray(data)) {
     return {
       items: data as PayoutItem[],
@@ -357,7 +357,7 @@ export async function adminMarkPayoutPaid(
   paidAt: string | null;
 }> {
   const { data } = await api.post(
-    `/payments/payouts/${encodeURIComponent(payoutId)}/mark-paid`
+    `/admin/payouts/${encodeURIComponent(payoutId)}/mark-paid`
   );
   const paidAt = data?.payout?.paidAt ?? data?.paidAt ?? null;
   return { ok: !!data?.ok, payoutId, paidAt };
@@ -369,7 +369,7 @@ export async function adminRunPayoutsNow(
 ): Promise<AdminRunPayoutsResponse> {
   const body =
     typeof limit === "number" && Number.isFinite(limit) ? { limit } : {};
-  const { data } = await api.post("/payments/admin/payouts/run", body);
+  const { data } = await api.post("/admin/payouts/run", body);
 
   const results = Array.isArray(data?.results)
     ? data.results.map((r: any) => ({
