@@ -460,11 +460,11 @@ export default function TicketPurchaseFlow({ eventId, eventType, eventPrice, onP
       {/* Success - Modal grande con entradas */}
       {step === 'success' && currentReservationId && (
         <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 animate-fade-in"
+          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in"
           onClick={() => navigate('/mis-entradas')}
         >
           <div 
-            className="bg-white rounded-2xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-y-auto animate-slide-in"
+            className="glass border-2 border-dark-600 rounded-2xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-y-auto animate-slide-in"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header del modal */}
@@ -494,11 +494,11 @@ export default function TicketPurchaseFlow({ eventId, eventType, eventPrice, onP
             </div>
 
             {/* Contenido del modal */}
-            <div className="p-6">
+            <div className="p-6 bg-dark-850">
               {/* Lista de entradas */}
-              <div className="bg-gray-50 rounded-xl p-6 mb-6">
-                <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                  <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="glass border border-dark-600 rounded-xl p-6 mb-6">
+                <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                  <svg className="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
                   </svg>
                   Tus Entradas
@@ -523,7 +523,7 @@ export default function TicketPurchaseFlow({ eventId, eventType, eventPrice, onP
                 </button>
                 <button
                   onClick={() => navigate('/eventos')}
-                  className="px-8 py-3 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-700 transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+                  className="px-8 py-3 glass border border-dark-600 text-white font-semibold rounded-lg hover:bg-dark-700 transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />

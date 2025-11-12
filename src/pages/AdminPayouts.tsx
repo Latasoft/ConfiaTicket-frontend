@@ -126,9 +126,8 @@ export default function AdminPayouts() {
   // ui
   const [loading, setLoading] = useState(false);
   const [rowLoading, setRowLoading] = useState<number | null>(null);
-  const [runLoading, setRunLoading] = useState(false);
-  const [runLimit, setRunLimit] = useState<string>(""); // límite opcional
   const [error, setError] = useState<string | null>(null);
+  const [expandedBankInfo, setExpandedBankInfo] = useState<number | null>(null);
 
   const totalPages = useMemo(
     () => Math.max(1, Math.ceil((total || 0) / pageSize)),
@@ -220,38 +219,6 @@ export default function AdminPayouts() {
     }
   }
 
-  async function runPayoutsNow() {
-    const ok = window.confirm(
-      "¿Ejecutar pagos pendientes ahora (simulación)? Intentará avanzar el estado de los pagos elegibles."
-    );
-    if (!ok) return;
-    try {
-      setRunLoading(true);
-      setError(null);
-      const limitNum =
-        runLimit.trim() && /^\d+$/.test(runLimit) ? parseInt(runLimit, 10) : undefined;
-      const resp = await paymentsService.adminRunPayoutsNow(limitNum);
-      const processed = resp?.processed ?? 0;
-      const paid = (resp?.results || []).filter((r) => r.status === "PAID").length;
-      const failed = (resp?.results || []).filter((r) => r.error).length;
-      window.alert(
-        `Lote ejecutado.\nProcesados: ${processed}\nPagados: ${paid}\nCon error: ${failed}`
-      );
-      fetchList();
-    } catch (e: any) {
-      const msg =
-        e?.response?.status === 403
-          ? "No autorizado: se requiere superadmin."
-          : e?.response?.data?.error ||
-            e?.response?.data?.message ||
-            e?.message ||
-            "No se pudo ejecutar el lote de pagos.";
-      setError(msg);
-    } finally {
-      setRunLoading(false);
-    }
-  }
-
   return (
     <div className="min-h-screen bg-dark-900 px-4 md:px-8 py-6">
       <div className="max-w-7xl mx-auto">
@@ -265,32 +232,12 @@ export default function AdminPayouts() {
             </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
-            <div className="flex items-center gap-2 bg-dark-850 border border-dark-700 rounded-lg px-3 py-2">
-              <label className="text-xs text-dark-300 whitespace-nowrap">Límite de lote</label>
-              <input
-                value={runLimit}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  if (/^\d*$/.test(v)) setRunLimit(v);
-                }}
-                placeholder="p. ej. 50"
-                className="px-2 py-1 bg-dark-800 border border-dark-600 rounded-md w-24 text-white placeholder-dark-500 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50 transition-all"
-                inputMode="numeric"
-              />
-            </div>
             <button
               onClick={fetchList}
-              disabled={loading || runLoading}
+              disabled={loading}
               className="rounded-xl border-2 border-cyan-500/50 px-4 py-2.5 text-sm font-medium text-cyan-300 hover:bg-cyan-500/10 disabled:opacity-50 transition-all"
             >
               {loading ? "Actualizando…" : "Refrescar"}
-            </button>
-            <button
-              onClick={runPayoutsNow}
-              disabled={loading || runLoading}
-              className="rounded-xl bg-purple-500 px-4 py-2.5 text-sm font-bold text-white hover:bg-purple-600 disabled:opacity-50 shadow-lg shadow-purple-500/30 transition-all transform hover:scale-105"
-            >
-              {runLoading ? "Ejecutando…" : "⚡ Ejecutar pagos ahora"}
             </button>
           </div>
         </div>
@@ -359,7 +306,7 @@ export default function AdminPayouts() {
               className="px-4 py-2.5 bg-cyan-500 hover:bg-cyan-600 rounded-lg text-white font-bold w-full shadow-lg shadow-cyan-500/30 transition-all transform hover:scale-105 disabled:opacity-50"
               disabled={loading}
             >
-              {loading ? "Buscando…" : "🔍 Aplicar"}
+              {loading ? "Buscando…" : "Aplicar"}
             </button>
           </div>
         </form>
@@ -377,6 +324,7 @@ export default function AdminPayouts() {
                   <th className="px-4 py-3 text-left font-bold">Orden</th>
                   <th className="px-4 py-3 text-left font-bold">Monto</th>
                   <th className="px-4 py-3 text-left font-bold">Estado</th>
+                  <th className="px-4 py-3 text-left font-bold">Datos Bancarios</th>
                   <th className="px-4 py-3 text-left font-bold">Pagado el</th>
                   <th className="px-4 py-3 text-right font-bold">Acciones</th>
                 </tr>
@@ -384,7 +332,7 @@ export default function AdminPayouts() {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={9} className="px-4 py-12 text-center text-dark-300">
+                    <td colSpan={10} className="px-4 py-12 text-center text-dark-300">
                       <div className="flex justify-center items-center gap-3">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-400"></div>
                         <span className="text-lg">Cargando…</span>
@@ -393,7 +341,7 @@ export default function AdminPayouts() {
                   </tr>
                 ) : rows.length === 0 ? (
                   <tr>
-                    <td colSpan={9} className="px-4 py-16 text-center text-dark-300">
+                    <td colSpan={10} className="px-4 py-16 text-center text-dark-300">
                       <div className="text-lg">No hay resultados para los filtros seleccionados.</div>
                     </td>
                   </tr>
@@ -472,6 +420,52 @@ export default function AdminPayouts() {
                               ? `Error: ${p.failureMessage}`
                               : ""}
                           </div>
+                        </td>
+                        <td className="px-4 py-3 align-top">
+                          {p.bankAccount && p.bankAccount.payoutsEnabled ? (
+                            <div className="space-y-1">
+                              <button
+                                onClick={() => setExpandedBankInfo(expandedBankInfo === p.id ? null : p.id)}
+                                className="text-xs text-cyan-400 hover:text-cyan-300 underline transition-colors"
+                              >
+                                {expandedBankInfo === p.id ? "Ocultar" : "Ver datos"}
+                              </button>
+                              {expandedBankInfo === p.id && (
+                                <div className="mt-2 p-3 rounded-lg glass border border-dark-600 text-xs space-y-1">
+                                  <div className="flex justify-between">
+                                    <span className="text-dark-400">Banco:</span>
+                                    <span className="text-white font-medium">{p.bankAccount.bankName || "—"}</span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span className="text-dark-400">Tipo:</span>
+                                    <span className="text-white font-medium">{p.bankAccount.accountType || "—"}</span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span className="text-dark-400">Número:</span>
+                                    <span className="text-white font-medium font-mono">{p.bankAccount.accountNumber || "—"}</span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span className="text-dark-400">Titular:</span>
+                                    <span className="text-white font-medium">{p.bankAccount.holderName || "—"}</span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span className="text-dark-400">RUT:</span>
+                                    <span className="text-white font-medium font-mono">{p.bankAccount.holderRut || "—"}</span>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="text-xs text-amber-400">
+                              <div className="flex items-center gap-1">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                                <span>Sin datos</span>
+                              </div>
+                              <div className="text-[10px] text-dark-400 mt-1">Pagos deshabilitados</div>
+                            </div>
+                          )}
                         </td>
                         <td className="px-4 py-3 align-top text-white">{fmtDate(p.paidAt)}</td>
                         <td className="px-4 py-3 align-top text-right">

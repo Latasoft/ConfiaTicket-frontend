@@ -117,6 +117,16 @@ export type PayoutItem = {
   buyOrder?: string | null;
   netAmount?: number | null;
   capturedAt?: string | null;
+
+  // datos bancarios del organizador
+  bankAccount?: {
+    bankName?: string | null;
+    accountType?: AccountType | null;
+    accountNumber?: string | null;
+    holderName?: string | null;
+    holderRut?: string | null;
+    payoutsEnabled?: boolean;
+  } | null;
 };
 
 export type PayoutListResponse = {

@@ -515,24 +515,24 @@ export default function OrganizerEventForm() {
       {currentStep === 1 && (
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Datos del organizador */}
-        <div className="border rounded p-3">
-          <h2 className="font-semibold mb-2">Datos del organizador</h2>
+        <div className="glass border border-dark-600 rounded-xl p-4">
+          <h2 className="font-semibold mb-3 text-white">Datos del organizador</h2>
           <div className="grid md:grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium mb-1">Nombre del organizador</label>
+              <label className="block text-sm font-medium mb-1 text-dark-100">Nombre del organizador</label>
               <input
                 value={organizerName || "—"}
                 readOnly
-                className="w-full border rounded px-3 py-2 bg-gray-50 text-gray-700"
+                className="w-full bg-dark-700/50 border border-dark-600 rounded-xl px-4 py-3 text-dark-300"
                 placeholder="Nombre"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">RUT</label>
+              <label className="block text-sm font-medium mb-1 text-dark-100">RUT</label>
               <input
                 value={organizerRut || "—"}
                 readOnly
-                className="w-full border rounded px-3 py-2 bg-gray-50 text-gray-700"
+                className="w-full bg-dark-700/50 border border-dark-600 rounded-xl px-4 py-3 text-dark-300"
                 placeholder="12345678-9"
               />
             </div>
@@ -540,14 +540,14 @@ export default function OrganizerEventForm() {
         </div>
 
         {/* Datos del evento */}
-        <div className="border rounded p-3">
+        <div className="glass border border-dark-600 rounded-xl p-4">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="font-semibold">Datos del evento</h2>
+            <h2 className="font-semibold text-white">Datos del evento</h2>
             {eventType && (
               <span className={`text-xs px-3 py-1 rounded-full font-medium ${
                 eventType === "resale" 
-                  ? "bg-blue-100 text-blue-800" 
-                  : "bg-green-100 text-green-800"
+                  ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/50" 
+                  : "bg-neon-green/20 text-neon-green border border-neon-green/50"
               }`}>
                 {eventType === "resale" ? "Reventa" : "Evento Propio"}
               </span>
@@ -556,18 +556,22 @@ export default function OrganizerEventForm() {
 
           {/* Aviso de tickets vendidos */}
           {hasSoldTickets && (
-            <div className="mb-4 p-4 rounded-lg bg-amber-50 border border-amber-200">
+            <div className="mb-4 p-4 rounded-xl glass border border-amber-500/50">
               <div className="flex items-start gap-3">
-                <span className="text-2xl">⚠️</span>
+                <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center">
+                  <svg className="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                </div>
                 <div className="flex-1">
-                  <h3 className="font-semibold text-amber-900 mb-1">
+                  <h3 className="font-semibold text-amber-300 mb-1">
                     Evento con entradas vendidas
                   </h3>
-                  <p className="text-sm text-amber-800 mb-2">
-                    Este evento ya tiene <strong>{soldTicketsCount} {soldTicketsCount === 1 ? 'entrada vendida' : 'entradas vendidas'}</strong>.
+                  <p className="text-sm text-dark-200 mb-2">
+                    Este evento ya tiene <strong className="text-white">{soldTicketsCount} {soldTicketsCount === 1 ? 'entrada vendida' : 'entradas vendidas'}</strong>.
                     Por lo tanto, no puedes modificar: fecha, ubicación, capacidad ni precios.
                   </p>
-                  <p className="text-xs text-amber-700">
+                  <p className="text-xs text-dark-300">
                     Solo puedes editar: título, descripción e imagen de portada.
                   </p>
                 </div>
@@ -577,20 +581,24 @@ export default function OrganizerEventForm() {
 
           {/* Aviso de capacidad incompleta */}
           {isEdit && !sectionsComplete && (
-            <div className="mb-4 p-4 rounded-lg bg-blue-50 border border-blue-200">
+            <div className="mb-4 p-4 rounded-xl glass border border-cyan-500/50">
               <div className="flex items-start gap-3">
-                <span className="text-2xl">ℹ️</span>
+                <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-cyan-500/20 flex items-center justify-center">
+                  <svg className="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
                 <div className="flex-1">
-                  <h3 className="font-semibold text-blue-900 mb-1">
+                  <h3 className="font-semibold text-cyan-300 mb-1">
                     Capacidad incompleta
                   </h3>
-                  <p className="text-sm text-blue-800 mb-2">
+                  <p className="text-sm text-dark-200 mb-2">
                     {eventType === 'own' 
                       ? `Has definido ${sectionsCapacity} de ${watch("capacity")} cupos en las secciones. Faltan ${missingCapacity} cupos por definir.`
                       : `Has cargado ${sectionsCapacity} de ${watch("capacity")} tickets. Faltan ${missingCapacity} tickets por cargar.`
                     }
                   </p>
-                  <p className="text-xs text-blue-700">
+                  <p className="text-xs text-dark-300">
                     {eventType === 'own' 
                       ? 'Debes agregar o modificar secciones hasta completar la capacidad total del evento.'
                       : 'Debes cargar más tickets hasta completar la capacidad total del evento.'
@@ -602,21 +610,21 @@ export default function OrganizerEventForm() {
           )}
 
           <div className="mb-3">
-            <label className="block text-sm font-medium mb-1">Título *</label>
+            <label className="block text-sm font-medium mb-1 text-dark-100">Título *</label>
             <input
               {...register("title")}
-              className="w-full border rounded px-3 py-2"
+              className="w-full bg-dark-800 border-2 border-dark-600 rounded-xl px-4 py-3 text-white placeholder-dark-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50 transition-all"
               placeholder="Ej: Concierto de Rock"
               maxLength={limits.field.TITLE}
             />
-            {errors.title && <p className="text-sm text-red-600">{errors.title.message as string}</p>}
+            {errors.title && <p className="text-sm text-red-400 mt-1">{errors.title.message as string}</p>}
           </div>
 
           <div className="mb-3">
-            <label className="block text-sm font-medium mb-1">Descripción</label>
+            <label className="block text-sm font-medium mb-1 text-dark-100">Descripción</label>
             <textarea
               {...register("description")}
-              className="w-full border rounded px-3 py-2 min-h-[100px]"
+              className="w-full bg-dark-800 border-2 border-dark-600 rounded-xl px-4 py-3 text-white placeholder-dark-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50 transition-all min-h-[100px]"
               placeholder="Detalles del evento…"
               maxLength={limits.field.DESCRIPTION}
             />
@@ -624,9 +632,9 @@ export default function OrganizerEventForm() {
 
           <div className="mb-3">
             <div className="flex items-center justify-between gap-2">
-              <label className="block text-sm font-medium mb-1">Imagen de portada (URL directa)</label>
+              <label className="block text-sm font-medium mb-1 text-dark-100">Imagen de portada (URL directa)</label>
               {coverUrl ? (
-                <button type="button" onClick={handleClearCover} className="text-sm px-3 py-1 rounded border hover:bg-black/5">
+                <button type="button" onClick={handleClearCover} className="text-sm px-3 py-1 rounded-xl glass border border-dark-600 text-dark-100 hover:bg-dark-700 transition-colors">
                   Quitar
                 </button>
               ) : null}
@@ -638,17 +646,17 @@ export default function OrganizerEventForm() {
                 setValue("coverImageUrl", cleaned, { shouldDirty: true });
                 setPreviewError(null);
               }}
-              className="w-full border rounded px-3 py-2"
+              className="w-full bg-dark-800 border-2 border-dark-600 rounded-xl px-4 py-3 text-white placeholder-dark-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50 transition-all"
               placeholder="https://…/archivo.jpg (evita enlaces de búsqueda; usa la URL directa)"
               maxLength={limits.field.COVER_URL}
             />
-            {errors.coverImageUrl && <p className="text-sm text-red-600">{errors.coverImageUrl.message as string}</p>}
+            {errors.coverImageUrl && <p className="text-sm text-red-400 mt-1">{errors.coverImageUrl.message as string}</p>}
 
             <div className="mt-3">
-              <div className="text-xs text-gray-500 mb-1">
+              <div className="text-xs text-dark-300 mb-1">
                 Recomendado: relación 16:9 (p. ej. 1600×900). Se recorta centrado en tarjetas y detalle.
               </div>
-              <div className="relative rounded-xl overflow-hidden border aspect-video bg-gradient-to-br from-indigo-700 to-fuchsia-600">
+              <div className="relative rounded-xl overflow-hidden border-2 border-dark-600 aspect-video bg-gradient-to-br from-indigo-700 to-fuchsia-600">
                 {coverUrl ? (
                   <>
                     <img
@@ -671,77 +679,77 @@ export default function OrganizerEventForm() {
                   </div>
                 )}
               </div>
-              {previewError && <p className="mt-2 text-sm text-amber-700">{previewError}</p>}
+              {previewError && <p className="mt-2 text-sm text-amber-300">{previewError}</p>}
             </div>
           </div>
 
           {/* Lugar / Ciudad / Comuna */}
           <div className="grid md:grid-cols-3 gap-3 mb-3">
             <div>
-              <label className="block text-sm font-medium mb-1">Lugar *</label>
+              <label className="block text-sm font-medium mb-1 text-dark-100">Lugar *</label>
               <input
                 {...register("venue")}
                 disabled={hasSoldTickets}
-                className={`w-full border rounded px-3 py-2 ${hasSoldTickets ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                className={`w-full border-2 rounded-xl px-4 py-3 transition-all ${hasSoldTickets ? 'bg-dark-700/30 border-dark-700 text-dark-400 cursor-not-allowed' : 'bg-dark-800 border-dark-600 text-white placeholder-dark-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50'}`}
                 placeholder="Estadio Nacional"
                 maxLength={limits.field.VENUE}
                 title={hasSoldTickets ? 'No se puede modificar la ubicación porque hay entradas vendidas' : ''}
               />
-              {errors.venue && <p className="text-sm text-red-600">{errors.venue.message as string}</p>}
+              {errors.venue && <p className="text-sm text-red-400 mt-1">{errors.venue.message as string}</p>}
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Ciudad</label>
+              <label className="block text-sm font-medium mb-1 text-dark-100">Ciudad</label>
               <input
                 {...register("city")}
                 disabled={hasSoldTickets}
-                className={`w-full border rounded px-3 py-2 ${hasSoldTickets ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                className={`w-full border-2 rounded-xl px-4 py-3 transition-all ${hasSoldTickets ? 'bg-dark-700/30 border-dark-700 text-dark-400 cursor-not-allowed' : 'bg-dark-800 border-dark-600 text-white placeholder-dark-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50'}`}
                 placeholder="Santiago"
                 maxLength={limits.field.CITY}
                 title={hasSoldTickets ? 'No se puede modificar la ciudad porque hay entradas vendidas' : ''}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Comuna *</label>
+              <label className="block text-sm font-medium mb-1 text-dark-100">Comuna *</label>
               <input
                 {...register("commune")}
                 disabled={hasSoldTickets}
-                className={`w-full border rounded px-3 py-2 ${hasSoldTickets ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                className={`w-full border-2 rounded-xl px-4 py-3 transition-all ${hasSoldTickets ? 'bg-dark-700/30 border-dark-700 text-dark-400 cursor-not-allowed' : 'bg-dark-800 border-dark-600 text-white placeholder-dark-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50'}`}
                 placeholder="Providencia"
                 maxLength={limits.field.COMMUNE}
                 title={hasSoldTickets ? 'No se puede modificar la comuna porque hay entradas vendidas' : ''}
               />
-              {errors.commune && <p className="text-sm text-red-600">{errors.commune.message as string}</p>}
+              {errors.commune && <p className="text-sm text-red-400 mt-1">{errors.commune.message as string}</p>}
             </div>
           </div>
 
           <div className="grid md:grid-cols-2 gap-3 mb-3">
             <div>
-              <label className="block text-sm font-medium mb-1">Inicio (fecha y hora) *</label>
+              <label className="block text-sm font-medium mb-1 text-dark-100">Inicio (fecha y hora) *</label>
               <input 
                 type="datetime-local" 
                 {...register("startAt")} 
                 disabled={hasSoldTickets}
-                className={`w-full border rounded px-3 py-2 ${hasSoldTickets ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                className={`w-full border-2 rounded-xl px-4 py-3 transition-all ${hasSoldTickets ? 'bg-dark-700/30 border-dark-700 text-dark-400 cursor-not-allowed' : 'bg-dark-800 border-dark-600 text-white focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50'}`}
                 title={hasSoldTickets ? 'No se puede modificar la fecha porque hay entradas vendidas' : ''}
               />
-              {errors.startAt && <p className="text-sm text-red-600">{errors.startAt.message as string}</p>}
+              {errors.startAt && <p className="text-sm text-red-400 mt-1">{errors.startAt.message as string}</p>}
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Fin (opcional)</label>
+              <label className="block text-sm font-medium mb-1 text-dark-100">Fin (opcional)</label>
               <input 
                 type="datetime-local" 
                 {...register("endAt")} 
                 disabled={hasSoldTickets}
-                className={`w-full border rounded px-3 py-2 ${hasSoldTickets ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                className={`w-full border-2 rounded-xl px-4 py-3 transition-all ${hasSoldTickets ? 'bg-dark-700/30 border-dark-700 text-dark-400 cursor-not-allowed' : 'bg-dark-800 border-dark-600 text-white focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50'}`}
                 title={hasSoldTickets ? 'No se puede modificar la fecha porque hay entradas vendidas' : ''}
               />
             </div>
           </div>
 
           <div className="mb-1">
-            <label className="block text-sm font-medium mb-1">
+            <label className="block text-sm font-medium mb-1 text-dark-100">
               Número de entradas * 
-              <span className="text-xs text-gray-500 ml-1">
+              <span className="text-xs text-dark-300 ml-1">
                 {eventType === "resale" 
                   ? `(máx. ${limits.ticket.RESALE.MAX})` 
                   : limits.ticket.OWN.MAX !== null
@@ -757,18 +765,18 @@ export default function OrganizerEventForm() {
               step={1}
               {...register("capacity")}
               disabled={hasSoldTickets}
-              className={`w-full border rounded px-3 py-2 ${hasSoldTickets ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+              className={`w-full border-2 rounded-xl px-4 py-3 transition-all ${hasSoldTickets ? 'bg-dark-700/30 border-dark-700 text-dark-400 cursor-not-allowed' : 'bg-dark-800 border-dark-600 text-white placeholder-dark-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50'}`}
               placeholder={eventType === "resale" ? "1" : "100"}
               title={hasSoldTickets ? 'No se puede modificar la capacidad porque hay entradas vendidas' : ''}
             />
-            {errors.capacity && <p className="text-sm text-red-600">{errors.capacity.message as string}</p>}
+            {errors.capacity && <p className="text-sm text-red-400 mt-1">{errors.capacity.message as string}</p>}
             {eventType === "resale" && (
-              <p className="text-xs text-blue-600 mt-1">
+              <p className="text-xs text-cyan-300 mt-1">
                 Reventa: Máximo {limits.ticket.RESALE.MAX.toLocaleString()} entradas permitidas
               </p>
             )}
             {eventType === "own" && (
-              <p className="text-xs text-green-600 mt-1">
+              <p className="text-xs text-neon-green mt-1">
                 Evento propio: {limits.ticket.OWN.MAX !== null 
                   ? `Hasta ${limits.ticket.OWN.MAX.toLocaleString()} entradas` 
                   : 'Sin límite de capacidad'
@@ -781,8 +789,8 @@ export default function OrganizerEventForm() {
           <div className="mt-4 grid md:grid-cols-2 gap-3">
             {eventType === "resale" && (
               <div>
-                <label className="block text-sm font-medium mb-1">
-                  Precio base (CLP) * <span className="text-xs text-gray-500">(valor original del ticket)</span>
+                <label className="block text-sm font-medium mb-1 text-dark-100">
+                  Precio base (CLP) * <span className="text-xs text-dark-300">(valor original del ticket)</span>
                 </label>
                 <input
                   type="number"
@@ -791,17 +799,17 @@ export default function OrganizerEventForm() {
                   inputMode="numeric"
                   {...register("priceBase")}
                   disabled={hasSoldTickets}
-                  className={`w-full border rounded px-3 py-2 ${hasSoldTickets ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                  className={`w-full border-2 rounded-xl px-4 py-3 transition-all ${hasSoldTickets ? 'bg-dark-700/30 border-dark-700 text-dark-400 cursor-not-allowed' : 'bg-dark-800 border-dark-600 text-white placeholder-dark-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50'}`}
                   placeholder="Ej: 10000"
                   title={hasSoldTickets ? 'No se puede modificar el precio porque hay entradas vendidas' : ''}
                 />
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-dark-300 mt-1">
                   El precio que pagaste originalmente por la entrada
                 </p>
               </div>
             )}
             <div className={eventType === "own" ? "md:col-span-2" : ""}>
-              <label className="block text-sm font-medium mb-1">
+              <label className="block text-sm font-medium mb-1 text-dark-100">
                 Precio {eventType === "resale" ? "de reventa" : "de venta"} (CLP) *
               </label>
               <input
@@ -811,35 +819,35 @@ export default function OrganizerEventForm() {
                 inputMode="numeric"
                 {...register("price")}
                 disabled={hasSoldTickets}
-                className={`w-full border rounded px-3 py-2 ${hasSoldTickets ? 'bg-gray-100 cursor-not-allowed' : ''} ${errors.price ? "border-red-400" : ""}`}
+                className={`w-full border-2 rounded-xl px-4 py-3 transition-all ${hasSoldTickets ? 'bg-dark-700/30 border-dark-700 text-dark-400 cursor-not-allowed' : 'bg-dark-800 border-dark-600 text-white placeholder-dark-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50'} ${errors.price ? "border-red-400" : ""}`}
                 placeholder="Ej: 12000"
                 title={hasSoldTickets ? 'No se puede modificar el precio porque hay entradas vendidas' : ''}
               />
               {eventType === "resale" && maxAllowedResale !== null && (
-                <p className="text-xs text-gray-500 mt-1">
-                  Máximo permitido: <strong>{formatMoneyCLP(maxAllowedResale)}</strong> (+{limits.price.RESALE_MARKUP_PERCENT}% del precio base).
+                <p className="text-xs text-dark-300 mt-1">
+                  Máximo permitido: <strong className="text-white">{formatMoneyCLP(maxAllowedResale)}</strong> (+{limits.price.RESALE_MARKUP_PERCENT}% del precio base).
                 </p>
               )}
-              {errors.price && <p className="text-sm text-red-600">{errors.price.message as string}</p>}
+              {errors.price && <p className="text-sm text-red-400 mt-1">{errors.price.message as string}</p>}
             </div>
           </div>
 
           {/* Preview total (precio x capacidad) */}
           {priceWatch > 0 && capacityWatch > 0 && (
-            <div className="mt-2 text-sm text-gray-700">
-              Total estimado (todas las entradas): <strong>{formatMoneyCLP(previewTotal)}</strong>
+            <div className="mt-2 text-sm text-dark-200">
+              Total estimado (todas las entradas): <strong className="text-white">{formatMoneyCLP(previewTotal)}</strong>
             </div>
           )}
         </div>
 
-        <div className="flex items-center gap-2 pt-2">
-          <button type="submit" disabled={isSubmitting} className="px-4 py-2 rounded bg-black text-white disabled:opacity-50">
+        <div className="flex items-center gap-3 pt-4">
+          <button type="submit" disabled={isSubmitting} className="px-6 py-3 rounded-xl bg-gradient-to-r from-neon-cyan to-neon-purple text-white font-semibold disabled:opacity-50 hover:shadow-lg hover:shadow-cyan-500/50 transition-all">
             Continuar
           </button>
           <button
             type="button"
             onClick={() => navigate("/organizador/eventos")}
-            className="px-4 py-2 rounded border hover:bg-black/5"
+            className="px-6 py-3 rounded-xl glass border border-dark-600 text-dark-100 hover:bg-dark-700 transition-colors"
           >
             Cancelar
           </button>
@@ -861,16 +869,16 @@ export default function OrganizerEventForm() {
       />}
 
       {showPendingModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md mx-4">
-            <h3 className="text-lg font-semibold mb-3">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="glass border border-dark-600 rounded-2xl p-6 max-w-md mx-4">
+            <h3 className="text-xl font-semibold mb-4 text-white">
               Evento {isEdit ? "actualizado" : "creado"} exitosamente
             </h3>
-            <div className="bg-yellow-50 border border-yellow-200 rounded p-4 mb-4">
-              <p className="text-sm text-yellow-900">
-                <strong>Tu evento está pendiente de validación</strong>
+            <div className="glass border border-neon-yellow/50 rounded-xl p-4 mb-6">
+              <p className="text-sm text-neon-yellow font-semibold mb-2">
+                Tu evento está pendiente de validación
               </p>
-              <p className="text-sm text-yellow-800 mt-2">
+              <p className="text-sm text-dark-200">
                 Un administrador revisará la información antes de aprobarlo. 
                 Te notificaremos cuando esté disponible para los usuarios.
               </p>
@@ -888,7 +896,7 @@ export default function OrganizerEventForm() {
                 replace: true,
               });
             }}
-            className="w-full btn-primary px-4 py-2"
+            className="w-full px-6 py-3 rounded-xl bg-gradient-to-r from-neon-cyan to-neon-purple text-white font-semibold hover:shadow-lg hover:shadow-cyan-500/50 transition-all"
           >
             Aceptar
           </button>
@@ -1094,55 +1102,55 @@ function OwnEventTicketsStep({
 
   return (
     <div className="space-y-6">
-      <div className="border-l-4 border-green-500 bg-green-50 p-4 rounded">
-        <h2 className="text-lg font-semibold text-green-900">Evento Propio - Definir Secciones</h2>
-        <p className="text-sm text-green-800 mt-1">
+      <div className="glass border-l-4 border-neon-green rounded-xl p-4">
+        <h2 className="text-lg font-semibold text-neon-green">Evento Propio - Definir Secciones</h2>
+        <p className="text-sm text-dark-200 mt-1">
           Define las secciones de tu evento. Los tickets se generarán automáticamente cuando los usuarios compren.
         </p>
       </div>
 
       {error && (
-        <div className="p-3 rounded border border-red-300 bg-red-50 text-red-800 text-sm">
+        <div className="p-4 rounded-xl glass border border-red-500/50 text-red-300 text-sm">
           {error}
         </div>
       )}
       {success && (
-        <div className="p-3 rounded border border-green-300 bg-green-50 text-green-800 text-sm">
+        <div className="p-4 rounded-xl glass border border-neon-green/50 text-neon-green text-sm">
           {success}
         </div>
       )}
 
       {/* Resumen de capacidad */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h4 className="font-semibold text-blue-900 mb-2">Estado actual</h4>
+      <div className="glass border border-dark-600 rounded-xl p-4">
+        <h4 className="font-semibold text-white mb-3">Estado actual</h4>
         <div className="grid md:grid-cols-3 gap-4 text-sm">
           <div>
-            <p className="text-blue-800">Capacidad del evento:</p>
-            <p className="text-2xl font-bold text-blue-900">{expectedCapacity.toLocaleString()}</p>
+            <p className="text-dark-200">Capacidad del evento:</p>
+            <p className="text-2xl font-bold text-cyan-400">{expectedCapacity.toLocaleString()}</p>
           </div>
           <div>
-            <p className="text-blue-800">Capacidad en secciones:</p>
-            <p className="text-2xl font-bold text-blue-900">{totalSectionCapacity.toLocaleString()}</p>
+            <p className="text-dark-200">Capacidad en secciones:</p>
+            <p className="text-2xl font-bold text-purple-400">{totalSectionCapacity.toLocaleString()}</p>
           </div>
           <div>
-            <p className="text-blue-800">Capacidad restante:</p>
+            <p className="text-dark-200">Capacidad restante:</p>
             <p className={`text-2xl font-bold ${
-              expectedCapacity - totalSectionCapacity > 0 ? 'text-green-600' : 'text-gray-500'
+              expectedCapacity - totalSectionCapacity > 0 ? 'text-neon-green' : 'text-dark-400'
             }`}>
               {(expectedCapacity - totalSectionCapacity).toLocaleString()}
             </p>
           </div>
         </div>
         {totalSectionCapacity > 0 && totalSectionCapacity !== expectedCapacity && (
-          <div className={`text-xs mt-2 ${
+          <div className={`text-xs mt-3 p-2 rounded-lg ${
             totalSectionCapacity < expectedCapacity 
-              ? 'text-blue-700' 
-              : 'text-amber-700'
+              ? 'bg-cyan-500/10 text-cyan-300' 
+              : 'bg-amber-500/10 text-amber-300'
           }`}>
             {totalSectionCapacity < expectedCapacity ? (
-              <p>ℹ️ Faltan {(expectedCapacity - totalSectionCapacity).toLocaleString()} asientos por definir en secciones</p>
+              <p>Faltan {(expectedCapacity - totalSectionCapacity).toLocaleString()} asientos por definir en secciones</p>
             ) : (
-              <p>⚠️ La capacidad en secciones ({totalSectionCapacity.toLocaleString()}) excede la capacidad del evento ({expectedCapacity.toLocaleString()})</p>
+              <p>La capacidad en secciones ({totalSectionCapacity.toLocaleString()}) excede la capacidad del evento ({expectedCapacity.toLocaleString()})</p>
             )}
           </div>
         )}
@@ -1150,45 +1158,45 @@ function OwnEventTicketsStep({
 
       {/* Lista de secciones */}
       {loading && sections.length === 0 ? (
-        <div className="p-8 text-center text-gray-500">Cargando secciones...</div>
+        <div className="p-8 text-center text-dark-300">Cargando secciones...</div>
       ) : sections.length > 0 ? (
-        <div className="border rounded-lg overflow-hidden">
-          <h3 className="font-semibold p-4 border-b bg-gray-50">Secciones Creadas</h3>
-          <div className="divide-y">
+        <div className="glass border border-dark-600 rounded-xl overflow-hidden">
+          <h3 className="font-semibold p-4 border-b border-dark-600 bg-dark-800/50 text-white">Secciones Creadas</h3>
+          <div className="divide-y divide-dark-600">
             {sections.map((section) => (
-              <div key={section.id} className="p-4 hover:bg-gray-50">
+              <div key={section.id} className="p-4 hover:bg-dark-800/30 transition-colors">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <h4 className="font-semibold">{section.name}</h4>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm text-gray-600 mt-2">
+                    <h4 className="font-semibold text-white">{section.name}</h4>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm text-dark-200 mt-2">
                       {section.rowStart && (
                         <>
                           <div>
-                            <span className="text-xs text-gray-500">Filas:</span>{" "}
-                            <span className="font-medium">{section.rowStart} - {section.rowEnd}</span>
+                            <span className="text-xs text-dark-400">Filas:</span>{" "}
+                            <span className="font-medium text-cyan-300">{section.rowStart} - {section.rowEnd}</span>
                           </div>
                           <div>
-                            <span className="text-xs text-gray-500">Asientos/fila:</span>{" "}
-                            <span className="font-medium">{section.seatsPerRow}</span>
+                            <span className="text-xs text-dark-400">Asientos/fila:</span>{" "}
+                            <span className="font-medium text-cyan-300">{section.seatsPerRow}</span>
                           </div>
                         </>
                       )}
                       {section.seatStart && (
                         <div>
-                          <span className="text-xs text-gray-500">Asientos:</span>{" "}
-                          <span className="font-medium">{section.seatStart} - {section.seatEnd}</span>
+                          <span className="text-xs text-dark-400">Asientos:</span>{" "}
+                          <span className="font-medium text-cyan-300">{section.seatStart} - {section.seatEnd}</span>
                         </div>
                       )}
                       <div>
-                        <span className="text-xs text-gray-500">Capacidad:</span>{" "}
-                        <span className="font-bold text-green-600">{section.totalCapacity}</span>
+                        <span className="text-xs text-dark-400">Capacidad:</span>{" "}
+                        <span className="font-bold text-neon-green">{section.totalCapacity}</span>
                       </div>
                     </div>
                   </div>
                   <button
                     onClick={() => handleDeleteSection(section.id)}
                     disabled={loading}
-                    className="text-red-600 hover:text-red-800 text-sm ml-4"
+                    className="text-red-400 hover:text-red-300 text-sm ml-4 px-3 py-1 rounded-lg glass border border-red-500/30 hover:border-red-500/50 transition-colors"
                   >
                     Eliminar
                   </button>
@@ -1198,9 +1206,9 @@ function OwnEventTicketsStep({
           </div>
         </div>
       ) : (
-        <div className="border rounded-lg p-8 text-center">
-          <p className="text-gray-600 mb-2">Aún no hay secciones definidas</p>
-          <p className="text-sm text-gray-500">
+        <div className="glass border border-dark-600 rounded-xl p-8 text-center">
+          <p className="text-dark-200 mb-2">Aún no hay secciones definidas</p>
+          <p className="text-sm text-dark-400">
             Crea al menos una sección para tu evento
           </p>
         </div>
@@ -1211,7 +1219,7 @@ function OwnEventTicketsStep({
         <button
           onClick={() => setShowForm(true)}
           disabled={totalSectionCapacity >= expectedCapacity}
-          className="w-full md:w-auto px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full md:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-neon-green to-green-600 text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg hover:shadow-green-500/50 transition-all"
           title={totalSectionCapacity >= expectedCapacity ? "La capacidad del evento está completa" : ""}
         >
           {totalSectionCapacity >= expectedCapacity 
@@ -1223,66 +1231,66 @@ function OwnEventTicketsStep({
 
       {/* Formulario de nueva seccion */}
       {showForm && (
-        <div className="border rounded-lg p-6 bg-gray-50">
-          <h3 className="font-semibold mb-4">Nueva Sección</h3>
+        <div className="glass border border-dark-600 rounded-xl p-6">
+          <h3 className="font-semibold mb-4 text-white">Nueva Sección</h3>
 
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-1">
+              <label className="block text-sm font-medium mb-1 text-dark-100">
                 Nombre de la Sección *
               </label>
               <input
                 type="text"
                 value={sectionForm.name}
                 onChange={(e) => setSectionForm({ ...sectionForm, name: e.target.value })}
-                className="w-full border rounded px-3 py-2"
+                className="w-full bg-dark-800 border-2 border-dark-600 rounded-xl px-4 py-3 text-white placeholder-dark-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50 transition-all"
                 placeholder="Ej: Platea A, Tribuna Norte, VIP"
                 maxLength={100}
               />
             </div>
 
-            <div className="border-t pt-4">
-              <label className="flex items-center gap-2 mb-3">
+            <div className="border-t border-dark-600 pt-4">
+              <label className="flex items-center gap-2 mb-3 cursor-pointer group">
                 <input
                   type="checkbox"
                   checked={sectionForm.useRangeMode}
                   onChange={(e) => setSectionForm({ ...sectionForm, useRangeMode: e.target.checked })}
-                  className="w-4 h-4"
+                  className="w-5 h-5 rounded border-dark-600 text-cyan-500 focus:ring-2 focus:ring-cyan-400/50"
                 />
-                <span className="text-sm font-medium">Usar rango de filas</span>
+                <span className="text-sm font-medium text-dark-100 group-hover:text-white transition-colors">Usar rango de filas</span>
               </label>
 
               {sectionForm.useRangeMode ? (
                 <div className="grid md:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-sm font-medium mb-1">Fila Inicio *</label>
+                    <label className="block text-sm font-medium mb-1 text-dark-100">Fila Inicio *</label>
                     <input
                       type="text"
                       value={sectionForm.rowStart}
                       onChange={(e) => setSectionForm({ ...sectionForm, rowStart: e.target.value })}
-                      className="w-full border rounded px-3 py-2"
+                      className="w-full bg-dark-800 border-2 border-dark-600 rounded-xl px-4 py-3 text-white placeholder-dark-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50 transition-all"
                       placeholder="A"
                       maxLength={10}
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Fila Fin *</label>
+                    <label className="block text-sm font-medium mb-1 text-dark-100">Fila Fin *</label>
                     <input
                       type="text"
                       value={sectionForm.rowEnd}
                       onChange={(e) => setSectionForm({ ...sectionForm, rowEnd: e.target.value })}
-                      className="w-full border rounded px-3 py-2"
+                      className="w-full bg-dark-800 border-2 border-dark-600 rounded-xl px-4 py-3 text-white placeholder-dark-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50 transition-all"
                       placeholder="Z"
                       maxLength={10}
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Asientos por Fila *</label>
+                    <label className="block text-sm font-medium mb-1 text-dark-100">Asientos por Fila *</label>
                     <input
                       type="number"
                       value={sectionForm.seatsPerRow}
                       onChange={(e) => setSectionForm({ ...sectionForm, seatsPerRow: e.target.value })}
-                      className="w-full border rounded px-3 py-2"
+                      className="w-full bg-dark-800 border-2 border-dark-600 rounded-xl px-4 py-3 text-white placeholder-dark-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50 transition-all"
                       placeholder="20"
                       min="1"
                     />
@@ -1291,23 +1299,23 @@ function OwnEventTicketsStep({
               ) : (
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium mb-1">Asiento Inicio *</label>
+                    <label className="block text-sm font-medium mb-1 text-dark-100">Asiento Inicio *</label>
                     <input
                       type="number"
                       value={sectionForm.seatStart}
                       onChange={(e) => setSectionForm({ ...sectionForm, seatStart: e.target.value })}
-                      className="w-full border rounded px-3 py-2"
+                      className="w-full bg-dark-800 border-2 border-dark-600 rounded-xl px-4 py-3 text-white placeholder-dark-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50 transition-all"
                       placeholder="1"
                       min="1"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Asiento Fin *</label>
+                    <label className="block text-sm font-medium mb-1 text-dark-100">Asiento Fin *</label>
                     <input
                       type="number"
                       value={sectionForm.seatEnd}
                       onChange={(e) => setSectionForm({ ...sectionForm, seatEnd: e.target.value })}
-                      className="w-full border rounded px-3 py-2"
+                      className="w-full bg-dark-800 border-2 border-dark-600 rounded-xl px-4 py-3 text-white placeholder-dark-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50 transition-all"
                       placeholder="100"
                       min="1"
                     />
@@ -1316,11 +1324,11 @@ function OwnEventTicketsStep({
               )}
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex gap-3 pt-2">
               <button
                 onClick={handleCreateSection}
                 disabled={loading}
-                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50"
+                className="px-6 py-3 rounded-xl bg-gradient-to-r from-neon-green to-green-600 text-white font-semibold disabled:opacity-50 hover:shadow-lg hover:shadow-green-500/50 transition-all"
               >
                 {loading ? "Creando..." : "Crear Sección"}
               </button>
@@ -1330,7 +1338,7 @@ function OwnEventTicketsStep({
                   setError(null);
                 }}
                 disabled={loading}
-                className="px-4 py-2 border rounded hover:bg-gray-100"
+                className="px-6 py-3 rounded-xl glass border border-dark-600 text-dark-100 hover:bg-dark-700 transition-colors"
               >
                 Cancelar
               </button>
@@ -1340,17 +1348,17 @@ function OwnEventTicketsStep({
       )}
 
       {/* botones de navegacion */}
-      <div className="flex items-center justify-between pt-4 border-t">
+      <div className="flex items-center justify-between pt-6 border-t border-dark-600">
         <button
           onClick={onBack}
-          className="px-4 py-2 border rounded hover:bg-black/5"
+          className="px-6 py-3 rounded-xl glass border border-dark-600 text-dark-100 hover:bg-dark-700 transition-colors"
         >
           ← Volver
         </button>
         <button
           onClick={onFinish}
           disabled={sections.length === 0 || totalSectionCapacity !== expectedCapacity}
-          className="px-4 py-2 bg-black text-white rounded hover:bg-black/90 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-6 py-3 rounded-xl bg-gradient-to-r from-neon-cyan to-neon-purple text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg hover:shadow-cyan-500/50 transition-all"
           title={
             sections.length === 0 
               ? "Debes crear al menos una sección" 
@@ -1552,11 +1560,11 @@ function ResaleTicketsStep({
 
   return (
     <div className="space-y-6">
-      <div className="border-l-4 border-blue-500 bg-blue-50 p-4 rounded">
+      <div className="glass border-l-4 border-cyan-500 rounded-xl p-4">
         <div className="flex items-start gap-3">
           <div>
-            <h2 className="text-lg font-semibold text-blue-900">Reventa - Información de Tickets</h2>
-            <p className="text-sm text-blue-800 mt-1">
+            <h2 className="text-lg font-semibold text-cyan-400">Reventa - Información de Tickets</h2>
+            <p className="text-sm text-dark-200 mt-1">
               Sube las imágenes de las entradas que vas a revender (máximo {expectedCapacity})
             </p>
           </div>
@@ -1564,54 +1572,54 @@ function ResaleTicketsStep({
       </div>
 
       {/* Progreso */}
-      <div className={`p-4 rounded-lg border ${
+      <div className={`p-4 rounded-xl glass border ${
         allUploaded 
-          ? "bg-green-50 border-green-200" 
-          : "bg-blue-50 border-blue-200"
+          ? "border-neon-green/50" 
+          : "border-cyan-500/50"
       }`}>
         <div className="flex items-center justify-between">
           <div>
-            <p className="font-semibold text-sm">
+            <p className="font-semibold text-sm text-white">
               Tickets configurados: {uploadedCount} / {expectedCapacity}
             </p>
-            <p className="text-xs text-gray-600 mt-1">
+            <p className={`text-xs mt-1 ${allUploaded ? 'text-neon-green' : 'text-dark-300'}`}>
               {allUploaded 
-                ? "✓ Todas las entradas han sido configuradas"
+                ? "Todas las entradas han sido configuradas"
                 : `Puedes agregar ${expectedCapacity - uploadedCount} entrada(s) más`
               }
             </p>
           </div>
           {allUploaded && (
-            <span className="text-2xl">✓</span>
+            <div className="text-2xl text-neon-green">✓</div>
           )}
         </div>
       </div>
 
       {/* Mensajes */}
       {error && (
-        <div className="p-3 rounded border border-red-300 bg-red-50 text-red-800 text-sm">
+        <div className="p-4 rounded-xl glass border border-red-500/50 text-red-300 text-sm">
           {error}
         </div>
       )}
       {success && (
-        <div className="p-3 rounded border border-green-300 bg-green-50 text-green-800 text-sm">
+        <div className="p-4 rounded-xl glass border border-neon-green/50 text-neon-green text-sm">
           {success}
         </div>
       )}
 
       {/* lista de tickets */}
       {loading && tickets.length === 0 ? (
-        <div className="p-8 text-center text-gray-500">Cargando tickets...</div>
+        <div className="p-8 text-center text-dark-300">Cargando tickets...</div>
       ) : tickets.length > 0 ? (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
           {tickets.map((ticket) => (
-            <div key={ticket.id} className="border rounded-lg p-4 bg-green-50 border-green-300">
+            <div key={ticket.id} className="glass border border-neon-green/50 rounded-xl p-4">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="font-semibold text-sm">Ticket #{ticket.id}</h3>
+                <h3 className="font-semibold text-sm text-white">Ticket #{ticket.id}</h3>
                 <button
                   onClick={() => handleRemoveTicket(ticket.id)}
                   disabled={loading}
-                  className="text-xs text-red-600 hover:underline disabled:opacity-50"
+                  className="text-xs text-red-400 hover:text-red-300 px-2 py-1 rounded-lg glass border border-red-500/30 hover:border-red-500/50 transition-colors disabled:opacity-50"
                 >
                   Eliminar
                 </button>
@@ -1619,35 +1627,35 @@ function ResaleTicketsStep({
 
               <div className="space-y-2 text-sm">
                 <div className="grid grid-cols-2 gap-1 text-xs">
-                  <span className="text-gray-600">Fila:</span>
-                  <span className="font-medium">{ticket.row}</span>
-                  <span className="text-gray-600">Asiento:</span>
-                  <span className="font-medium">{ticket.seat}</span>
+                  <span className="text-dark-400">Fila:</span>
+                  <span className="font-medium text-cyan-300">{ticket.row}</span>
+                  <span className="text-dark-400">Asiento:</span>
+                  <span className="font-medium text-cyan-300">{ticket.seat}</span>
                   {ticket.zone && (
                     <>
-                      <span className="text-gray-600">Zona:</span>
-                      <span className="font-medium">{ticket.zone}</span>
+                      <span className="text-dark-400">Zona:</span>
+                      <span className="font-medium text-cyan-300">{ticket.zone}</span>
                     </>
                   )}
                   {ticket.level && (
                     <>
-                      <span className="text-gray-600">Nivel:</span>
-                      <span className="font-medium">{ticket.level}</span>
+                      <span className="text-dark-400">Nivel:</span>
+                      <span className="font-medium text-cyan-300">{ticket.level}</span>
                     </>
                   )}
                 </div>
                 {ticket.description && (
-                  <p className="text-xs text-gray-600 mt-2">{ticket.description}</p>
+                  <p className="text-xs text-dark-300 mt-2">{ticket.description}</p>
                 )}
-                <span className="text-green-600 text-xs font-medium">✓ Configurado</span>
+                <span className="text-neon-green text-xs font-medium">✓ Configurado</span>
               </div>
             </div>
           ))}
         </div>
       ) : (
-        <div className="border rounded-lg p-8 text-center">
-          <p className="text-gray-600 mb-2">Aún no has subido tickets</p>
-          <p className="text-sm text-gray-500">
+        <div className="glass border border-dark-600 rounded-xl p-8 text-center">
+          <p className="text-dark-200 mb-2">Aún no has subido tickets</p>
+          <p className="text-sm text-dark-400">
             Completa el formulario abajo para agregar tus entradas
           </p>
         </div>
@@ -1655,61 +1663,61 @@ function ResaleTicketsStep({
 
       {/* formulario para agregar ticket */}
       {canAddMore && (
-        <div id="ticket-form" className="border rounded-lg p-6 bg-gray-50">
-          <h3 className="font-semibold mb-4">Agregar nuevo ticket</h3>
+        <div id="ticket-form" className="glass border border-dark-600 rounded-xl p-6">
+          <h3 className="font-semibold mb-4 text-white">Agregar nuevo ticket</h3>
           
           <div className="grid md:grid-cols-2 gap-4 mb-4">
             <div>
-              <label className="block text-sm font-medium mb-1">
-                Fila * <span className="text-xs text-gray-500">(ej: A, 12, VIP)</span>
+              <label className="block text-sm font-medium mb-1 text-dark-100">
+                Fila * <span className="text-xs text-dark-400">(ej: A, 12, VIP)</span>
               </label>
               <input
                 type="text"
                 value={currentTicket.row}
                 onChange={(e) => setCurrentTicket({ ...currentTicket, row: e.target.value })}
-                className="w-full border rounded px-3 py-2"
+                className="w-full bg-dark-800 border-2 border-dark-600 rounded-xl px-4 py-3 text-white placeholder-dark-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50 transition-all"
                 placeholder="A"
                 maxLength={20}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">
-                Asiento * <span className="text-xs text-gray-500">(ej: 15, B3)</span>
+              <label className="block text-sm font-medium mb-1 text-dark-100">
+                Asiento * <span className="text-xs text-dark-400">(ej: 15, B3)</span>
               </label>
               <input
                 type="text"
                 value={currentTicket.seat}
                 onChange={(e) => setCurrentTicket({ ...currentTicket, seat: e.target.value })}
-                className="w-full border rounded px-3 py-2"
+                className="w-full bg-dark-800 border-2 border-dark-600 rounded-xl px-4 py-3 text-white placeholder-dark-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50 transition-all"
                 placeholder="15"
                 maxLength={20}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">
-                Zona/Sección <span className="text-xs text-gray-500">(opcional)</span>
+              <label className="block text-sm font-medium mb-1 text-dark-100">
+                Zona/Sección <span className="text-xs text-dark-400">(opcional)</span>
               </label>
               <input
                 type="text"
                 value={currentTicket.zone}
                 onChange={(e) => setCurrentTicket({ ...currentTicket, zone: e.target.value })}
-                className="w-full border rounded px-3 py-2"
+                className="w-full bg-dark-800 border-2 border-dark-600 rounded-xl px-4 py-3 text-white placeholder-dark-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50 transition-all"
                 placeholder="Tribuna Norte"
                 maxLength={50}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">
-                Nivel <span className="text-xs text-gray-500">(opcional)</span>
+              <label className="block text-sm font-medium mb-1 text-dark-100">
+                Nivel <span className="text-xs text-dark-400">(opcional)</span>
               </label>
               <input
                 type="text"
                 value={currentTicket.level}
                 onChange={(e) => setCurrentTicket({ ...currentTicket, level: e.target.value })}
-                className="w-full border rounded px-3 py-2"
+                className="w-full bg-dark-800 border-2 border-dark-600 rounded-xl px-4 py-3 text-white placeholder-dark-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50 transition-all"
                 placeholder="Platea Alta"
                 maxLength={50}
               />
@@ -1717,35 +1725,35 @@ function ResaleTicketsStep({
           </div>
 
           <div className="mb-4">
-            <label className="block text-sm font-medium mb-1">
-              Descripción <span className="text-xs text-gray-500">(opcional)</span>
+            <label className="block text-sm font-medium mb-1 text-dark-100">
+              Descripción <span className="text-xs text-dark-400">(opcional)</span>
             </label>
             <textarea
               value={currentTicket.description}
               onChange={(e) => setCurrentTicket({ ...currentTicket, description: e.target.value })}
-              className="w-full border rounded px-3 py-2 min-h-[80px]"
+              className="w-full bg-dark-800 border-2 border-dark-600 rounded-xl px-4 py-3 text-white placeholder-dark-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50 transition-all min-h-[80px]"
               placeholder="Información adicional sobre este ticket..."
               maxLength={200}
             />
           </div>
 
           <div className="mb-4">
-            <label className="block text-sm font-medium mb-1">
-              Imagen del Ticket * <span className="text-xs text-gray-500">(JPG o PNG - máx 10MB)</span>
+            <label className="block text-sm font-medium mb-1 text-dark-100">
+              Imagen del Ticket * <span className="text-xs text-dark-400">(JPG o PNG - máx 10MB)</span>
             </label>
             <input
               type="file"
               accept="image/jpeg,image/png,image/jpg"
               onChange={handleFileChange}
               ref={fileInputRef}
-              className="w-full border rounded px-3 py-2 text-sm"
+              className="w-full bg-dark-800 border-2 border-dark-600 rounded-xl px-4 py-3 text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-cyan-500/20 file:text-cyan-300 hover:file:bg-cyan-500/30 transition-all"
             />
             {currentPreview && (
               <div className="mt-3">
                 <img 
                   src={currentPreview} 
                   alt="Preview" 
-                  className="max-w-full h-48 object-contain border rounded"
+                  className="max-w-full h-48 object-contain border-2 border-dark-600 rounded-xl"
                 />
               </div>
             )}
@@ -1754,7 +1762,7 @@ function ResaleTicketsStep({
           <button
             onClick={handleAddTicket}
             disabled={uploading || !currentTicket.row || !currentTicket.seat || !currentFile}
-            className="w-full md:w-auto px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full md:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg hover:shadow-cyan-500/50 transition-all"
           >
             {uploading ? "Guardando..." : "Guardar Ticket"}
           </button>
@@ -1762,17 +1770,17 @@ function ResaleTicketsStep({
       )}
 
       {/* botones de navegacion */}
-      <div className="flex items-center justify-between pt-4 border-t">
+      <div className="flex items-center justify-between pt-6 border-t border-dark-600">
         <button
           onClick={onBack}
-          className="px-4 py-2 border rounded hover:bg-black/5"
+          className="px-6 py-3 rounded-xl glass border border-dark-600 text-dark-100 hover:bg-dark-700 transition-colors"
         >
           ← Volver
         </button>
         <button
           onClick={onFinish}
           disabled={tickets.length === 0 || tickets.length !== expectedCapacity}
-          className="px-4 py-2 bg-black text-white rounded hover:bg-black/90 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-6 py-3 rounded-xl bg-gradient-to-r from-neon-cyan to-neon-purple text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg hover:shadow-cyan-500/50 transition-all"
           title={
             tickets.length === 0 
               ? "Debes subir al menos un ticket" 
