@@ -123,7 +123,7 @@ export default function NavbarModern() {
             className="flex items-center gap-3 font-display text-2xl font-bold text-white hover:text-neon-cyan transition-colors"
           >
             <img 
-              src="/logo_confiaticket_claro.jpeg" 
+              src="/logo_confiaticket_oscuro.jpeg" 
               alt="ConfíaTicket Logo" 
               className="h-12 w-auto"
             />
